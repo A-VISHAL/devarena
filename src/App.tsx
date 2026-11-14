@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
-import { Navbar } from './components/layout/Navbar';
-import { MobileNav } from './components/layout/MobileNav';
+import { AppLayout } from './components/layout/AppLayout';
 import { ShareCardModal } from './components/common/ShareCardModal';
 import { AccountModal } from './components/common/AccountModal';
 
@@ -45,24 +44,15 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-arena-bg pb-16 md:pb-8">
-      {/* Top Navbar */}
-      <Navbar onOpenAccountModal={() => setIsAccountModalOpen(true)} />
-
-      {/* Main Content View */}
-      <main className="flex-1">
-        {activeTab === 'home' && <Home />}
-        {activeTab === 'play' && <Play />}
-        {activeTab === 'arena' && <CodeArena />}
-        {activeTab === 'cards' && <CardsCollection />}
-        {activeTab === 'learn' && <Learn />}
-        {activeTab === 'community' && <Community />}
-        {activeTab === 'leaderboard' && <Leaderboard />}
-        {activeTab === 'profile' && <Profile />}
-      </main>
-
-      {/* Mobile Bottom Dock */}
-      <MobileNav />
+    <AppLayout onOpenAccountModal={() => setIsAccountModalOpen(true)}>
+      {activeTab === 'home' && <Home />}
+      {activeTab === 'play' && <Play />}
+      {activeTab === 'arena' && <CodeArena />}
+      {activeTab === 'cards' && <CardsCollection />}
+      {activeTab === 'learn' && <Learn />}
+      {activeTab === 'community' && <Community />}
+      {activeTab === 'leaderboard' && <Leaderboard />}
+      {activeTab === 'profile' && <Profile />}
 
       {/* Modals */}
       <ShareCardModal />
@@ -101,7 +91,7 @@ const AppContent: React.FC = () => {
         user={user}
         onClose={() => setShareCard(null)}
       />
-    </div>
+    </AppLayout>
   );
 };
 
