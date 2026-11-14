@@ -1,5 +1,7 @@
 export type NavigationTab = 'home' | 'play' | 'arena' | 'learn' | 'community' | 'leaderboard' | 'profile';
 
+export type AppView = 'landing' | 'app';
+
 export type GameCategory = 'daily' | 'brain' | 'logic' | 'multiplayer';
 
 export type CasualGameId = 

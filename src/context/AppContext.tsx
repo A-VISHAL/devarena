@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { 
   UserProfile, 
   NavigationTab, 
+  AppView,
   CasualGameId, 
   CommunityPost, 
   BattleRecord,
@@ -23,6 +24,10 @@ interface ShareCardData {
 
 interface AppContextType {
   user: UserProfile;
+  currentView: AppView;
+  setCurrentView: (view: AppView) => void;
+  navigateToApp: (tab?: NavigationTab, gameId?: CasualGameId) => void;
+  navigateToLanding: () => void;
   activeTab: NavigationTab;
   setActiveTab: (tab: NavigationTab) => void;
   activeGame: CasualGameId | null;
@@ -73,6 +78,54 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return createDefaultGuest();
   });
 
+  // 1.5 View state (landing vs app dashboard)
+  const [currentView, setCurrentView] = useState<AppView>(() => {
+    try {
+      const pathname = window.location.pathname;
+      const urlParams = new URLSearchParams(window.location.search);
+      if (
+        pathname.startsWith('/app') || 
+        urlParams.get('view') === 'app' ||
+        urlParams.has('battle') ||
+        urlParams.has('room') ||
+        urlParams.has('game') ||
+        urlParams.has('tab')
+      ) {
+        return 'app';
+      }
+    } catch (e) {
+      // ignore
+    }
+    return 'landing';
+  });
+
+  const navigateToApp = (tab?: NavigationTab, gameId?: CasualGameId) => {
+    setCurrentView('app');
+    if (tab) {
+      setActiveTabState(tab);
+    }
+    if (gameId) {
+      setActiveGame(gameId);
+    }
+    try {
+      const targetUrl = tab ? `/app/${tab}` : '/app';
+      window.history.pushState({ view: 'app', tab }, '', targetUrl);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  const navigateToLanding = () => {
+    setCurrentView('landing');
+    try {
+      window.history.pushState({ view: 'landing' }, '', '/');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (e) {
+      // ignore
+    }
+  };
+
   // 2. Navigation & active state
   const [activeTab, setActiveTabState] = useState<NavigationTab>('home');
   const [activeGame, setActiveGame] = useState<CasualGameId | null>(null);
@@ -100,31 +153,74 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [shareCardData, setShareCardData] = useState<ShareCardData | null>(null);
   const [gameResultData, setGameResultData] = useState<GameResultData | null>(null);
 
-  // Check URL params for direct room links (e.g. ?battle=XYZ or ?room=ABC or ?tab=XYZ)
+  // Check URL params for direct room links and path routes
   useEffect(() => {
     try {
+      const pathname = window.location.pathname;
       const urlParams = new URLSearchParams(window.location.search);
       const battleParam = urlParams.get('battle');
       const roomParam = urlParams.get('room');
       const tabParam = urlParams.get('tab') as NavigationTab;
       const gameParam = urlParams.get('game') as CasualGameId;
 
+      if (pathname.startsWith('/app')) {
+        setCurrentView('app');
+        const parts = pathname.split('/').filter(Boolean);
+        if (parts[1] && ['home', 'play', 'arena', 'learn', 'community', 'leaderboard', 'profile'].includes(parts[1])) {
+          setActiveTabState(parts[1] as NavigationTab);
+        }
+      }
+
       if (battleParam) {
+        setCurrentView('app');
         setActiveBattleId(battleParam);
         setActiveTabState('arena');
       } else if (roomParam) {
+        setCurrentView('app');
         setActiveMultiplayerCode(roomParam);
         setActiveGame('multiplayer-math');
         setActiveTabState('play');
       } else if (gameParam) {
+        setCurrentView('app');
         setActiveGame(gameParam);
         setActiveTabState('play');
       } else if (tabParam) {
+        setCurrentView('app');
         setActiveTabState(tabParam);
       }
     } catch (e) {
       // ignore
     }
+  }, []);
+
+  // Handle browser back and forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      try {
+        const pathname = window.location.pathname;
+        const urlParams = new URLSearchParams(window.location.search);
+        if (
+          pathname.startsWith('/app') || 
+          urlParams.get('view') === 'app' ||
+          urlParams.has('battle') ||
+          urlParams.has('room') ||
+          urlParams.has('game') ||
+          urlParams.has('tab')
+        ) {
+          setCurrentView('app');
+          const parts = pathname.split('/').filter(Boolean);
+          if (parts[1] && ['home', 'play', 'arena', 'learn', 'community', 'leaderboard', 'profile'].includes(parts[1])) {
+            setActiveTabState(parts[1] as NavigationTab);
+          }
+        } else {
+          setCurrentView('landing');
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   // Persist user changes
@@ -151,6 +247,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // If switching tabs away from game/battle, reset if appropriate
     if (tab !== 'play') setActiveGame(null);
     if (tab !== 'arena') setActiveBattleId(null);
+    try {
+      window.history.pushState({ view: 'app', tab }, '', `/app/${tab}`);
+    } catch (e) {
+      // ignore
+    }
   };
 
   const toggleSound = () => {
@@ -404,6 +505,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     <AppContext.Provider
       value={{
         user,
+        currentView,
+        setCurrentView,
+        navigateToApp,
+        navigateToLanding,
         activeTab,
         setActiveTab,
         activeGame,

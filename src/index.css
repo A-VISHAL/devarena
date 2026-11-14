@@ -48,4 +48,64 @@
   .arena-card-elevated {
     @apply bg-arena-elevated border border-arena-border rounded-xl transition-all duration-150 hover:border-arena-borderHover;
   }
+
+  /* 3D and Motion Utilities for Premium Landing Experience */
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+  .perspective-1400 {
+    perspective: 1400px;
+  }
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+  .animate-float-slow {
+    animation: floatGentle 6s ease-in-out infinite;
+  }
+  .animate-float-alt {
+    animation: floatGentleReverse 7s ease-in-out infinite;
+  }
+  .animate-glow-pulse {
+    animation: amberGlowPulse 4s ease-in-out infinite;
+  }
+}
+
+@keyframes floatGentle {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(0.8deg);
+  }
+}
+
+@keyframes floatGentleReverse {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(8px) rotate(-1deg);
+  }
+}
+
+@keyframes amberGlowPulse {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float-slow,
+  .animate-float-alt,
+  .animate-glow-pulse {
+    animation: none !important;
+  }
 }

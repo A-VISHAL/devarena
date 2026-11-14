@@ -11,7 +11,8 @@ import {
   VolumeX, 
   Menu,
   X,
-  Sparkles
+  Sparkles,
+  Compass
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { NavigationTab } from '../../types';
@@ -26,7 +27,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAccountModal }) => {
     activeTab, 
     setActiveTab, 
     isSoundMuted, 
-    toggleSound 
+    toggleSound,
+    navigateToLanding
   } = useApp();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -46,19 +48,30 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAccountModal }) => {
       <div className="w-[94%] max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
         
         {/* Brand Logo - Minimal & Refined Midnight & Amber */}
-        <div 
-          onClick={() => setActiveTab('home')}
-          className="flex items-center gap-2.5 cursor-pointer select-none group"
-        >
-          <div className="w-7 h-7 rounded-lg bg-arena-surface border border-arena-border flex items-center justify-center transition-colors group-hover:border-arena-borderHover">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-arena-amber">
-              <path d="M6 4L14 12L6 20" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-              <circle cx="18" cy="18" r="2.5" fill="#83B6A3"/>
-            </svg>
+        <div className="flex items-center gap-2">
+          <div 
+            onClick={() => setActiveTab('home')}
+            className="flex items-center gap-2.5 cursor-pointer select-none group"
+          >
+            <div className="w-7 h-7 rounded-lg bg-arena-surface border border-arena-border flex items-center justify-center transition-colors group-hover:border-arena-borderHover">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-arena-amber">
+                <path d="M6 4L14 12L6 20" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="18" cy="18" r="2.5" fill="#83B6A3"/>
+              </svg>
+            </div>
+            <span className="font-bold text-sm tracking-tight text-arena-textPrimary">
+              DEVARENA
+            </span>
           </div>
-          <span className="font-bold text-sm tracking-tight text-arena-textPrimary">
-            DEVARENA
-          </span>
+
+          <button
+            onClick={navigateToLanding}
+            className="hidden xl:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-arena-surface border border-arena-border text-[10px] font-medium text-arena-textSecondary hover:text-arena-amber hover:border-arena-amber/40 transition-all ml-1"
+            title="Public Marketing Landing Page"
+          >
+            <Compass className="w-3 h-3 text-arena-amber" />
+            <span>Tour</span>
+          </button>
         </div>
 
         {/* Desktop Navigation Links */}
