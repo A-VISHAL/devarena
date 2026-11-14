@@ -1,0 +1,361 @@
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { 
+  UserProfile, 
+  NavigationTab, 
+  CasualGameId, 
+  CommunityPost, 
+  BattleRecord 
+} from '../types';
+import { createDefaultGuest, INITIAL_COMMUNITY_POSTS, ACHIEVEMENTS } from '../data/mockData';
+import { sound } from '../utils/sound';
+
+interface ShareCardData {
+  title: string;
+  gameOrBattle: string;
+  scoreOrResult: string;
+  subtitle?: string;
+  ratingChange?: number;
+  badge?: string;
+  customStats?: { label: string; value: string }[];
+}
+
+interface AppContextType {
+  user: UserProfile;
+  activeTab: NavigationTab;
+  setActiveTab: (tab: NavigationTab) => void;
+  activeGame: CasualGameId | null;
+  setActiveGame: (game: CasualGameId | null) => void;
+  activeBattleId: string | null;
+  setActiveBattleId: (id: string | null) => void;
+  activeMultiplayerCode: string | null;
+  setActiveMultiplayerCode: (code: string | null) => void;
+  posts: CommunityPost[];
+  addPost: (post: Omit<CommunityPost, 'id' | 'likesCount' | 'likedBy' | 'comments' | 'createdAt'>) => void;
+  likePost: (postId: string) => void;
+  addComment: (postId: string, text: string) => void;
+  upgradeGuestToAccount: (username: string, displayName: string) => void;
+  updateUserProfile: (partial: Partial<UserProfile>) => void;
+  recordCasualGameResult: (gameId: CasualGameId, score: number, meta?: any) => void;
+  recordCodingBattleResult: (
+    result: 'won' | 'lost' | 'draw',
+    opponentName: string,
+    opponentRating: number,
+    problemTitle: string,
+    testsPassed: string,
+    timeSpentSec: number
+  ) => { newRating: number; ratingDelta: number };
+  recordProblemSolved: (problemId: string, topicId?: string) => void;
+  isSoundMuted: boolean;
+  toggleSound: () => void;
+  shareCardData: ShareCardData | null;
+  openShareModal: (data: ShareCardData) => void;
+  closeShareModal: () => void;
+  completedDailyChallenge: boolean;
+}
+
+const AppContext = createContext<AppContextType | undefined>(undefined);
+
+export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // 1. User state
+  const [user, setUser] = useState<UserProfile>(() => {
+    try {
+      const saved = localStorage.getItem('devarena_user_profile');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.warn('Error reading saved user', e);
+    }
+    return createDefaultGuest();
+  });
+
+  // 2. Navigation & active state
+  const [activeTab, setActiveTabState] = useState<NavigationTab>('home');
+  const [activeGame, setActiveGame] = useState<CasualGameId | null>(null);
+  const [activeBattleId, setActiveBattleId] = useState<string | null>(null);
+  const [activeMultiplayerCode, setActiveMultiplayerCode] = useState<string | null>(null);
+  const [completedDailyChallenge, setCompletedDailyChallenge] = useState<boolean>(() => {
+    return localStorage.getItem(`devarena_daily_${new Date().toDateString()}`) === 'true';
+  });
+
+  // 3. Sound
+  const [isSoundMuted, setIsSoundMuted] = useState<boolean>(sound.getMuted());
+
+  // 4. Community posts
+  const [posts, setPosts] = useState<CommunityPost[]>(() => {
+    try {
+      const saved = localStorage.getItem('devarena_community_posts');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      // ignore
+    }
+    return INITIAL_COMMUNITY_POSTS;
+  });
+
+  // 5. Share modal
+  const [shareCardData, setShareCardData] = useState<ShareCardData | null>(null);
+
+  // Check URL params for direct room links (e.g. ?battle=XYZ or ?room=ABC or ?tab=XYZ)
+  useEffect(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const battleParam = urlParams.get('battle');
+      const roomParam = urlParams.get('room');
+      const tabParam = urlParams.get('tab') as NavigationTab;
+      const gameParam = urlParams.get('game') as CasualGameId;
+
+      if (battleParam) {
+        setActiveBattleId(battleParam);
+        setActiveTabState('arena');
+      } else if (roomParam) {
+        setActiveMultiplayerCode(roomParam);
+        setActiveGame('multiplayer-math');
+        setActiveTabState('play');
+      } else if (gameParam) {
+        setActiveGame(gameParam);
+        setActiveTabState('play');
+      } else if (tabParam) {
+        setActiveTabState(tabParam);
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
+  // Persist user changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('devarena_user_profile', JSON.stringify(user));
+    } catch (e) {
+      console.warn('Could not save user profile', e);
+    }
+  }, [user]);
+
+  // Persist posts
+  useEffect(() => {
+    try {
+      localStorage.setItem('devarena_community_posts', JSON.stringify(posts));
+    } catch (e) {
+      // ignore
+    }
+  }, [posts]);
+
+  const setActiveTab = (tab: NavigationTab) => {
+    sound.playClick();
+    setActiveTabState(tab);
+    // If switching tabs away from game/battle, reset if appropriate
+    if (tab !== 'play') setActiveGame(null);
+    if (tab !== 'arena') setActiveBattleId(null);
+  };
+
+  const toggleSound = () => {
+    const muted = sound.toggleMute();
+    setIsSoundMuted(muted);
+  };
+
+  const openShareModal = (data: ShareCardData) => {
+    sound.playClick();
+    setShareCardData(data);
+  };
+
+  const closeShareModal = () => {
+    setShareCardData(null);
+  };
+
+  const upgradeGuestToAccount = (username: string, displayName: string) => {
+    sound.playVictory();
+    setUser(prev => ({
+      ...prev,
+      username: username.trim().toLowerCase().replace(/\s+/g, '_'),
+      displayName: displayName.trim(),
+      isGuest: false,
+      achievements: Array.from(new Set([...prev.achievements, 'challenger']))
+    }));
+  };
+
+  const updateUserProfile = (partial: Partial<UserProfile>) => {
+    setUser(prev => ({ ...prev, ...partial }));
+  };
+
+  const recordCasualGameResult = (gameId: CasualGameId, score: number, meta?: any) => {
+    setUser(prev => {
+      const newAchievements = [...prev.achievements];
+      let newCasualRating = prev.casualRating + Math.max(5, Math.floor(score / 50));
+
+      if (gameId === 'reaction-challenge' && score < 220) {
+        if (!newAchievements.includes('reaction_pro')) newAchievements.push('reaction_pro');
+      }
+      if (gameId === 'word-puzzle' && meta?.won) {
+        if (!newAchievements.includes('puzzle_master')) newAchievements.push('puzzle_master');
+        setCompletedDailyChallenge(true);
+        localStorage.setItem(`devarena_daily_${new Date().toDateString()}`, 'true');
+      }
+      if (gameId === 'quick-math' && score >= 12) {
+        if (!newAchievements.includes('math_wizard')) newAchievements.push('math_wizard');
+      }
+
+      return {
+        ...prev,
+        casualRating: newCasualRating,
+        achievements: newAchievements
+      };
+    });
+  };
+
+  const recordCodingBattleResult = (
+    result: 'won' | 'lost' | 'draw',
+    opponentName: string,
+    opponentRating: number,
+    problemTitle: string,
+    testsPassed: string,
+    timeSpentSec: number
+  ) => {
+    let ratingDelta = 0;
+    if (result === 'won') {
+      ratingDelta = Math.max(16, Math.min(36, 25 + Math.round((opponentRating - user.rating) * 0.1)));
+    } else if (result === 'lost') {
+      ratingDelta = -Math.max(10, Math.min(28, 16 - Math.round((opponentRating - user.rating) * 0.05)));
+    } else {
+      ratingDelta = 4;
+    }
+
+    const newRating = Math.max(800, user.rating + ratingDelta);
+
+    const record: BattleRecord = {
+      id: `battle-${Date.now()}`,
+      opponentName,
+      opponentAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+      opponentRating,
+      problemTitle,
+      result,
+      ratingChange: ratingDelta,
+      timeSpentSec,
+      testsPassed,
+      timestamp: 'Just now'
+    };
+
+    setUser(prev => {
+      const newAchievements = [...prev.achievements];
+      if (!newAchievements.includes('first_battle')) newAchievements.push('first_battle');
+      if (result === 'won' && !newAchievements.includes('first_victory')) newAchievements.push('first_victory');
+      if (result === 'won' && timeSpentSec < 180 && !newAchievements.includes('speed_demon')) newAchievements.push('speed_demon');
+
+      return {
+        ...prev,
+        rating: newRating,
+        battlesTotal: prev.battlesTotal + 1,
+        battlesWon: result === 'won' ? prev.battlesWon + 1 : prev.battlesWon,
+        battlesLost: result === 'lost' ? prev.battlesLost + 1 : prev.battlesLost,
+        achievements: newAchievements,
+        recentBattles: [record, ...prev.recentBattles.slice(0, 9)]
+      };
+    });
+
+    return { newRating, ratingDelta };
+  };
+
+  const recordProblemSolved = (problemId: string, topicId?: string) => {
+    setUser(prev => {
+      const alreadySolved = prev.problemsSolved.includes(problemId);
+      const newSolved = alreadySolved ? prev.problemsSolved : [...prev.problemsSolved, problemId];
+      
+      const newTopicProgress = { ...prev.topicProgress };
+      if (topicId) {
+        newTopicProgress[topicId] = Math.min(100, (newTopicProgress[topicId] || 0) + 35);
+      }
+
+      return {
+        ...prev,
+        problemsSolved: newSolved,
+        topicProgress: newTopicProgress
+      };
+    });
+  };
+
+  const addPost = (newPostData: Omit<CommunityPost, 'id' | 'likesCount' | 'likedBy' | 'comments' | 'createdAt'>) => {
+    const newPost: CommunityPost = {
+      ...newPostData,
+      id: `post-${Date.now()}`,
+      likesCount: 0,
+      likedBy: [],
+      comments: [],
+      createdAt: 'Just now'
+    };
+    setPosts(prev => [newPost, ...prev]);
+  };
+
+  const likePost = (postId: string) => {
+    sound.playClick();
+    setPosts(prev => prev.map(p => {
+      if (p.id !== postId) return p;
+      const alreadyLiked = p.likedBy.includes(user.id);
+      return {
+        ...p,
+        likesCount: alreadyLiked ? p.likesCount - 1 : p.likesCount + 1,
+        likedBy: alreadyLiked ? p.likedBy.filter(id => id !== user.id) : [...p.likedBy, user.id]
+      };
+    }));
+  };
+
+  const addComment = (postId: string, text: string) => {
+    if (!text.trim()) return;
+    sound.playClick();
+    const newComment = {
+      id: `c-${Date.now()}`,
+      author: {
+        username: user.username,
+        avatar: user.avatar
+      },
+      text: text.trim(),
+      timestamp: 'Just now'
+    };
+
+    setPosts(prev => prev.map(p => {
+      if (p.id !== postId) return p;
+      return {
+        ...p,
+        comments: [...p.comments, newComment]
+      };
+    }));
+  };
+
+  return (
+    <AppContext.Provider
+      value={{
+        user,
+        activeTab,
+        setActiveTab,
+        activeGame,
+        setActiveGame,
+        activeBattleId,
+        setActiveBattleId,
+        activeMultiplayerCode,
+        setActiveMultiplayerCode,
+        posts,
+        addPost,
+        likePost,
+        addComment,
+        upgradeGuestToAccount,
+        updateUserProfile,
+        recordCasualGameResult,
+        recordCodingBattleResult,
+        recordProblemSolved,
+        isSoundMuted,
+        toggleSound,
+        shareCardData,
+        openShareModal,
+        closeShareModal,
+        completedDailyChallenge
+      }}
+    >
+      {children}
+    </AppContext.Provider>
+  );
+};
+
+export const useApp = () => {
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error('useApp must be used within an AppProvider');
+  }
+  return context;
+};
+
