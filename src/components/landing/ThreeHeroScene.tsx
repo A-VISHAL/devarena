@@ -26,74 +26,111 @@ export const ThreeHeroScene: React.FC = () => {
     renderer.toneMappingExposure = 1.2;
     container.appendChild(renderer.domElement);
 
-    // 2. Ambient & Interactive Dynamic Lights
-    const ambientLight = new THREE.AmbientLight(0x1a2022, 2.0);
+    // 2. Lights
+    const ambientLight = new THREE.AmbientLight(0x22282a, 2.2);
     scene.add(ambientLight);
 
-    const amberLight = new THREE.PointLight(0xe6a746, 10, 60);
-    amberLight.position.set(8, 6, 10);
+    const amberLight = new THREE.PointLight(0xe6a746, 14, 60);
+    amberLight.position.set(9, 6, 8);
     scene.add(amberLight);
 
-    const tealLight = new THREE.PointLight(0x83b6a3, 8, 60);
-    tealLight.position.set(-8, -6, 8);
+    const tealLight = new THREE.PointLight(0x83b6a3, 10, 60);
+    tealLight.position.set(5, -6, 6);
     scene.add(tealLight);
 
-    // 3. Ambient Atmospheric 3D Group (Positioned to frame the viewport without occluding UI)
-    const backgroundGroup = new THREE.Group();
-    scene.add(backgroundGroup);
+    // 3. Right-Aligned 3D Cluster
+    // Positioned strictly in the right half of the viewport (x = 5.8)
+    // All child meshes stay within [x - 2.8, x + 4.8], meaning world X is strictly in [3.0, 10.6].
+    // Left text is at world X <= 0, guaranteeing zero overlap or collision.
+    const right3DGroup = new THREE.Group();
+    right3DGroup.position.set(5.8, 0, -3.5);
+    scene.add(right3DGroup);
 
-    // Wireframe Icosahedron (Top-Right Atmospheric Accent)
-    const icosaGeo = new THREE.IcosahedronGeometry(2.0, 1);
+    // 3D Bevelled Puzzle Cubes with Glowing Wireframe Edges
+    const cubeGeo = new THREE.BoxGeometry(1.35, 1.35, 1.35);
+    const cubeEdges = new THREE.EdgesGeometry(cubeGeo);
+
+    const cubeMatAmber = new THREE.MeshStandardMaterial({
+      color: 0x1d2224,
+      metalness: 0.85,
+      roughness: 0.2,
+      emissive: 0xe6a746,
+      emissiveIntensity: 0.32
+    });
+
+    const cubeMatTeal = new THREE.MeshStandardMaterial({
+      color: 0x171f21,
+      metalness: 0.8,
+      roughness: 0.25,
+      emissive: 0x83b6a3,
+      emissiveIntensity: 0.35
+    });
+
+    const wireMatAmber = new THREE.LineBasicMaterial({ color: 0xffbd62, transparent: true, opacity: 0.9 });
+    const wireMatTeal = new THREE.LineBasicMaterial({ color: 0x83b6a3, transparent: true, opacity: 0.85 });
+
+    // Cubes clustered in 3D around the right visual nexus card
+    // local coordinates: x between -2.6 and +4.2
+    const cubePositions = [
+      { x: -2.5, y: 1.8, z: 0.8, mat: cubeMatAmber, wire: wireMatAmber },
+      { x: 3.4, y: -2.2, z: 0.6, mat: cubeMatTeal, wire: wireMatTeal },
+      { x: -2.2, y: -1.9, z: -0.4, mat: cubeMatTeal, wire: wireMatTeal },
+      { x: 3.6, y: 1.9, z: -0.8, mat: cubeMatAmber, wire: wireMatAmber },
+      { x: 0.6, y: 3.4, z: -1.2, mat: cubeMatAmber, wire: wireMatAmber },
+      { x: -1.2, y: 2.8, z: -0.6, mat: cubeMatTeal, wire: wireMatTeal }
+    ];
+
+    const cubes: THREE.Mesh[] = [];
+    cubePositions.forEach((cp) => {
+      const mesh = new THREE.Mesh(cubeGeo, cp.mat);
+      mesh.position.set(cp.x, cp.y, cp.z);
+      const wireframe = new THREE.LineSegments(cubeEdges, cp.wire);
+      mesh.add(wireframe);
+      right3DGroup.add(mesh);
+      cubes.push(mesh);
+    });
+
+    // 3D Geometric Polyhedra (Framing outer right perimeter of the 3D cluster)
+    const icosaGeo = new THREE.IcosahedronGeometry(1.2, 0);
     const icosaMat = new THREE.MeshStandardMaterial({
       color: 0x141719,
       emissive: 0xe6a746,
-      emissiveIntensity: 0.35,
+      emissiveIntensity: 0.5,
       wireframe: true,
       transparent: true,
-      opacity: 0.7
+      opacity: 0.75
     });
     const icosaMesh = new THREE.Mesh(icosaGeo, icosaMat);
-    icosaMesh.position.set(10.5, 4.5, -4);
-    backgroundGroup.add(icosaMesh);
+    icosaMesh.position.set(4.2, 2.6, -1);
+    right3DGroup.add(icosaMesh);
 
-    // Wireframe Dodecahedron (Bottom-Left Atmospheric Accent)
-    const dodecaGeo = new THREE.DodecahedronGeometry(1.8, 0);
+    const dodecaGeo = new THREE.DodecahedronGeometry(1.1, 0);
     const dodecaMat = new THREE.MeshStandardMaterial({
       color: 0x141719,
       emissive: 0x83b6a3,
-      emissiveIntensity: 0.4,
+      emissiveIntensity: 0.55,
       wireframe: true,
       transparent: true,
-      opacity: 0.65
+      opacity: 0.75
     });
     const dodecaMesh = new THREE.Mesh(dodecaGeo, dodecaMat);
-    dodecaMesh.position.set(-11, -4.5, -3);
-    backgroundGroup.add(dodecaMesh);
+    dodecaMesh.position.set(4.0, -2.8, -1);
+    right3DGroup.add(dodecaMesh);
 
-    // Wireframe Octahedron (Top-Left Background Accent)
-    const octaGeo = new THREE.OctahedronGeometry(1.4, 0);
-    const octaMat = new THREE.MeshStandardMaterial({
-      color: 0x141719,
-      emissive: 0xe6a746,
-      emissiveIntensity: 0.3,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.5
-    });
-    const octaMesh = new THREE.Mesh(octaGeo, octaMat);
-    octaMesh.position.set(-9, 5.5, -5);
-    backgroundGroup.add(octaMesh);
+    // Orbital 3D Rings framing the right 3D centerpiece (radius 4.2 stays within x = [1.6, 10.0])
+    const ringGeo = new THREE.TorusGeometry(4.2, 0.025, 16, 100);
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0xe6a746, transparent: true, opacity: 0.35 });
+    const ringMesh1 = new THREE.Mesh(ringGeo, ringMat);
+    ringMesh1.rotation.x = Math.PI / 3;
+    right3DGroup.add(ringMesh1);
 
-    // Delicate Large Orbital Celestial Ring (Frames background gently with low opacity)
-    const ringGeo = new THREE.TorusGeometry(12, 0.025, 16, 120);
-    const ringMat = new THREE.MeshBasicMaterial({ color: 0xe6a746, transparent: true, opacity: 0.15 });
-    const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-    ringMesh.rotation.x = Math.PI / 3.2;
-    ringMesh.position.set(2, 0, -6);
-    backgroundGroup.add(ringMesh);
+    const ringMat2 = new THREE.MeshBasicMaterial({ color: 0x83b6a3, transparent: true, opacity: 0.3 });
+    const ringMesh2 = new THREE.Mesh(ringGeo, ringMat2);
+    ringMesh2.rotation.y = Math.PI / 2.5;
+    right3DGroup.add(ringMesh2);
 
-    // 4. Glowing 3D Particle Starfield
-    const particleCount = 280;
+    // 4. Subtle Distant 3D Starfield across entire viewport (Very small particles, zero text obstruction)
+    const particleCount = 260;
     const particleGeo = new THREE.BufferGeometry();
     const particlePos = new Float32Array(particleCount * 3);
     const particleColors = new Float32Array(particleCount * 3);
@@ -103,9 +140,9 @@ export const ThreeHeroScene: React.FC = () => {
     const colorWhite = new THREE.Color(0xf2f0e9);
 
     for (let i = 0; i < particleCount; i++) {
-      particlePos[i * 3] = (Math.random() - 0.5) * 36;
-      particlePos[i * 3 + 1] = (Math.random() - 0.5) * 26;
-      particlePos[i * 3 + 2] = (Math.random() - 0.5) * 20;
+      particlePos[i * 3] = (Math.random() - 0.5) * 40;
+      particlePos[i * 3 + 1] = (Math.random() - 0.5) * 28;
+      particlePos[i * 3 + 2] = -5 - Math.random() * 20; // Deep in the background
 
       const c = Math.random() > 0.6 ? colorAmber : Math.random() > 0.4 ? colorTeal : colorWhite;
       particleColors[i * 3] = c.r;
@@ -117,10 +154,10 @@ export const ThreeHeroScene: React.FC = () => {
     particleGeo.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
 
     const particleMat = new THREE.PointsMaterial({
-      size: 0.11,
+      size: 0.08,
       vertexColors: true,
       transparent: true,
-      opacity: 0.8
+      opacity: 0.65
     });
 
     const particles = new THREE.Points(particleGeo, particleMat);
@@ -138,12 +175,11 @@ export const ThreeHeroScene: React.FC = () => {
       mouseX = (e.clientX - windowHalfX) / windowHalfX;
       mouseY = (e.clientY - windowHalfY) / windowHalfY;
 
-      targetRotationY = mouseX * 0.25;
-      targetRotationX = mouseY * 0.2;
+      targetRotationY = mouseX * 0.35;
+      targetRotationX = mouseY * 0.25;
 
-      // Move point lights dynamically in 3D
-      amberLight.position.x = 8 + mouseX * 6;
-      amberLight.position.y = 6 - mouseY * 6;
+      amberLight.position.x = 9 + mouseX * 4;
+      amberLight.position.y = 6 - mouseY * 4;
     };
 
     window.addEventListener('mousemove', handleWindowMouseMove);
@@ -157,27 +193,26 @@ export const ThreeHeroScene: React.FC = () => {
       const elapsedTime = clock.getElapsedTime();
 
       if (!prefersReducedMotion) {
-        // Continuous subtle parallax rotation
-        backgroundGroup.rotation.y += (targetRotationY - backgroundGroup.rotation.y) * 0.04;
-        backgroundGroup.rotation.x += (targetRotationX - backgroundGroup.rotation.x) * 0.04;
+        // Continuous subtle rotation of the right 3D group
+        right3DGroup.rotation.y += (targetRotationY - right3DGroup.rotation.y) * 0.05;
+        right3DGroup.rotation.x += (targetRotationX - right3DGroup.rotation.x) * 0.05;
 
-        // Rotate ambient polyhedra
-        icosaMesh.rotation.x = elapsedTime * 0.15;
-        icosaMesh.rotation.y = elapsedTime * 0.2;
-        icosaMesh.position.y = 4.5 + Math.sin(elapsedTime * 1.2) * 0.35;
+        cubes.forEach((cube, i) => {
+          cube.rotation.x = elapsedTime * 0.35 * (i % 2 === 0 ? 1 : -1);
+          cube.rotation.y = elapsedTime * 0.28 * (i % 3 === 0 ? 1 : -1);
+          cube.position.y += Math.sin(elapsedTime * 1.5 + i) * 0.003;
+        });
 
-        dodecaMesh.rotation.x = -elapsedTime * 0.18;
-        dodecaMesh.rotation.y = -elapsedTime * 0.15;
-        dodecaMesh.position.y = -4.5 + Math.cos(elapsedTime * 1.1) * 0.35;
+        icosaMesh.rotation.x = elapsedTime * 0.2;
+        icosaMesh.rotation.y = elapsedTime * 0.25;
 
-        octaMesh.rotation.y = elapsedTime * 0.22;
-        octaMesh.position.y = 5.5 + Math.sin(elapsedTime * 0.9) * 0.25;
+        dodecaMesh.rotation.x = -elapsedTime * 0.22;
+        dodecaMesh.rotation.y = -elapsedTime * 0.18;
 
-        ringMesh.rotation.z = elapsedTime * 0.03;
+        ringMesh1.rotation.z = elapsedTime * 0.04;
+        ringMesh2.rotation.z = -elapsedTime * 0.05;
 
-        // Orbit particles slowly
-        particles.rotation.y = elapsedTime * 0.025;
-        particles.rotation.x = Math.sin(elapsedTime * 0.015) * 0.03;
+        particles.rotation.y = elapsedTime * 0.015;
       }
 
       renderer.render(scene, camera);
@@ -193,9 +228,23 @@ export const ThreeHeroScene: React.FC = () => {
       camera.aspect = newWidth / newHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(newWidth, newHeight);
+
+      // On narrow mobile screens, shift group to center
+      if (newWidth < 1024) {
+        right3DGroup.position.x = 0;
+        right3DGroup.position.y = -3;
+      } else {
+        right3DGroup.position.x = 5.8;
+        right3DGroup.position.y = 0;
+      }
     };
 
     window.addEventListener('resize', handleResize);
+    // Initial check
+    if (width < 1024) {
+      right3DGroup.position.x = 0;
+      right3DGroup.position.y = -3;
+    }
 
     // 8. Cleanup
     return () => {
@@ -203,14 +252,19 @@ export const ThreeHeroScene: React.FC = () => {
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameId);
 
+      cubeGeo.dispose();
+      cubeEdges.dispose();
+      cubeMatAmber.dispose();
+      cubeMatTeal.dispose();
+      wireMatAmber.dispose();
+      wireMatTeal.dispose();
       icosaGeo.dispose();
       icosaMat.dispose();
       dodecaGeo.dispose();
       dodecaMat.dispose();
-      octaGeo.dispose();
-      octaMat.dispose();
       ringGeo.dispose();
       ringMat.dispose();
+      ringMat2.dispose();
       particleGeo.dispose();
       particleMat.dispose();
       renderer.dispose();
