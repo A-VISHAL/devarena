@@ -9,6 +9,8 @@ import {
   GameResultData,
   GameHistoryEntry
 } from '../types';
+import { CollectibleCard } from '../types/cards';
+import { BASE_COLLECTIBLE_CARDS } from '../data/collectibleCards';
 import { createDefaultGuest, INITIAL_COMMUNITY_POSTS, ACHIEVEMENTS } from '../data/mockData';
 import { sound } from '../utils/sound';
 
@@ -62,6 +64,9 @@ interface AppContextType {
   openShareModal: (data: ShareCardData) => void;
   closeShareModal: () => void;
   completedDailyChallenge: boolean;
+  newlyUnlockedCard: CollectibleCard | null;
+  closeVictoryCardModal: () => void;
+  unlockCard: (cardId: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -152,6 +157,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // 5. Share modal & game result modal
   const [shareCardData, setShareCardData] = useState<ShareCardData | null>(null);
   const [gameResultData, setGameResultData] = useState<GameResultData | null>(null);
+  const [newlyUnlockedCard, setNewlyUnlockedCard] = useState<CollectibleCard | null>(null);
+
+  const closeVictoryCardModal = () => {
+    setNewlyUnlockedCard(null);
+  };
+
+  const unlockCard = (cardId: string) => {
+    const cardDef = BASE_COLLECTIBLE_CARDS.find(c => c.id === cardId);
+    if (!cardDef) return;
+
+    setUser(prev => {
+      const currentCards = prev.unlockedCards || ['speed_thinker', 'daily_challenger', 'first_blood', 'perfect_submission'];
+      if (currentCards.includes(cardId)) return prev;
+
+      setNewlyUnlockedCard({ ...cardDef, unlocked: true, unlockedAt: 'Just now' });
+      return {
+        ...prev,
+        unlockedCards: [...currentCards, cardId]
+      };
+    });
+  };
 
   // Check URL params for direct room links and path routes
   useEffect(() => {
@@ -166,7 +192,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (pathname.startsWith('/app')) {
         setCurrentView('app');
         const parts = pathname.split('/').filter(Boolean);
-        if (parts[1] && ['home', 'play', 'arena', 'learn', 'community', 'leaderboard', 'profile'].includes(parts[1])) {
+        if (parts[1] && ['home', 'play', 'arena', 'cards', 'learn', 'community', 'leaderboard', 'profile'].includes(parts[1])) {
           setActiveTabState(parts[1] as NavigationTab);
         }
       }
@@ -209,7 +235,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ) {
           setCurrentView('app');
           const parts = pathname.split('/').filter(Boolean);
-          if (parts[1] && ['home', 'play', 'arena', 'learn', 'community', 'leaderboard', 'profile'].includes(parts[1])) {
+          if (parts[1] && ['home', 'play', 'arena', 'cards', 'learn', 'community', 'leaderboard', 'profile'].includes(parts[1])) {
             setActiveTabState(parts[1] as NavigationTab);
           }
         } else {
@@ -328,27 +354,65 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const history = [historyEntry, ...(prev.gameHistory || [])].slice(0, 20);
 
       const newAchievements = [...prev.achievements];
+      const newUnlockedCards = [...(prev.unlockedCards || ['speed_thinker', 'daily_challenger', 'first_blood', 'perfect_submission'])];
+      let newlyFoundCardId: string | null = null;
       let newCasualRating = prev.casualRating + Math.max(5, Math.floor(result.score / 50));
 
       if (result.gameId === 'zip' && result.won) {
         if (!newAchievements.includes('puzzle_master')) newAchievements.push('puzzle_master');
+        if (!newUnlockedCards.includes('logic_architect')) {
+          newUnlockedCards.push('logic_architect');
+          newlyFoundCardId = 'logic_architect';
+        }
       }
       if (result.gameId === 'word-puzzle' && result.won) {
         if (!newAchievements.includes('puzzle_master')) newAchievements.push('puzzle_master');
+        if (!newUnlockedCards.includes('daily_challenger')) {
+          newUnlockedCards.push('daily_challenger');
+          newlyFoundCardId = 'daily_challenger';
+        }
         setCompletedDailyChallenge(true);
         localStorage.setItem(`devarena_daily_${new Date().toDateString()}`, 'true');
       }
-      if (result.gameId === 'reaction-challenge' && result.score < 220) {
+      if (result.gameId === 'reaction-challenge' && result.score < 200) {
         if (!newAchievements.includes('reaction_pro')) newAchievements.push('reaction_pro');
+        if (!newUnlockedCards.includes('speed_thinker')) {
+          newUnlockedCards.push('speed_thinker');
+          newlyFoundCardId = 'speed_thinker';
+        }
       }
-      if (result.gameId === 'quick-math' && result.score >= 12) {
+      if (result.gameId === 'quick-math' && result.score >= 14) {
         if (!newAchievements.includes('math_wizard')) newAchievements.push('math_wizard');
+        if (!newUnlockedCards.includes('mental_calculator')) {
+          newUnlockedCards.push('mental_calculator');
+          newlyFoundCardId = 'mental_calculator';
+        }
+      }
+      if (result.gameId === 'memory-grid' && result.score >= 450) {
+        if (!newUnlockedCards.includes('mind_master')) {
+          newUnlockedCards.push('mind_master');
+          newlyFoundCardId = 'mind_master';
+        }
+      }
+      if (prev.streak + 1 >= 5) {
+        if (!newUnlockedCards.includes('puzzle_streak')) {
+          newUnlockedCards.push('puzzle_streak');
+          newlyFoundCardId = 'puzzle_streak';
+        }
+      }
+
+      if (newlyFoundCardId) {
+        const found = BASE_COLLECTIBLE_CARDS.find(c => c.id === newlyFoundCardId);
+        if (found) {
+          setNewlyUnlockedCard({ ...found, unlocked: true, unlockedAt: 'Just now' });
+        }
       }
 
       return {
         ...prev,
         casualRating: newCasualRating,
         achievements: newAchievements,
+        unlockedCards: newUnlockedCards,
         recentlyPlayedGames: updatedRecent,
         personalBests: pBests,
         gameHistory: history
@@ -418,9 +482,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setUser(prev => {
       const newAchievements = [...prev.achievements];
+      const newUnlockedCards = [...(prev.unlockedCards || ['speed_thinker', 'daily_challenger', 'first_blood', 'perfect_submission'])];
+      let newlyFoundCardId: string | null = null;
+
       if (!newAchievements.includes('first_battle')) newAchievements.push('first_battle');
-      if (result === 'won' && !newAchievements.includes('first_victory')) newAchievements.push('first_victory');
+      if (result === 'won') {
+        if (!newAchievements.includes('first_victory')) newAchievements.push('first_victory');
+        if (!newUnlockedCards.includes('first_blood')) {
+          newUnlockedCards.push('first_blood');
+          newlyFoundCardId = 'first_blood';
+        }
+        if (testsPassed.includes('5/5') || testsPassed.includes('6/6')) {
+          if (!newUnlockedCards.includes('perfect_submission')) {
+            newUnlockedCards.push('perfect_submission');
+            newlyFoundCardId = 'perfect_submission';
+          }
+        }
+        if ((prev.battlesWon + 1) >= 3 && prev.battlesLost === 0) {
+          if (!newUnlockedCards.includes('unstoppable')) {
+            newUnlockedCards.push('unstoppable');
+            newlyFoundCardId = 'unstoppable';
+          }
+        }
+        if (newRating >= 1250) {
+          if (!newUnlockedCards.includes('arena_champion')) {
+            newUnlockedCards.push('arena_champion');
+            newlyFoundCardId = 'arena_champion';
+          }
+        }
+      }
       if (result === 'won' && timeSpentSec < 180 && !newAchievements.includes('speed_demon')) newAchievements.push('speed_demon');
+
+      if (newlyFoundCardId) {
+        const found = BASE_COLLECTIBLE_CARDS.find(c => c.id === newlyFoundCardId);
+        if (found) {
+          setNewlyUnlockedCard({ ...found, unlocked: true, unlockedAt: 'Just now' });
+        }
+      }
 
       return {
         ...prev,
@@ -429,6 +527,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         battlesWon: result === 'won' ? prev.battlesWon + 1 : prev.battlesWon,
         battlesLost: result === 'lost' ? prev.battlesLost + 1 : prev.battlesLost,
         achievements: newAchievements,
+        unlockedCards: newUnlockedCards,
         recentBattles: [record, ...prev.recentBattles.slice(0, 9)]
       };
     });
@@ -535,7 +634,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         shareCardData,
         openShareModal,
         closeShareModal,
-        completedDailyChallenge
+        completedDailyChallenge,
+        newlyUnlockedCard,
+        closeVictoryCardModal,
+        unlockCard
       }}
     >
       {children}

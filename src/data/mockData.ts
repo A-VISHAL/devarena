@@ -201,6 +201,8 @@ export function createDefaultGuest(): UserProfile {
     battlesLost: 1,
     problemsSolved: ['two-sum', 'valid-parentheses'],
     achievements: ['first_battle', 'reaction_pro'],
+    unlockedCards: ['speed_thinker', 'daily_challenger', 'first_blood', 'perfect_submission'],
+    pinnedCardIds: ['first_blood', 'perfect_submission'],
     topicProgress: {
       'arrays': 65,
       'stacks-queues': 50,

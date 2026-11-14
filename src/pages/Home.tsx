@@ -335,6 +335,44 @@ export const Home: React.FC = () => {
         </div>
       </div>
 
+      {/* THEMED ACHIEVEMENT & COLLECTIBLE CARDS SHOWCASE BANNER */}
+      <div 
+        onClick={() => {
+          sound.playClick();
+          setActiveTab('cards');
+        }}
+        className="rounded-2xl p-5 sm:p-6 bg-gradient-to-r from-[#182326] via-[#151E20] to-[#12181A] border border-[#2B3B3F] hover:border-arena-amber/50 cursor-pointer transition-all shadow-card group"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-arena-amber/15 border border-arena-amber/40 flex items-center justify-center text-arena-amber shrink-0 group-hover:scale-105 transition-transform">
+              <Sparkles className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] uppercase font-mono font-bold px-2 py-0.5 rounded bg-arena-amber/10 border border-arena-amber/30 text-arena-amber">
+                  NEW FEATURE
+                </span>
+                <span className="text-xs font-mono text-arena-teal font-semibold">
+                  {user.unlockedCards?.length || 4} Cards Unlocked
+                </span>
+              </div>
+              <h3 className="text-base sm:text-lg font-bold text-arena-textPrimary group-hover:text-arena-amber transition-colors">
+                Themed Achievement & Collectible Card System
+              </h3>
+              <p className="text-xs text-arena-textSecondary max-w-xl">
+                Every victory generates a cryptographic achievement card. Inspect 3D holographic cards, verify test metrics, and export high-res cards to LinkedIn.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs font-bold text-arena-amber shrink-0">
+            <span>Explore Collection</span>
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </div>
+        </div>
+      </div>
+
       {/* DEVELOPER ARENA & COMMUNITY ACTIVITY — Full-width balanced 2-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Swords, 
   Flame, 
@@ -8,19 +8,38 @@ import {
   Edit3, 
   Layers, 
   BookOpen,
-  Code2
+  Code2,
+  Sparkles
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { ACHIEVEMENTS } from '../data/mockData';
+import { getUserCards } from '../data/collectibleCards';
+import { CollectibleCardItem } from '../components/cards/CollectibleCardItem';
+import { CardDetailModal } from '../components/cards/CardDetailModal';
+import { CardShareStudioModal } from '../components/cards/CardShareStudioModal';
+import { CollectibleCard } from '../types/cards';
 import { sound } from '../utils/sound';
 
 export const Profile: React.FC = () => {
-  const { user, updateUserProfile, openShareModal } = useApp();
+  const { user, updateUserProfile, openShareModal, setActiveTab } = useApp();
 
   const [isEditing, setIsEditing] = useState(false);
   const [displayName, setDisplayName] = useState(user.displayName);
   const [bio, setBio] = useState(user.bio);
   const [githubUrl, setGithubUrl] = useState(user.githubUrl || 'https://github.com');
+  const [inspectingCard, setInspectingCard] = useState<CollectibleCard | null>(null);
+  const [sharingCard, setSharingCard] = useState<CollectibleCard | null>(null);
+
+  const userCards = useMemo(() => {
+    return getUserCards(user.unlockedCards || ['speed_thinker', 'daily_challenger', 'first_blood', 'perfect_submission']);
+  }, [user.unlockedCards]);
+
+  const pinnedCards = useMemo(() => {
+    const pinnedIds = user.pinnedCardIds || ['first_blood', 'perfect_submission'];
+    const pinned = userCards.filter(c => pinnedIds.includes(c.id));
+    if (pinned.length === 0) return userCards.filter(c => c.unlocked).slice(0, 3);
+    return pinned;
+  }, [userCards, user.pinnedCardIds]);
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -268,6 +287,48 @@ export const Profile: React.FC = () => {
 
       </div>
 
+      {/* SHOWCASED ACHIEVEMENT CARDS */}
+      <div className="arena-card p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-arena-amber" />
+            <h3 className="font-bold text-sm text-arena-textPrimary">
+              Showcase Collectibles
+            </h3>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#182326] border border-[#2B3B3F] text-arena-teal font-semibold">
+              Pinned on Profile
+            </span>
+          </div>
+
+          <button
+            onClick={() => setActiveTab('cards')}
+            className="text-xs font-semibold text-arena-amber hover:underline flex items-center gap-1 group"
+          >
+            <span>View All Cards ({userCards.filter(c => c.unlocked).length}/{userCards.length})</span>
+            <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {pinnedCards.map((card) => (
+            <CollectibleCardItem
+              key={card.id}
+              card={card}
+              compact
+              isPinned
+              onInspect={(c) => {
+                sound.playClick();
+                setInspectingCard(c);
+              }}
+              onShare={(c) => {
+                sound.playClick();
+                setSharingCard(c);
+              }}
+            />
+          ))}
+        </div>
+      </div>
+
       {/* RECENT BATTLES */}
       <div className="arena-card p-5 space-y-3">
         <h3 className="font-bold text-xs text-arena-textPrimary flex items-center gap-2">
@@ -300,6 +361,30 @@ export const Profile: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* 3D Card Detail & Flip Modal */}
+      <CardDetailModal
+        card={inspectingCard}
+        onClose={() => setInspectingCard(null)}
+        isPinned={inspectingCard ? (user.pinnedCardIds || []).includes(inspectingCard.id) : false}
+        onTogglePin={(c) => {
+          const currentPinned = [...(user.pinnedCardIds || ['first_blood', 'perfect_submission'])];
+          const isP = currentPinned.includes(c.id);
+          const nextP = isP ? currentPinned.filter(id => id !== c.id) : [...currentPinned.slice(-2), c.id];
+          updateUserProfile({ pinnedCardIds: nextP });
+        }}
+        onShare={(c) => {
+          setInspectingCard(null);
+          setSharingCard(c);
+        }}
+      />
+
+      {/* Victory Studio Share Modal */}
+      <CardShareStudioModal
+        card={sharingCard}
+        user={user}
+        onClose={() => setSharingCard(null)}
+      />
 
     </div>
   );

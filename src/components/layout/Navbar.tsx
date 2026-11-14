@@ -12,7 +12,8 @@ import {
   Menu,
   X,
   Sparkles,
-  Compass
+  Compass,
+  Layers
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { NavigationTab } from '../../types';
@@ -37,6 +38,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAccountModal }) => {
     { id: 'home', label: 'Home', icon: <Sparkles className="w-3.5 h-3.5" /> },
     { id: 'play', label: 'Play', icon: <Gamepad2 className="w-3.5 h-3.5" /> },
     { id: 'arena', label: 'Code Arena', icon: <Swords className="w-3.5 h-3.5" /> },
+    { id: 'cards', label: 'Cards', icon: <Layers className="w-3.5 h-3.5" /> },
     { id: 'learn', label: 'Learn', icon: <BookOpen className="w-3.5 h-3.5" /> },
     { id: 'community', label: 'Community', icon: <Users className="w-3.5 h-3.5" /> },
     { id: 'leaderboard', label: 'Leaderboard', icon: <Trophy className="w-3.5 h-3.5" /> },

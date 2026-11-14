@@ -1,4 +1,6 @@
-export type NavigationTab = 'home' | 'play' | 'arena' | 'learn' | 'community' | 'leaderboard' | 'profile';
+export type NavigationTab = 'home' | 'play' | 'arena' | 'cards' | 'learn' | 'community' | 'leaderboard' | 'profile';
+
+export * from './cards';
 
 export type AppView = 'landing' | 'app';
 
@@ -82,6 +84,8 @@ export interface UserProfile {
   battlesLost: number;
   problemsSolved: string[]; // Problem IDs
   achievements: string[]; // Achievement IDs
+  unlockedCards?: string[]; // Collectible Card IDs
+  pinnedCardIds?: string[]; // Showcase Card IDs pinned to profile
   topicProgress: Record<string, number>; // topicId -> percent (0-100)
   recentBattles: BattleRecord[];
   gameHistory?: GameHistoryEntry[];
