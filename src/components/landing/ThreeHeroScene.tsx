@@ -117,18 +117,6 @@ export const ThreeHeroScene: React.FC = () => {
     dodecaMesh.position.set(4.0, -2.8, -1);
     right3DGroup.add(dodecaMesh);
 
-    // Orbital 3D Rings framing the right 3D centerpiece (radius 4.2 stays within x = [1.6, 10.0])
-    const ringGeo = new THREE.TorusGeometry(4.2, 0.025, 16, 100);
-    const ringMat = new THREE.MeshBasicMaterial({ color: 0xe6a746, transparent: true, opacity: 0.35 });
-    const ringMesh1 = new THREE.Mesh(ringGeo, ringMat);
-    ringMesh1.rotation.x = Math.PI / 3;
-    right3DGroup.add(ringMesh1);
-
-    const ringMat2 = new THREE.MeshBasicMaterial({ color: 0x83b6a3, transparent: true, opacity: 0.3 });
-    const ringMesh2 = new THREE.Mesh(ringGeo, ringMat2);
-    ringMesh2.rotation.y = Math.PI / 2.5;
-    right3DGroup.add(ringMesh2);
-
     // 4. Subtle Distant 3D Starfield across entire viewport (Very small particles, zero text obstruction)
     const particleCount = 260;
     const particleGeo = new THREE.BufferGeometry();
@@ -209,9 +197,6 @@ export const ThreeHeroScene: React.FC = () => {
         dodecaMesh.rotation.x = -elapsedTime * 0.22;
         dodecaMesh.rotation.y = -elapsedTime * 0.18;
 
-        ringMesh1.rotation.z = elapsedTime * 0.04;
-        ringMesh2.rotation.z = -elapsedTime * 0.05;
-
         particles.rotation.y = elapsedTime * 0.015;
       }
 
@@ -262,9 +247,6 @@ export const ThreeHeroScene: React.FC = () => {
       icosaMat.dispose();
       dodecaGeo.dispose();
       dodecaMat.dispose();
-      ringGeo.dispose();
-      ringMat.dispose();
-      ringMat2.dispose();
       particleGeo.dispose();
       particleMat.dispose();
       renderer.dispose();
