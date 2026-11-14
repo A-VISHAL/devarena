@@ -350,3 +350,4 @@ export async function getSharedResult(id: string, encodedPayload?: string): Prom
     }
   };
 }
+

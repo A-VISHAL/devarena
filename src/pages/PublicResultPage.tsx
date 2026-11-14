@@ -364,3 +364,4 @@ export const PublicResultPage: React.FC = () => {
     </div>
   );
 };
+
