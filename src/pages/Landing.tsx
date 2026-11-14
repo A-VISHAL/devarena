@@ -52,3 +52,4 @@ export const Landing: React.FC = () => {
     </div>
   );
 };
+

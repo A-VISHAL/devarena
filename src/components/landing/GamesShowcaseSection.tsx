@@ -15,6 +15,7 @@ import {
   Flame 
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { useInView } from '../../hooks/useScrollReveal';
 import { CasualGameId } from '../../types';
 import { sound } from '../../utils/sound';
 
@@ -35,6 +36,7 @@ export const GamesShowcaseSection: React.FC = () => {
   const [miniWordGuess, setMiniWordGuess] = useState<string>('ARRAY');
   const [miniMathAnswer, setMiniMathAnswer] = useState<number | null>(null);
   const [reactionClicked, setReactionClicked] = useState<boolean>(false);
+  const { ref, hasAnimated } = useInView({ threshold: 0.1 });
 
   const games: GameItem[] = [
     {
@@ -122,11 +124,11 @@ export const GamesShowcaseSection: React.FC = () => {
   const activeGameObj = games.find(g => g.id === selectedGame) || games[0];
 
   return (
-    <section id="games-showcase" className="py-24 relative bg-[#121517]">
+    <section ref={ref} id="games-showcase" className="py-24 relative bg-[#121517]">
       <div className="w-[94%] max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-arena-border">
+        <div className={`flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-arena-border reveal-init ${hasAnimated ? 'revealed' : ''}`}>
           <div className="space-y-3 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-arena-surface border border-arena-border text-xs font-semibold text-arena-teal">
               <Gamepad2 className="w-3.5 h-3.5 text-arena-teal" />
@@ -157,7 +159,7 @@ export const GamesShowcaseSection: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* Left Column: 8 Game Cards Catalog */}
-          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div className={`lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3.5 reveal-left-init ${hasAnimated ? 'revealed' : ''}`}>
             {games.map((game) => {
               const isSelected = selectedGame === game.id;
               return (
@@ -204,7 +206,7 @@ export const GamesShowcaseSection: React.FC = () => {
           </div>
 
           {/* Right Column: Live Interactive Game Simulator Box */}
-          <div className="lg:col-span-5 sticky top-24 rounded-2xl bg-arena-surface border border-arena-border p-6 shadow-2xl space-y-6">
+          <div className={`lg:col-span-5 sticky top-24 rounded-2xl bg-arena-surface border border-arena-border p-6 shadow-2xl space-y-6 reveal-right-init ${hasAnimated ? 'revealed' : ''}`}>
             
             {/* Header info for selected game */}
             <div className="flex items-center justify-between pb-4 border-b border-arena-border">
@@ -385,3 +387,4 @@ export const GamesShowcaseSection: React.FC = () => {
     </section>
   );
 };
+

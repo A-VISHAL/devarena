@@ -14,21 +14,23 @@ import {
   Sparkles 
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { useInView } from '../../hooks/useScrollReveal';
 import { sound } from '../../utils/sound';
 
 export const TwoWorldsSection: React.FC = () => {
   const { navigateToApp } = useApp();
   const [activeSide, setActiveSide] = useState<'both' | 'casual' | 'developer'>('both');
+  const { ref, hasAnimated } = useInView({ threshold: 0.15 });
 
   return (
-    <section id="two-worlds" className="py-24 relative overflow-hidden">
+    <section ref={ref} id="two-worlds" className="py-24 relative overflow-hidden">
       {/* Background Subtle Gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#141719] via-[#101314] to-[#141719] pointer-events-none -z-10" />
 
       <div className="w-[94%] max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto space-y-4">
+        <div className={`text-center max-w-3xl mx-auto space-y-4 reveal-init ${hasAnimated ? 'revealed' : ''}`}>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-arena-surface border border-arena-border text-xs font-semibold text-arena-teal">
             <Sparkles className="w-3.5 h-3.5 text-arena-teal" />
             <span>TWO WORLDS. ONE SHARED ARENA.</span>
@@ -89,7 +91,7 @@ export const TwoWorldsSection: React.FC = () => {
           <div 
             onMouseEnter={() => setActiveSide('casual')}
             onMouseLeave={() => setActiveSide('both')}
-            className={`lg:col-span-6 rounded-2xl p-6 sm:p-8 bg-gradient-to-br from-[#181F21] to-[#141819] border transition-all duration-300 flex flex-col justify-between ${
+            className={`lg:col-span-6 rounded-2xl p-6 sm:p-8 bg-gradient-to-br from-[#181F21] to-[#141819] border transition-all duration-300 flex flex-col justify-between reveal-left-init ${hasAnimated ? 'revealed' : ''} ${
               activeSide === 'casual' || activeSide === 'both'
                 ? 'border-arena-teal/40 shadow-[0_10px_35px_-10px_rgba(131,182,163,0.15)]'
                 : 'border-arena-border opacity-70'
@@ -178,7 +180,7 @@ export const TwoWorldsSection: React.FC = () => {
           <div 
             onMouseEnter={() => setActiveSide('developer')}
             onMouseLeave={() => setActiveSide('both')}
-            className={`lg:col-span-6 rounded-2xl p-6 sm:p-8 bg-gradient-to-br from-[#201D1A] to-[#181615] border transition-all duration-300 flex flex-col justify-between ${
+            className={`lg:col-span-6 rounded-2xl p-6 sm:p-8 bg-gradient-to-br from-[#201D1A] to-[#181615] border transition-all duration-300 flex flex-col justify-between reveal-right-init ${hasAnimated ? 'revealed' : ''} ${
               activeSide === 'developer' || activeSide === 'both'
                 ? 'border-arena-amber/40 shadow-[0_10px_35px_-10px_rgba(230,167,70,0.15)]'
                 : 'border-arena-border opacity-70'
@@ -269,3 +271,4 @@ export const TwoWorldsSection: React.FC = () => {
     </section>
   );
 };
+

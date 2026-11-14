@@ -8,17 +8,19 @@ import {
   Layers 
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { useInView } from '../../hooks/useScrollReveal';
 import { sound } from '../../utils/sound';
 
 export const FinalCtaSection: React.FC = () => {
   const { navigateToApp } = useApp();
+  const { ref, hasAnimated } = useInView({ threshold: 0.2 });
 
   return (
-    <section className="py-24 relative overflow-hidden bg-gradient-to-b from-[#141719] to-[#0E1012]">
+    <section ref={ref} className="py-24 relative overflow-hidden bg-gradient-to-b from-[#141719] to-[#0E1012]">
       {/* Background radial glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-arena-amber/10 rounded-full filter blur-[140px] pointer-events-none -z-10" />
 
-      <div className="w-[94%] max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
+      <div className={`w-[94%] max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8 reveal-scale-init ${hasAnimated ? 'revealed' : ''}`}>
         
         {/* Dimensional Center Badge */}
         <div className="w-16 h-16 rounded-2xl bg-arena-surface border border-arena-amber/50 shadow-[0_0_30px_rgba(230,167,70,0.3)] flex items-center justify-center mx-auto transform hover:rotate-6 transition-transform">
@@ -74,3 +76,4 @@ export const FinalCtaSection: React.FC = () => {
     </section>
   );
 };
+

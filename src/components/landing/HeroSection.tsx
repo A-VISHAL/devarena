@@ -13,22 +13,28 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Hero3DVisual } from './Hero3DVisual';
+import { ThreeHeroScene } from './ThreeHeroScene';
+import { useInView } from '../../hooks/useScrollReveal';
 import { sound } from '../../utils/sound';
 
 export const HeroSection: React.FC = () => {
   const { navigateToApp } = useApp();
+  const { ref, hasAnimated } = useInView({ threshold: 0.1 });
 
   return (
-    <section className="relative min-h-[90vh] flex items-center justify-center pt-8 pb-16 overflow-hidden">
+    <section ref={ref} className="relative min-h-[92vh] flex items-center justify-center pt-8 pb-16 overflow-hidden">
+      {/* Real Three.js WebGL 3D Interactive Environment */}
+      <ThreeHeroScene />
+
       {/* Background radial gradient glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] rounded-full bg-arena-amber/5 filter blur-[140px] pointer-events-none -z-10" />
       <div className="absolute top-1/3 right-10 w-[450px] h-[400px] rounded-full bg-arena-teal/5 filter blur-[120px] pointer-events-none -z-10" />
 
-      <div className="w-[94%] max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-[94%] max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
           
-          {/* Left Column: Headline, Narrative & Primary Actions */}
-          <div className="lg:col-span-6 space-y-6 text-left">
+          {/* Left Column: Headline, Narrative & Primary Actions with Scroll Entrance */}
+          <div className={`lg:col-span-6 space-y-6 text-left reveal-left-init ${hasAnimated ? 'revealed' : ''}`}>
             
             {/* Eyebrow Badge */}
             <div className="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-arena-surface border border-arena-border text-xs font-semibold text-arena-textSecondary shadow-sm">
@@ -107,7 +113,7 @@ export const HeroSection: React.FC = () => {
           </div>
 
           {/* Right Column: 3D Centerpiece Visual */}
-          <div className="lg:col-span-6 flex items-center justify-center lg:justify-end">
+          <div className={`lg:col-span-6 flex items-center justify-center lg:justify-end reveal-right-init ${hasAnimated ? 'revealed' : ''}`}>
             <Hero3DVisual />
           </div>
 
@@ -116,3 +122,4 @@ export const HeroSection: React.FC = () => {
     </section>
   );
 };
+

@@ -12,12 +12,14 @@ import {
   Trophy 
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { useInView } from '../../hooks/useScrollReveal';
 import { sound } from '../../utils/sound';
 
 export const SocialLoopSection: React.FC = () => {
   const { navigateToApp } = useApp();
   const [copiedLink, setCopiedLink] = useState(false);
   const [activeStep, setActiveStep] = useState<number>(1);
+  const { ref, hasAnimated } = useInView({ threshold: 0.15 });
 
   const sampleRoomCode = 'DEV-8492';
 
@@ -29,14 +31,14 @@ export const SocialLoopSection: React.FC = () => {
   };
 
   return (
-    <section id="social-loop" className="py-24 relative bg-[#101314]">
+    <section ref={ref} id="social-loop" className="py-24 relative bg-[#101314]">
       {/* Background ambient lighting */}
       <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-arena-teal/5 rounded-full filter blur-[140px] pointer-events-none -z-10" />
 
       <div className="w-[94%] max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto space-y-4">
+        <div className={`text-center max-w-3xl mx-auto space-y-4 reveal-init ${hasAnimated ? 'revealed' : ''}`}>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-arena-surface border border-arena-border text-xs font-semibold text-arena-teal">
             <Users className="w-3.5 h-3.5 text-arena-teal" />
             <span>THE SOCIAL VIRAL LOOP</span>
@@ -53,7 +55,7 @@ export const SocialLoopSection: React.FC = () => {
         </div>
 
         {/* Animated Visual Flow of a Challenge Journey */}
-        <div className="rounded-2xl bg-arena-surface border border-arena-border p-6 sm:p-10 shadow-2xl space-y-8">
+        <div className={`rounded-2xl bg-arena-surface border border-arena-border p-6 sm:p-10 shadow-2xl space-y-8 reveal-scale-init ${hasAnimated ? 'revealed' : ''}`}>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
             
@@ -192,3 +194,4 @@ export const SocialLoopSection: React.FC = () => {
     </section>
   );
 };
+

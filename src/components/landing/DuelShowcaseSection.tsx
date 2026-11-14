@@ -13,6 +13,7 @@ import {
   Play 
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { useInView } from '../../hooks/useScrollReveal';
 import { sound } from '../../utils/sound';
 
 export const DuelShowcaseSection: React.FC = () => {
@@ -21,6 +22,7 @@ export const DuelShowcaseSection: React.FC = () => {
   // Simulated match timeline states: 0 = starting, 1 = coding, 2 = running tests, 3 = winner reveal
   const [matchStep, setMatchStep] = useState<number>(3);
   const [isPlayingDemo, setIsPlayingDemo] = useState<boolean>(false);
+  const { ref, hasAnimated } = useInView({ threshold: 0.25 });
 
   const startDemoPlayback = () => {
     sound.playGo();
@@ -39,15 +41,22 @@ export const DuelShowcaseSection: React.FC = () => {
     }, 1200);
   };
 
+  // Scroll-triggered duel playback
+  useEffect(() => {
+    if (hasAnimated && !isPlayingDemo) {
+      startDemoPlayback();
+    }
+  }, [hasAnimated]);
+
   return (
-    <section id="duel-showcase" className="py-24 relative bg-[#101314] overflow-hidden">
+    <section ref={ref} id="duel-showcase" className="py-24 relative bg-[#101314] overflow-hidden">
       {/* Background ambient lighting */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-arena-amber/5 rounded-full filter blur-[150px] pointer-events-none -z-10" />
 
       <div className="w-[94%] max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto space-y-4">
+        <div className={`text-center max-w-3xl mx-auto space-y-4 reveal-init ${hasAnimated ? 'revealed' : ''}`}>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-arena-surface border border-arena-border text-xs font-semibold text-arena-amber">
             <Swords className="w-3.5 h-3.5 text-arena-amber" />
             <span>COMPETITIVE DEVELOPER ARENA</span>
@@ -76,7 +85,7 @@ export const DuelShowcaseSection: React.FC = () => {
         </div>
 
         {/* Realistic Simulated Arena Duel Interface */}
-        <div className="rounded-2xl bg-arena-surface border border-arena-border p-5 sm:p-8 shadow-2xl space-y-6">
+        <div className={`rounded-2xl bg-arena-surface border border-arena-border p-5 sm:p-8 shadow-2xl space-y-6 reveal-scale-init ${hasAnimated ? 'revealed' : ''}`}>
           
           {/* Top Duel Match Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-arena-border">
@@ -283,3 +292,4 @@ export const DuelShowcaseSection: React.FC = () => {
     </section>
   );
 };
+

@@ -41,3 +41,4 @@ description: Premium frontend design guidelines, anti-generic UI rules, Midnight
 - **Seamless Conversion & Flow**:
   - Visitors can immediately explore games, preview interactive mechanics, and enter the actual dashboard with one click.
   - Dedicated public landing route (`/` or marketing state) seamlessly bridging to `/app` or active platform views.
+

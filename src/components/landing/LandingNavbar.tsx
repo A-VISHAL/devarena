@@ -12,11 +12,13 @@ import {
   Layers
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { useScrollProgress } from '../../hooks/useScrollReveal';
 import { sound } from '../../utils/sound';
 
 export const LandingNavbar: React.FC = () => {
   const { navigateToApp, isSoundMuted, toggleSound } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const scrollProgress = useScrollProgress();
 
   const handleNavClick = (sectionId: string) => {
     sound.playClick();
@@ -29,6 +31,14 @@ export const LandingNavbar: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-[#141719]/85 backdrop-blur-md border-b border-[#30383A] transition-all">
+      {/* Real-time Global Scroll Progress Indicator */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-transparent pointer-events-none">
+        <div 
+          className="h-full bg-gradient-to-r from-arena-amber via-arena-amberHighlight to-arena-teal transition-all duration-100 shadow-[0_0_8px_rgba(230,167,70,0.6)]"
+          style={{ width: `${scrollProgress}%` }}
+        />
+      </div>
+
       <div className="w-[94%] max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         
         {/* Brand Logo */}
@@ -205,3 +215,4 @@ export const LandingNavbar: React.FC = () => {
     </header>
   );
 };
+

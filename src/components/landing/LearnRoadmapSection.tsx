@@ -11,6 +11,7 @@ import {
   ChevronRight 
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { useInView } from '../../hooks/useScrollReveal';
 import { sound } from '../../utils/sound';
 
 interface RoadmapNode {
@@ -30,6 +31,7 @@ interface RoadmapNode {
 export const LearnRoadmapSection: React.FC = () => {
   const { navigateToApp } = useApp();
   const [selectedNodeId, setSelectedNodeId] = useState<string>('arrays');
+  const { ref, hasAnimated } = useInView({ threshold: 0.15 });
 
   const nodes: RoadmapNode[] = [
     {
@@ -115,11 +117,11 @@ export const LearnRoadmapSection: React.FC = () => {
   const activeNode = nodes.find(n => n.id === selectedNodeId) || nodes[0];
 
   return (
-    <section id="learn-roadmap" className="py-24 relative bg-[#141719]">
+    <section ref={ref} id="learn-roadmap" className="py-24 relative bg-[#141719]">
       <div className="w-[94%] max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-arena-border">
+        <div className={`flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-arena-border reveal-init ${hasAnimated ? 'revealed' : ''}`}>
           <div className="space-y-3 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-arena-surface border border-arena-border text-xs font-semibold text-arena-teal">
               <BookOpen className="w-3.5 h-3.5 text-arena-teal" />
@@ -150,7 +152,7 @@ export const LearnRoadmapSection: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* Left Column: Interactive Milestone Pathway */}
-          <div className="lg:col-span-7 space-y-3 relative">
+          <div className={`lg:col-span-7 space-y-3 relative reveal-left-init ${hasAnimated ? 'revealed' : ''}`}>
             {/* Connecting Pathway Line */}
             <div className="absolute left-6 top-8 bottom-8 w-0.5 bg-arena-border pointer-events-none -z-0 hidden sm:block" />
 
@@ -217,7 +219,7 @@ export const LearnRoadmapSection: React.FC = () => {
           </div>
 
           {/* Right Column: Node Details Inspector Card */}
-          <div className="lg:col-span-5 sticky top-24 rounded-2xl bg-arena-surface border border-arena-border p-6 shadow-2xl space-y-6">
+          <div className={`lg:col-span-5 sticky top-24 rounded-2xl bg-arena-surface border border-arena-border p-6 shadow-2xl space-y-6 reveal-right-init ${hasAnimated ? 'revealed' : ''}`}>
             
             {/* Stage Header */}
             <div className="flex items-center justify-between pb-4 border-b border-arena-border">
@@ -296,3 +298,4 @@ export const LearnRoadmapSection: React.FC = () => {
     </section>
   );
 };
+

@@ -12,10 +12,12 @@ import {
   ArrowRight 
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { useInView } from '../../hooks/useScrollReveal';
 import { sound } from '../../utils/sound';
 
 export const ProgressionSection: React.FC = () => {
   const { navigateToApp } = useApp();
+  const { ref, hasAnimated } = useInView({ threshold: 0.15 });
 
   const achievements = [
     {
@@ -53,11 +55,11 @@ export const ProgressionSection: React.FC = () => {
   ];
 
   return (
-    <section id="progression" className="py-24 relative bg-[#141719]">
+    <section ref={ref} id="progression" className="py-24 relative bg-[#141719]">
       <div className="w-[94%] max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto space-y-4">
+        <div className={`text-center max-w-3xl mx-auto space-y-4 reveal-init ${hasAnimated ? 'revealed' : ''}`}>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-arena-surface border border-arena-border text-xs font-semibold text-arena-amber">
             <Trophy className="w-3.5 h-3.5 text-arena-amber" />
             <span>PROGRESSION & RECOGNITION</span>
@@ -74,7 +76,7 @@ export const ProgressionSection: React.FC = () => {
         </div>
 
         {/* 3-Column Progression Dashboard Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+        <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch reveal-scale-init ${hasAnimated ? 'revealed' : ''}`}>
           
           {/* Card 1: Coding Rating & Elo Status */}
           <div className="p-6 rounded-2xl bg-arena-surface border border-arena-border space-y-5 flex flex-col justify-between">
@@ -221,3 +223,4 @@ export const ProgressionSection: React.FC = () => {
     </section>
   );
 };
+
