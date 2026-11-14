@@ -49,3 +49,4 @@ export const useInView = (options: IntersectionObserverInit = { threshold: 0.15,
 
   return { ref: setRef, isInView, hasAnimated };
 };
+
