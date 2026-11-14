@@ -15,6 +15,7 @@ import { Community } from './pages/Community';
 import { Leaderboard } from './pages/Leaderboard';
 import { Profile } from './pages/Profile';
 import { CardsCollection } from './pages/CardsCollection';
+import { PublicResultPage } from './pages/PublicResultPage';
 import { VictoryCardUnlockModal } from './components/cards/VictoryCardUnlockModal';
 import { CardDetailModal } from './components/cards/CardDetailModal';
 import { CardShareStudioModal } from './components/cards/CardShareStudioModal';
@@ -36,6 +37,11 @@ const AppContent: React.FC = () => {
   // If public visitor is on marketing landing page
   if (currentView === 'landing') {
     return <Landing />;
+  }
+
+  // If visitor is on public challenge result share page
+  if (currentView === 'result') {
+    return <PublicResultPage />;
   }
 
   return (

@@ -101,3 +101,4 @@ export const PostComposer: React.FC<PostComposerProps> = ({ onOpenCreateModal })
     </div>
   );
 };
+

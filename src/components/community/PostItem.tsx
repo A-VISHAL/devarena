@@ -442,3 +442,4 @@ export const PostItem: React.FC<PostItemProps> = ({
     </article>
   );
 };
+

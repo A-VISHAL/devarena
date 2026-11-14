@@ -7,22 +7,13 @@ import {
   CommunityPost, 
   BattleRecord,
   GameResultData,
-  GameHistoryEntry
+  GameHistoryEntry,
+  ShareCardData
 } from '../types';
 import { CollectibleCard } from '../types/cards';
 import { BASE_COLLECTIBLE_CARDS } from '../data/collectibleCards';
 import { createDefaultGuest, INITIAL_COMMUNITY_POSTS, ACHIEVEMENTS } from '../data/mockData';
 import { sound } from '../utils/sound';
-
-interface ShareCardData {
-  title: string;
-  gameOrBattle: string;
-  scoreOrResult: string;
-  subtitle?: string;
-  ratingChange?: number;
-  badge?: string;
-  customStats?: { label: string; value: string }[];
-}
 
 interface AppContextType {
   user: UserProfile;
@@ -88,11 +79,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return createDefaultGuest();
   });
 
-  // 1.5 View state (landing vs app dashboard)
+  // 1.5 View state (landing vs app dashboard vs public result page)
   const [currentView, setCurrentView] = useState<AppView>(() => {
     try {
       const pathname = window.location.pathname;
       const urlParams = new URLSearchParams(window.location.search);
+      if (
+        pathname.startsWith('/result') || 
+        urlParams.has('result') || 
+        urlParams.has('res')
+      ) {
+        return 'result';
+      }
       if (
         pathname.startsWith('/app') || 
         urlParams.get('view') === 'app' ||
@@ -194,6 +192,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const tabParam = urlParams.get('tab') as NavigationTab;
       const gameParam = urlParams.get('game') as CasualGameId;
 
+      if (pathname.startsWith('/result') || urlParams.has('result') || urlParams.has('res')) {
+        setCurrentView('result');
+        return;
+      }
+
       if (pathname.startsWith('/app')) {
         setCurrentView('app');
         const parts = pathname.split('/').filter(Boolean);
@@ -230,6 +233,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         const pathname = window.location.pathname;
         const urlParams = new URLSearchParams(window.location.search);
+        if (pathname.startsWith('/result') || urlParams.has('result') || urlParams.has('res')) {
+          setCurrentView('result');
+          return;
+        }
         if (
           pathname.startsWith('/app') || 
           urlParams.get('view') === 'app' ||
@@ -292,7 +299,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const openShareModal = (data: ShareCardData) => {
     sound.playClick();
-    setShareCardData(data);
+    const enriched: ShareCardData = {
+      ...data,
+      shareId: data.shareId || `da_res_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`,
+      streak: data.streak !== undefined ? data.streak : user.streak,
+      timestamp: Date.now()
+    };
+    setShareCardData(enriched);
   };
 
   const closeShareModal = () => {

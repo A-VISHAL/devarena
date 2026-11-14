@@ -2,7 +2,7 @@ export type NavigationTab = 'home' | 'play' | 'arena' | 'cards' | 'learn' | 'com
 
 export * from './cards';
 
-export type AppView = 'landing' | 'app';
+export type AppView = 'landing' | 'app' | 'result';
 
 export type GameCategory = 'daily' | 'brain' | 'logic' | 'multiplayer';
 
@@ -240,4 +240,62 @@ export interface DSATopic {
   commonPatterns: string[];
   problemIds: string[];
 }
+
+export interface ShareCardData {
+  title: string;
+  gameOrBattle: string;
+  scoreOrResult: string;
+  subtitle?: string;
+  ratingChange?: number;
+  badge?: string;
+  customStats?: { label: string; value: string }[];
+  shareId?: string;
+  gameId?: CasualGameId | 'arena';
+  gameTitle?: string;
+  score?: number | string;
+  roundsOrMoves?: string;
+  streak?: number;
+  timeTakenSec?: number;
+  isBattle?: boolean;
+  problemTitle?: string;
+  opponentName?: string;
+  battleResult?: 'Win' | 'Loss' | 'Draw' | 'Victory' | 'Defeat';
+  executionTime?: string;
+  testCasesPassed?: string;
+  timestamp?: number;
+}
+
+export interface PublicSharedResult {
+  id: string;
+  title: string;
+  gameOrBattle: string;
+  scoreOrResult: string;
+  subtitle?: string;
+  ratingChange?: number;
+  badge?: string;
+  customStats?: { label: string; value: string }[];
+  gameId?: CasualGameId | 'arena';
+  gameTitle?: string;
+  score?: number | string;
+  roundsOrMoves?: string;
+  streak?: number;
+  timeTakenSec?: number;
+  isBattle?: boolean;
+  problemTitle?: string;
+  opponentName?: string;
+  battleResult?: 'Win' | 'Loss' | 'Draw' | 'Victory' | 'Defeat';
+  executionTime?: string;
+  testCasesPassed?: string;
+  createdAt: string;
+  player: {
+    id: string;
+    username: string;
+    displayName: string;
+    headline?: string;
+    avatar: string;
+    rating: number;
+    streak: number;
+  };
+}
+
 

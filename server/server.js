@@ -3,8 +3,9 @@ import http from 'http';
 
 const PORT = process.env.PORT || 3001;
 
-// Lightweight in-memory room store
+// Lightweight in-memory room store & results store
 const rooms = new Map();
+const resultsStore = new Map();
 
 const server = http.createServer((req, res) => {
   // Enable CORS
@@ -37,6 +38,43 @@ const server = http.createServer((req, res) => {
     res.end(JSON.stringify({
       rooms: Array.from(rooms.keys())
     }));
+    return;
+  }
+
+  // Save shared result
+  if (url.pathname === '/api/results' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      try {
+        const data = JSON.parse(body);
+        if (data && data.id) {
+          resultsStore.set(data.id, data);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, id: data.id }));
+        } else {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing result id' }));
+        }
+      } catch (err) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON payload' }));
+      }
+    });
+    return;
+  }
+
+  // Retrieve shared result by ID
+  if (url.pathname.startsWith('/api/results/') && req.method === 'GET') {
+    const resultId = url.pathname.replace('/api/results/', '');
+    const data = resultsStore.get(resultId);
+    if (data) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(data));
+    } else {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Result not found' }));
+    }
     return;
   }
 

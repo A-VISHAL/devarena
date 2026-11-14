@@ -261,3 +261,4 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
     </div>
   );
 };
+

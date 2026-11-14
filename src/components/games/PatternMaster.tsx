@@ -122,7 +122,12 @@ export const PatternMaster: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     openShareModal({
       title: 'Pattern Master',
       gameOrBattle: 'Pattern Master',
+      gameId: 'pattern-master',
+      gameTitle: 'Pattern Master',
       scoreOrResult: `${score} Points`,
+      score: score,
+      roundsOrMoves: `all ${PATTERNS.length} rounds`,
+      streak: streak,
       subtitle: `Completed all ${PATTERNS.length} rounds • Streak: ${streak}`,
       customStats: [
         { label: 'Score', value: String(score) },

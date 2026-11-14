@@ -64,7 +64,12 @@ ${window.location.origin}`;
     openShareModal({
       title: 'Game Result',
       gameOrBattle: result.gameTitle,
+      gameId: result.gameId,
+      gameTitle: result.gameTitle,
       scoreOrResult: `${result.score} Points`,
+      score: result.score,
+      timeTakenSec: result.timeTakenSec,
+      roundsOrMoves: result.moves ? `${result.moves} moves` : undefined,
       subtitle: `${result.won ? 'Solved' : 'Completed'} in ${formatTime(result.timeTakenSec)}`,
       customStats: result.customStats
     });

@@ -713,10 +713,18 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
                     title: 'Coding Battle Victory',
                     gameOrBattle: `1v1 Battle on ${problem.title}`,
                     scoreOrResult: battleWinner.winner === 'you' ? 'Victory' : 'Competed',
+                    isBattle: true,
+                    problemTitle: problem.title,
+                    opponentName: opponent?.username || 'Opponent',
+                    battleResult: battleWinner.winner === 'you' ? 'Win' : 'Loss',
+                    executionTime: `${mySubmission?.timeTaken || 12}s`,
+                    testCasesPassed: `${mySubmission?.testsPassed || problem.testCases.length}/${problem.testCases.length}`,
+                    ratingChange: battleWinner.ratingDelta,
                     subtitle: `${battleWinner.ratingDelta > 0 ? `+${battleWinner.ratingDelta}` : battleWinner.ratingDelta} Elo • ${mySubmission?.testsPassed || 0}/${problem.testCases.length} Tests`,
                     customStats: [
                       { label: 'Rating', value: `${battleWinner.newRating} Elo` },
-                      { label: 'Time', value: `${mySubmission?.timeTaken || 0}s` }
+                      { label: 'Time', value: `${mySubmission?.timeTaken || 0}s` },
+                      { label: 'Tests', value: `${mySubmission?.testsPassed || 0}/${problem.testCases.length}` }
                     ]
                   });
                 }}
