@@ -33,16 +33,16 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-arena-bg text-arena-textPrimary selection:bg-arena-amber/25 selection:text-white antialiased overflow-x-hidden">
+    <div className="h-screen w-screen flex flex-col bg-arena-bg text-arena-textPrimary selection:bg-arena-amber/25 selection:text-white antialiased overflow-hidden">
       
-      {/* 1. Minimal Top Header */}
+      {/* 1. Minimal Top Header - permanently fixed at the top */}
       <TopHeader 
         onOpenAccountModal={onOpenAccountModal}
         onToggleMobileSidebar={() => setMobileOpen(true)}
       />
 
-      {/* 2. Hybrid Application Layout: Sidebar + Full Remaining Width Main Content */}
-      <div className="flex-1 flex overflow-hidden">
+      {/* 2. Hybrid Application Layout: Pinned Sidebar + Scrollable Main Content */}
+      <div className="flex-1 min-h-0 flex overflow-hidden">
         
         {/* Left Collapsible Sidebar */}
         <Sidebar 
@@ -53,8 +53,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           onOpenSettings={onOpenAccountModal}
         />
 
-        {/* Main Content Area - occupying all remaining available width without overlap */}
-        <main className="flex-1 min-w-0 overflow-y-auto">
+        {/* Main Content Area - only the main content scrolls, navbar stays fixed */}
+        <main className="flex-1 min-w-0 h-full overflow-y-auto">
           {children}
         </main>
 
@@ -62,3 +62,4 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     </div>
   );
 };
+

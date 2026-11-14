@@ -116,7 +116,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* 1. DESKTOP COLLAPSIBLE SIDEBAR                                  */}
       {/* ============================================================== */}
       <aside
-        className={`hidden md:flex flex-col bg-arena-bg border-r border-arena-border shrink-0 transition-[width] duration-250 ease-in-out select-none relative z-30 sticky top-14 h-[calc(100vh-3.5rem)] ${
+        className={`hidden md:flex flex-col bg-arena-bg border-r border-arena-border shrink-0 transition-[width] duration-250 ease-in-out select-none relative z-30 h-full ${
           isCollapsed ? 'w-[68px]' : 'w-60'
         }`}
       >
@@ -362,3 +362,4 @@ export const Sidebar: React.FC<SidebarProps> = ({
     </>
   );
 };
+
