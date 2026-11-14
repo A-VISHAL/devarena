@@ -469,7 +469,7 @@ export const Play: React.FC = () => {
         {/* ========================================================= */}
         {/* B. CENTER CONTENT — DISCOVERY & SOCIAL (6 COLS)           */}
         {/* ========================================================= */}
-        <main className="lg:col-span-6 space-y-7">
+        <div className="lg:col-span-6 space-y-7">
           
           {/* Header Bar */}
           <div className="space-y-3 pb-2 border-b border-arena-border">
@@ -850,7 +850,7 @@ export const Play: React.FC = () => {
             </div>
           </section>
 
-        </main>
+        </div>
 
         {/* ========================================================= */}
         {/* C. RIGHT SIDEBAR — STATS & LEADERBOARDS (3 COLS)          */}

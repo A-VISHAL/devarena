@@ -133,7 +133,7 @@ export const CardsCollection: React.FC = () => {
   }, [cards, selectedCategory, selectedRarity, statusFilter, sortBy, searchQuery]);
 
   return (
-    <div className="w-[94%] max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in">
+    <div className="page-container py-8 space-y-8 animate-in fade-in">
       
       {/* Page Header Banner */}
       <div className="relative rounded-3xl bg-gradient-to-r from-[#172022] via-[#151D1F] to-[#111719] border border-[#2B3B3F] p-6 sm:p-8 overflow-hidden shadow-card">

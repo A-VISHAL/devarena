@@ -93,7 +93,7 @@ export const Community: React.FC = () => {
   }, [posts, user.id, user.username]);
 
   return (
-    <div className="w-[94%] max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-in fade-in">
+    <div className="page-container py-8 space-y-6 animate-in fade-in">
       
       {/* Three-Column Professional Desktop Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">

@@ -33,7 +33,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-arena-bg text-arena-textPrimary selection:bg-arena-amber/25 selection:text-white antialiased overflow-hidden">
+    <div className="h-screen w-full flex flex-col bg-arena-bg text-arena-textPrimary selection:bg-arena-amber/25 selection:text-white antialiased overflow-hidden">
       
       {/* 1. Minimal Top Header - permanently fixed at the top */}
       <TopHeader 
@@ -54,7 +54,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         />
 
         {/* Main Content Area - only the main content scrolls, navbar stays fixed */}
-        <main className="flex-1 min-w-0 h-full overflow-y-auto">
+        <main className="flex-1 min-w-0 h-full overflow-y-auto overflow-x-hidden">
           {children}
         </main>
 

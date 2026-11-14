@@ -30,7 +30,7 @@
 @layer components {
   /* Full-width responsive main content container */
   .page-container {
-    @apply w-[94%] max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8;
+    @apply w-full px-4 sm:px-6 lg:px-8;
   }
 
   .btn-primary {
