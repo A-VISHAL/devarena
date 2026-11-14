@@ -293,3 +293,4 @@ export const CollectibleCardItem: React.FC<CollectibleCardItemProps> = ({
     </div>
   );
 };
+

@@ -401,3 +401,4 @@ export const CardArtwork: React.FC<CardArtworkProps> = ({
     </div>
   );
 };
+

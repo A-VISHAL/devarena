@@ -42,6 +42,11 @@ interface AppContextType {
   addPost: (post: Omit<CommunityPost, 'id' | 'likesCount' | 'likedBy' | 'comments' | 'createdAt'>) => void;
   likePost: (postId: string) => void;
   addComment: (postId: string, text: string) => void;
+  toggleFollowUser: (username: string) => void;
+  toggleSavePost: (postId: string) => void;
+  repostPost: (postId: string) => void;
+  deletePost: (postId: string) => void;
+  deleteComment: (postId: string, commentId: string) => void;
   upgradeGuestToAccount: (username: string, displayName: string) => void;
   updateUserProfile: (partial: Partial<UserProfile>) => void;
   recordCasualGameResult: (gameId: CasualGameId, score: number, meta?: any) => void;
@@ -600,6 +605,71 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
+  const toggleFollowUser = (targetUsername: string) => {
+    sound.playClick();
+    setUser(prev => {
+      const currentFollowing = prev.following || ['kavya_codes', 'alex_dev'];
+      const isFollowing = currentFollowing.includes(targetUsername);
+      const nextFollowing = isFollowing
+        ? currentFollowing.filter(u => u !== targetUsername)
+        : [...currentFollowing, targetUsername];
+
+      return {
+        ...prev,
+        following: nextFollowing,
+        followingCount: nextFollowing.length
+      };
+    });
+  };
+
+  const toggleSavePost = (postId: string) => {
+    sound.playClick();
+    setUser(prev => {
+      const currentSaved = prev.savedPostIds || ['post-1'];
+      const isSaved = currentSaved.includes(postId);
+      const nextSaved = isSaved
+        ? currentSaved.filter(id => id !== postId)
+        : [...currentSaved, postId];
+
+      return {
+        ...prev,
+        savedPostIds: nextSaved
+      };
+    });
+  };
+
+  const repostPost = (postId: string) => {
+    sound.playCorrect();
+    setPosts(prev => prev.map(p => {
+      if (p.id !== postId) return p;
+      const repostedBy = p.repostedBy || [];
+      const alreadyReposted = repostedBy.includes(user.id);
+      return {
+        ...p,
+        repostsCount: (p.repostsCount || 0) + (alreadyReposted ? -1 : 1),
+        repostedBy: alreadyReposted 
+          ? repostedBy.filter(id => id !== user.id)
+          : [...repostedBy, user.id]
+      };
+    }));
+  };
+
+  const deletePost = (postId: string) => {
+    sound.playClick();
+    setPosts(prev => prev.filter(p => p.id !== postId));
+  };
+
+  const deleteComment = (postId: string, commentId: string) => {
+    sound.playClick();
+    setPosts(prev => prev.map(p => {
+      if (p.id !== postId) return p;
+      return {
+        ...p,
+        comments: p.comments.filter(c => c.id !== commentId)
+      };
+    }));
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -620,6 +690,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addPost,
         likePost,
         addComment,
+        toggleFollowUser,
+        toggleSavePost,
+        repostPost,
+        deletePost,
+        deleteComment,
         upgradeGuestToAccount,
         updateUserProfile,
         recordCasualGameResult,

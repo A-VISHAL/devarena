@@ -105,3 +105,4 @@ export const VictoryCardUnlockModal: React.FC<VictoryCardUnlockModalProps> = ({
     </div>
   );
 };
+

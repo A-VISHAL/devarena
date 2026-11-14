@@ -330,3 +330,4 @@ export const CardDetailModal: React.FC<CardDetailModalProps> = ({
     </div>
   );
 };
+

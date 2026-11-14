@@ -68,6 +68,7 @@ export interface UserProfile {
   id: string;
   username: string;
   displayName: string;
+  headline?: string;
   avatar: string;
   isGuest: boolean;
   bio: string;
@@ -86,6 +87,10 @@ export interface UserProfile {
   achievements: string[]; // Achievement IDs
   unlockedCards?: string[]; // Collectible Card IDs
   pinnedCardIds?: string[]; // Showcase Card IDs pinned to profile
+  followersCount?: number;
+  followingCount?: number;
+  following?: string[]; // followed usernames
+  savedPostIds?: string[];
   topicProgress: Record<string, number>; // topicId -> percent (0-100)
   recentBattles: BattleRecord[];
   gameHistory?: GameHistoryEntry[];
@@ -177,12 +182,17 @@ export interface CommunityPost {
     id: string;
     username: string;
     displayName: string;
+    headline?: string;
     avatar: string;
     rating: number;
   };
   type: 'battle_victory' | 'puzzle_streak' | 'achievement_unlocked' | 'project_share' | 'discussion';
   title: string;
   content: string;
+  tags?: string[];
+  projectUrl?: string;
+  githubUrl?: string;
+  collectibleCardId?: string; // links to CollectibleCard
   metadata?: {
     gameName?: string;
     score?: number | string;
@@ -192,11 +202,15 @@ export interface CommunityPost {
   };
   likesCount: number;
   likedBy: string[]; // user IDs
+  repostsCount?: number;
+  repostedBy?: string[];
   comments: {
     id: string;
     author: {
       username: string;
+      displayName?: string;
       avatar: string;
+      headline?: string;
     };
     text: string;
     timestamp: string;

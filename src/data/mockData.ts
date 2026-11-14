@@ -66,12 +66,15 @@ export const INITIAL_COMMUNITY_POSTS: CommunityPost[] = [
       id: 'usr-kavya',
       username: 'kavya_codes',
       displayName: 'Kavya Sharma',
+      headline: 'Competitive Algorithmic Duelist • SWE @ Nexus',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
       rating: 1845
     },
     type: 'battle_victory',
     title: 'Clutched a 1v1 battle on Container With Most Water! 🔥',
-    content: 'Just had an intense duel against @alex_dev. Both of us finished with O(N) two pointers, but submitted 14 seconds earlier. The test cases caught my boundary condition initially, quick debug won it!',
+    content: 'Just had an intense duel against @alex_dev. Both of us finished with O(N) two pointers, but submitted 14 seconds earlier. The test cases caught my boundary condition initially, quick debug won it!\n\nKey lesson: Always assert that your two-pointer shrink condition strictly moves the bottleneck pointer rather than arbitrary index increments.',
+    tags: ['#TwoPointers', '#Monaco', '#Algorithms', '#CompetitiveCoding'],
+    collectibleCardId: 'perfect_submission',
     metadata: {
       gameName: '1v1 Code Battle',
       problemTitle: 'Container With Most Water',
@@ -80,20 +83,25 @@ export const INITIAL_COMMUNITY_POSTS: CommunityPost[] = [
     },
     likesCount: 24,
     likedBy: [],
+    repostsCount: 5,
     comments: [
       {
         id: 'c1',
         author: {
           username: 'alex_dev',
+          displayName: 'Alex Rivera',
+          headline: 'Systems Engineer',
           avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
         },
-        text: 'GG! Your two-pointer shrink condition was super clean. Need a rematch tomorrow!',
+        text: 'GG! Your two-pointer shrink condition was super clean. Rematch scheduled for tomorrow!',
         timestamp: '15m ago'
       },
       {
         id: 'c2',
         author: {
           username: 'rohit_algo',
+          displayName: 'Rohit Verma',
+          headline: 'DSA Coach',
           avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80'
         },
         text: 'Two-pointer greedy height check is such a satisfying pattern when it clicks.',
@@ -105,33 +113,36 @@ export const INITIAL_COMMUNITY_POSTS: CommunityPost[] = [
   {
     id: 'post-2',
     author: {
-      id: 'usr-marcus',
-      username: 'marcus_q',
-      displayName: 'Marcus Chen',
-      avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80',
-      rating: 1620
+      id: 'usr-alex',
+      username: 'alex_codes',
+      displayName: 'Alex Rivera',
+      headline: 'Compiler & Systems Engineer • Open Source Contributor',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+      rating: 1720
     },
-    type: 'puzzle_streak',
-    title: 'Day 12 streak on Word Puzzle! 🟩🟩🟩🟩🟩',
-    content: 'Today’s daily puzzle had a tricky double letter! Solved it on row 4 without burning unnecessary vowels. Who else got it today?',
-    metadata: {
-      gameName: 'Daily Word Puzzle',
-      score: '4/6 Attempts • Streak 12'
-    },
-    likesCount: 18,
+    type: 'project_share',
+    title: 'Showcase: Monaco Collab Runner — Real-time WASM Code Sandbox',
+    content: 'Excited to release Monaco Collab Runner! It allows two developers to duel or pair-program inside a virtual Monaco workspace with sub-millisecond AST delta synchronization and sandboxed execution via WebAssembly.\n\nBuilt for high-concurrency developer competitions. Check out the GitHub repository and live demo below!',
+    tags: ['#TypeScript', '#WebAssembly', '#MonacoEditor', '#OpenSource', '#SystemDesign'],
+    projectUrl: 'https://github.com/alexrivera/monaco-collab-runner',
+    githubUrl: 'https://github.com/alexrivera/monaco-collab-runner',
+    likesCount: 58,
     likedBy: [],
+    repostsCount: 14,
     comments: [
       {
-        id: 'c3',
+        id: 'c-proj-1',
         author: {
-          username: 'elena_v',
-          avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80'
+          username: 'sara_byte',
+          displayName: 'Sara Al-Mansoor',
+          headline: 'Lead Architect',
+          avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80'
         },
-        text: 'Got it in 3! Started with STARE and got 3 yellow letters immediately.',
+        text: 'This is brilliant! How are you isolating memory leaks across consecutive runner runs in WASM?',
         timestamp: '1h ago'
       }
     ],
-    createdAt: '2h ago'
+    createdAt: '1h ago'
   },
   {
     id: 'post-3',
@@ -139,20 +150,81 @@ export const INITIAL_COMMUNITY_POSTS: CommunityPost[] = [
       id: 'usr-sara',
       username: 'sara_byte',
       displayName: 'Sara Al-Mansoor',
+      headline: 'Lead Distributed Systems Architect • Master 2010 Elo',
       avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
       rating: 2010
     },
     type: 'achievement_unlocked',
-    title: 'Unlocked [Neural Reflexes] & [Arena Champion]! ⚡',
-    content: 'Tested my reaction speed after practicing dynamic programming and clocked 188ms on the Reaction Challenge. Love how DEVARENA balances hardcore coding with brain warmups!',
+    title: 'Unlocked [Arena Champion] Legendary Collectible Card! 🏆',
+    content: 'Hit 2010 Elo in the Code Arena and verified the [Arena Champion] card on DEVARENA. Balances competitive duels with mental reflex workouts. Check out the verified telemetry card attached below!',
+    tags: ['#ArenaChampion', '#RankedLadder', '#MasterTier', '#DEVARENA'],
+    collectibleCardId: 'arena_champion',
     metadata: {
-      badgeName: 'Neural Reflexes',
-      score: '188 ms'
+      badgeName: 'Arena Champion',
+      score: '2010 Elo'
     },
-    likesCount: 42,
+    likesCount: 84,
     likedBy: [],
+    repostsCount: 22,
+    comments: [
+      {
+        id: 'c-ach-1',
+        author: {
+          username: 'kavya_codes',
+          displayName: 'Kavya Sharma',
+          headline: 'Competitive Coder',
+          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+        },
+        text: 'Huge congratulations Sara! That 2000 Elo barrier is brutal to cross.',
+        timestamp: '2h ago'
+      }
+    ],
+    createdAt: '3h ago'
+  },
+  {
+    id: 'post-4',
+    author: {
+      id: 'usr-david',
+      username: 'dkim_dev',
+      displayName: 'David Kim',
+      headline: 'Senior Backend Engineer • Graph & Search Algorithms',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+      rating: 1680
+    },
+    type: 'discussion',
+    title: 'Why developers overcomplicate Graph BFS vs Dijkstra on unweighted graphs',
+    content: 'In multiple 1v1 duels this week, I noticed opponents pulling in PriorityQueues and min-heaps for problems with uniform edge weights.\n\nRemember: On unweighted graphs or graphs with unit weights (w=1), standard FIFO queue BFS guarantees shortest path in strictly O(V + E) time without the O((V + E) log V) heap overhead.\n\nWhat are your go-to heuristics when choosing between BFS, DFS with memoization, and Dijkstra under strict duel time constraints?',
+    tags: ['#GraphTheory', '#BFS', '#Algorithms', '#TimeComplexity', '#SystemDesign'],
+    likesCount: 39,
+    likedBy: [],
+    repostsCount: 7,
     comments: [],
-    createdAt: '4h ago'
+    createdAt: '5h ago'
+  },
+  {
+    id: 'post-5',
+    author: {
+      id: 'usr-marcus',
+      username: 'marcus_q',
+      displayName: 'Marcus Chen',
+      headline: 'Product Engineer • Daily Puzzle Enthusiast',
+      avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80',
+      rating: 1620
+    },
+    type: 'puzzle_streak',
+    title: 'Day 12 streak on Word Puzzle & minted [Puzzle Streak] Epic Card! 🟩',
+    content: 'Today’s daily puzzle had a tricky double letter! Solved it on row 4 without burning unnecessary vowels. Keeping a daily cognitive warmup before opening pull requests has been a game changer.',
+    tags: ['#DailyStreak', '#WordPuzzle', '#MentalClarity', '#DEVARENA'],
+    collectibleCardId: 'puzzle_streak',
+    metadata: {
+      gameName: 'Daily Word Puzzle',
+      score: '4/6 Attempts • Streak 12'
+    },
+    likesCount: 31,
+    likedBy: [],
+    repostsCount: 4,
+    comments: [],
+    createdAt: '7h ago'
   }
 ];
 
@@ -187,6 +259,7 @@ export function createDefaultGuest(): UserProfile {
     id: `guest-${Date.now()}-${randomSuffix}`,
     username: `Player_${randomSuffix}`,
     displayName: `Guest #${randomSuffix}`,
+    headline: 'Full-Stack Developer • 1200 Elo Ranked Duelist',
     avatar: avatars[Math.floor(Math.random() * avatars.length)],
     isGuest: true,
     bio: 'Casual gamer and developer exploring DEVARENA.',
@@ -203,6 +276,10 @@ export function createDefaultGuest(): UserProfile {
     achievements: ['first_battle', 'reaction_pro'],
     unlockedCards: ['speed_thinker', 'daily_challenger', 'first_blood', 'perfect_submission'],
     pinnedCardIds: ['first_blood', 'perfect_submission'],
+    followersCount: 380,
+    followingCount: 142,
+    following: ['kavya_codes', 'alex_dev'],
+    savedPostIds: ['post-1'],
     topicProgress: {
       'arrays': 65,
       'stacks-queues': 50,

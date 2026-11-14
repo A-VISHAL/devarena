@@ -49,3 +49,4 @@ export interface CardShareData {
   rating: number;
   streak: number;
 }
+

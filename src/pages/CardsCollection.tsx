@@ -362,3 +362,4 @@ export const CardsCollection: React.FC = () => {
     </div>
   );
 };
+
