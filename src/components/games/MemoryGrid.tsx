@@ -15,7 +15,6 @@ export const MemoryGrid: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [showingPattern, setShowingPattern] = useState<boolean>(false);
   const [gameOver, setGameOver] = useState<boolean>(false);
 
-  // Dynamic grid: 3x3 for lvl 1-2, 4x4 for lvl 3-5, 5x5 for lvl 6+
   const gridSize = level <= 2 ? 3 : level <= 5 ? 4 : 5;
   const totalCells = gridSize * gridSize;
   const targetCount = Math.min(Math.floor(totalCells * 0.4), 2 + level);
@@ -34,10 +33,9 @@ export const MemoryGrid: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     setSelectedCells([]);
     setShowingPattern(true);
 
-    // Show pattern for 1.4s then hide
     setTimeout(() => {
       setShowingPattern(false);
-    }, 1400);
+    }, 1300);
   };
 
   useEffect(() => {
@@ -52,10 +50,8 @@ export const MemoryGrid: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     setSelectedCells(newSelected);
 
     if (activeCells.includes(idx)) {
-      // Correct pick
       sound.playCorrect();
       
-      // Check if all found
       const allFound = activeCells.every(c => newSelected.includes(c));
       if (allFound) {
         sound.playVictory();
@@ -66,10 +62,9 @@ export const MemoryGrid: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           const nextLvl = level + 1;
           setLevel(nextLvl);
           startNewRound(nextLvl);
-        }, 800);
+        }, 700);
       }
     } else {
-      // Wrong pick!
       sound.playWrong();
       setLives(prev => {
         const remaining = prev - 1;
@@ -94,9 +89,9 @@ export const MemoryGrid: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const handleShare = () => {
     openShareModal({
       title: 'Memory Grid',
-      gameOrBattle: 'Memory Grid Working Memory Test',
+      gameOrBattle: 'Memory Grid',
       scoreOrResult: `${score} Points`,
-      subtitle: `Reached Level ${level} • Recalled ${targetCount} active cells`,
+      subtitle: `Level ${level} • Recalled ${targetCount} active cells`,
       customStats: [
         { label: 'Score', value: String(score) },
         { label: 'Peak Level', value: `Level ${level}` }
@@ -105,60 +100,60 @@ export const MemoryGrid: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   };
 
   return (
-    <div className="max-w-md mx-auto py-4 px-3 flex flex-col items-center">
+    <div className="max-w-md mx-auto py-6 px-4 flex flex-col items-center animate-in fade-in">
       {/* Header */}
       <div className="w-full flex items-center justify-between mb-4 pb-3 border-b border-arena-border">
         <button
           onClick={onBack}
-          className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white"
+          className="flex items-center gap-1.5 text-xs font-medium text-arena-textSecondary hover:text-arena-textPrimary"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>All Games</span>
         </button>
         <div className="text-center">
-          <h2 className="text-base font-black text-white">Memory Grid</h2>
-          <span className="text-[10px] text-slate-400">Level {level}</span>
+          <h2 className="text-sm font-bold text-arena-textPrimary">Memory Grid</h2>
+          <span className="text-[11px] text-arena-textSubtle">Level {level}</span>
         </div>
-        <button onClick={handleRestart} className="p-1.5 text-slate-400 hover:text-white">
+        <button onClick={handleRestart} className="p-1.5 text-arena-textSecondary hover:text-arena-textPrimary">
           <RefreshCw className="w-4 h-4" />
         </button>
       </div>
 
       {/* Stats Bar */}
       <div className="w-full grid grid-cols-3 gap-2 mb-4">
-        <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-center">
-          <span className="text-[10px] text-slate-400 font-semibold block">SCORE</span>
-          <span className="text-base font-black text-violet-400">{score}</span>
+        <div className="p-2.5 rounded-lg bg-arena-surface border border-arena-border text-center">
+          <span className="text-[10px] text-arena-textSubtle font-medium block">SCORE</span>
+          <span className="text-base font-bold text-arena-blue">{score}</span>
         </div>
-        <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-center">
-          <span className="text-[10px] text-slate-400 font-semibold block">LIVES</span>
-          <div className="flex items-center justify-center gap-1 text-rose-500">
+        <div className="p-2.5 rounded-lg bg-arena-surface border border-arena-border text-center">
+          <span className="text-[10px] text-arena-textSubtle font-medium block">LIVES</span>
+          <div className="flex items-center justify-center gap-1 text-arena-error">
             {Array.from({ length: 3 }).map((_, i) => (
               <Heart 
                 key={i} 
-                className={`w-4 h-4 ${i < lives ? 'fill-rose-500' : 'text-slate-700'}`} 
+                className={`w-3.5 h-3.5 ${i < lives ? 'fill-arena-error' : 'text-arena-border'}`} 
               />
             ))}
           </div>
         </div>
-        <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-center">
-          <span className="text-[10px] text-slate-400 font-semibold block">TARGETS</span>
-          <span className="text-base font-black text-cyan-400">
+        <div className="p-2.5 rounded-lg bg-arena-surface border border-arena-border text-center">
+          <span className="text-[10px] text-arena-textSubtle font-medium block">TARGETS</span>
+          <span className="text-base font-bold text-arena-teal">
             {selectedCells.filter(c => activeCells.includes(c)).length} / {targetCount}
           </span>
         </div>
       </div>
 
-      {/* Status Banner */}
+      {/* Status Notice */}
       <div className="mb-4">
         {showingPattern ? (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 text-xs font-bold animate-pulse">
-            <Eye className="w-4 h-4" />
-            <span>Memorize the highlighted cells!</span>
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-arena-elevated border border-arena-blue/40 text-arena-blue text-xs font-medium">
+            <Eye className="w-3.5 h-3.5" />
+            <span>Memorize highlighted cells</span>
           </div>
         ) : !gameOver ? (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 text-xs font-medium">
-            <Brain className="w-4 h-4 text-violet-400" />
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-arena-surface border border-arena-border text-arena-textSecondary text-xs">
+            <Brain className="w-3.5 h-3.5 text-arena-textSubtle" />
             <span>Click the cells that flashed</span>
           </div>
         ) : null}
@@ -167,7 +162,7 @@ export const MemoryGrid: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       {/* Grid */}
       {!gameOver ? (
         <div
-          className="grid gap-2.5 p-4 rounded-3xl bg-slate-900/60 border border-arena-border shadow-xl"
+          className="grid gap-2 p-3.5 rounded-xl bg-arena-surface border border-arena-border"
           style={{
             gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`
           }}
@@ -178,14 +173,14 @@ export const MemoryGrid: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             const isCorrect = isSelected && isPattern;
             const isWrong = isSelected && !isPattern;
 
-            let cellClass = 'bg-slate-800/80 border-slate-700 hover:border-slate-600';
+            let cellClass = 'bg-arena-elevated border-arena-border hover:border-arena-borderHover';
 
             if (showingPattern && isPattern) {
-              cellClass = 'bg-gradient-to-tr from-cyan-500 to-violet-500 border-cyan-400 shadow-lg shadow-cyan-500/30 scale-105';
+              cellClass = 'bg-arena-blue border-arena-blue text-white shadow-subtle';
             } else if (isCorrect) {
-              cellClass = 'bg-emerald-600 border-emerald-500 shadow-md shadow-emerald-600/30';
+              cellClass = 'bg-arena-success border-arena-success text-slate-950 font-bold';
             } else if (isWrong) {
-              cellClass = 'bg-rose-600 border-rose-500 animate-shake';
+              cellClass = 'bg-arena-error border-arena-error';
             }
 
             return (
@@ -193,29 +188,29 @@ export const MemoryGrid: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 key={idx}
                 disabled={showingPattern || isSelected}
                 onClick={() => handleCellClick(idx)}
-                className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border-2 transition-all duration-200 active:scale-95 ${cellClass}`}
+                className={`w-14 h-14 sm:w-16 sm:h-16 rounded-lg border transition-all active:scale-95 ${cellClass}`}
               />
             );
           })}
         </div>
       ) : (
         /* Game Over */
-        <div className="w-full p-6 rounded-3xl bg-slate-900 border border-violet-500/30 text-center space-y-4">
-          <div className="w-12 h-12 rounded-2xl bg-violet-600/20 text-violet-400 flex items-center justify-center mx-auto">
-            <Trophy className="w-6 h-6" />
+        <div className="w-full p-6 rounded-xl bg-arena-surface border border-arena-border text-center space-y-4">
+          <div className="w-10 h-10 rounded-lg bg-arena-elevated border border-arena-border text-arena-blue flex items-center justify-center mx-auto">
+            <Trophy className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-xl font-black text-white">Memory Grid Complete</h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Final Score: <strong className="text-violet-400">{score}</strong> points reached at Level {level}
+            <h3 className="text-lg font-bold text-arena-textPrimary">Memory Grid Complete</h3>
+            <p className="text-xs text-arena-textSecondary mt-1">
+              Final Score: <strong className="text-arena-textPrimary">{score}</strong> reached at Level {level}
             </p>
           </div>
 
           <div className="flex gap-2 pt-2">
-            <button onClick={handleRestart} className="btn-secondary flex-1 py-2.5 text-xs">
+            <button onClick={handleRestart} className="btn-secondary flex-1 py-2 text-xs">
               Play Again
             </button>
-            <button onClick={handleShare} className="btn-primary flex-1 py-2.5 text-xs gap-1.5">
+            <button onClick={handleShare} className="btn-primary flex-1 py-2 text-xs gap-1.5">
               <Share2 className="w-3.5 h-3.5" />
               <span>Share Score</span>
             </button>
@@ -225,4 +220,3 @@ export const MemoryGrid: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     </div>
   );
 };
-

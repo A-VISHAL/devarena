@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, 
   Copy, 
@@ -6,12 +6,8 @@ import {
   Users, 
   Trophy, 
   Timer, 
-  Flame, 
   Swords, 
-  Sparkles,
-  Share2,
-  RefreshCw,
-  Zap
+  Share2
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { syncEngine } from '../../utils/syncEngine';
@@ -24,7 +20,6 @@ interface MathQuestion {
   options: number[];
 }
 
-// Deterministic question generator from seed so both players get exact same questions
 function generateDeterministicQuestions(roomCode: string, count: number = 20): MathQuestion[] {
   let seed = 0;
   for (let i = 0; i < roomCode.length; i++) seed = (seed << 5) - seed + roomCode.charCodeAt(i);
@@ -86,7 +81,6 @@ export const CasualMultiplayerRoom: React.FC<{
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
 
   // Match state
-  const [isHost, setIsHost] = useState<boolean>(!initialRoomCode);
   const [opponent, setOpponent] = useState<{ id: string; username: string; avatar: string; rating: number } | null>(null);
   const [myReady, setMyReady] = useState<boolean>(false);
   const [opponentReady, setOpponentReady] = useState<boolean>(false);
@@ -102,7 +96,6 @@ export const CasualMultiplayerRoom: React.FC<{
 
   const [questions] = useState<MathQuestion[]>(() => generateDeterministicQuestions(roomCode));
 
-  // Sync engine listeners
   useEffect(() => {
     syncEngine.joinRoom(roomCode, {
       id: user.id,
@@ -114,7 +107,6 @@ export const CasualMultiplayerRoom: React.FC<{
       if (data.user.id !== user.id) {
         setOpponent(data.user);
         sound.playCorrect();
-        // Respond so they know we exist
         syncEngine.send('presence_ack', {
           user: {
             id: user.id,
@@ -195,7 +187,6 @@ export const CasualMultiplayerRoom: React.FC<{
     }
   };
 
-  // Timer when match is live
   useEffect(() => {
     if (!matchStarted || matchEnded) return;
 
@@ -225,7 +216,7 @@ export const CasualMultiplayerRoom: React.FC<{
 
     if (myScore > opponentScore) {
       sound.playVictory();
-      confetti({ particleCount: 80, spread: 70 });
+      confetti({ particleCount: 70, spread: 60 });
       recordCasualGameResult('multiplayer-math', myScore + 100);
     } else {
       sound.playWrong();
@@ -277,44 +268,44 @@ export const CasualMultiplayerRoom: React.FC<{
   const winner = myScore > opponentScore ? 'you' : myScore < opponentScore ? 'opponent' : 'draw';
 
   return (
-    <div className="max-w-xl mx-auto py-4 px-3 flex flex-col items-center">
+    <div className="max-w-xl mx-auto py-6 px-4 flex flex-col items-center animate-in fade-in">
       {/* Header */}
       <div className="w-full flex items-center justify-between mb-4 pb-3 border-b border-arena-border">
         <button
           onClick={onBack}
-          className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white"
+          className="flex items-center gap-1.5 text-xs font-medium text-arena-textSecondary hover:text-arena-textPrimary"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Casual Hub</span>
         </button>
         <div className="text-center">
           <div className="flex items-center justify-center gap-1.5">
-            <Swords className="w-4 h-4 text-violet-400" />
-            <h2 className="text-base font-black text-white">Quick Math Clash</h2>
+            <Swords className="w-4 h-4 text-arena-blue" />
+            <h2 className="text-sm font-bold text-arena-textPrimary">Quick Math Clash</h2>
           </div>
-          <span className="text-[10px] text-cyan-400 font-mono font-bold">ROOM {roomCode}</span>
+          <span className="text-[10px] text-arena-teal font-mono font-bold">ROOM {roomCode}</span>
         </div>
         <button
           onClick={handleCopyLink}
-          className="p-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white"
+          className="p-1.5 rounded-lg bg-arena-surface border border-arena-border text-arena-textSecondary hover:text-arena-textPrimary"
           title="Copy Room Link"
         >
-          {copiedLink ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+          {copiedLink ? <Check className="w-4 h-4 text-arena-teal" /> : <Copy className="w-4 h-4" />}
         </button>
       </div>
 
-      {/* LOBBY STATE (Waiting for match to begin) */}
+      {/* LOBBY STATE */}
       {!matchStarted && !matchEnded && (
         <div className="w-full space-y-4">
           {/* Invite Bar */}
-          <div className="p-4 rounded-2xl bg-slate-900/90 border border-violet-500/30 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="p-4 rounded-xl bg-arena-surface border border-arena-border flex flex-col sm:flex-row items-center justify-between gap-3">
             <div>
-              <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                <Users className="w-4 h-4 text-cyan-400" />
-                <span>Invite a Friend to Duel</span>
+              <span className="text-xs font-bold text-arena-textPrimary flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-arena-blue" />
+                <span>Invite a Friend to Clash</span>
               </span>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                Share this link or room code. They can join as a guest instantly!
+              <p className="text-[11px] text-arena-textSecondary mt-0.5">
+                Opponents can join with room code or URL directly as guests.
               </p>
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -322,11 +313,11 @@ export const CasualMultiplayerRoom: React.FC<{
                 type="text"
                 readOnly
                 value={inviteUrl}
-                className="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-300 font-mono w-full sm:w-44 truncate"
+                className="bg-arena-elevated border border-arena-border rounded-lg px-2.5 py-1 text-xs text-arena-textPrimary font-mono w-full sm:w-44 truncate"
               />
               <button
                 onClick={handleCopyLink}
-                className="btn-cyan py-1.5 px-3 text-xs gap-1.5 whitespace-nowrap"
+                className="btn-primary py-1 px-3 text-xs gap-1.5 whitespace-nowrap"
               >
                 {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copiedLink ? 'Copied' : 'Copy'}</span>
@@ -334,52 +325,50 @@ export const CasualMultiplayerRoom: React.FC<{
             </div>
           </div>
 
-          {/* Player Cards 1v1 */}
+          {/* 1v1 Cards */}
           <div className="grid grid-cols-2 gap-3">
-            {/* Player 1 (You) */}
-            <div className={`p-4 rounded-2xl border text-center transition-all ${
-              myReady ? 'bg-emerald-950/40 border-emerald-500/50' : 'bg-slate-900 border-slate-800'
+            <div className={`p-4 rounded-xl border text-center transition-all ${
+              myReady ? 'bg-arena-elevated border-arena-success' : 'bg-arena-surface border-arena-border'
             }`}>
               <img 
                 src={user.avatar} 
                 alt={user.username} 
-                className="w-12 h-12 rounded-full object-cover mx-auto mb-2 border-2 border-violet-500" 
+                className="w-12 h-12 rounded-lg object-cover mx-auto mb-2 border border-arena-border" 
               />
-              <div className="font-bold text-sm text-white truncate">{user.displayName}</div>
-              <div className="text-[10px] text-slate-400">@{user.username} (You)</div>
+              <div className="font-bold text-xs text-arena-textPrimary truncate">{user.displayName}</div>
+              <div className="text-[10px] text-arena-textSubtle">@{user.username} (You)</div>
               
               <div className="mt-3">
                 <button
                   onClick={handleToggleReady}
-                  className={`w-full py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  className={`w-full py-1.5 rounded-lg text-xs font-semibold transition-all ${
                     myReady 
-                      ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30' 
+                      ? 'bg-arena-success text-slate-950 font-bold' 
                       : 'btn-primary'
                   }`}
                 >
-                  {myReady ? '✓ Ready!' : 'Ready Up'}
+                  {myReady ? '✓ Ready' : 'Ready Up'}
                 </button>
               </div>
             </div>
 
-            {/* Player 2 (Opponent or Waiting) */}
-            <div className={`p-4 rounded-2xl border text-center transition-all ${
+            <div className={`p-4 rounded-xl border text-center transition-all ${
               opponent 
-                ? opponentReady ? 'bg-emerald-950/40 border-emerald-500/50' : 'bg-slate-900 border-slate-800'
-                : 'bg-slate-900/40 border-dashed border-slate-800'
+                ? opponentReady ? 'bg-arena-elevated border-arena-success' : 'bg-arena-surface border-arena-border'
+                : 'bg-arena-surface border-dashed border-arena-border'
             }`}>
               {opponent ? (
                 <>
                   <img 
                     src={opponent.avatar} 
                     alt={opponent.username} 
-                    className="w-12 h-12 rounded-full object-cover mx-auto mb-2 border-2 border-cyan-500" 
+                    className="w-12 h-12 rounded-lg object-cover mx-auto mb-2 border border-arena-border" 
                   />
-                  <div className="font-bold text-sm text-white truncate">{opponent.username}</div>
-                  <div className="text-[10px] text-slate-400">Opponent Connected</div>
+                  <div className="font-bold text-xs text-arena-textPrimary truncate">{opponent.username}</div>
+                  <div className="text-[10px] text-arena-textSubtle">Opponent Connected</div>
                   <div className="mt-3">
-                    <span className={`inline-block px-3 py-1.5 rounded-xl text-xs font-bold ${
-                      opponentReady ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-800 text-slate-400'
+                    <span className={`inline-block px-3 py-1 rounded-md text-xs font-semibold ${
+                      opponentReady ? 'bg-arena-success text-slate-950 font-bold' : 'bg-arena-elevated text-arena-textSubtle'
                     }`}>
                       {opponentReady ? '✓ Ready' : 'Waiting...'}
                     </span>
@@ -387,39 +376,38 @@ export const CasualMultiplayerRoom: React.FC<{
                 </>
               ) : (
                 <div className="py-4 space-y-2">
-                  <div className="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center mx-auto text-slate-500 animate-pulse">
-                    <Users className="w-5 h-5" />
+                  <div className="w-10 h-10 rounded-lg bg-arena-elevated border border-arena-border flex items-center justify-center mx-auto text-arena-textSubtle animate-pulse">
+                    <Users className="w-4 h-4" />
                   </div>
-                  <div className="text-xs font-bold text-slate-400">Waiting for friend...</div>
-                  <p className="text-[10px] text-slate-500">Open another tab with the link to test dueling yourself!</p>
+                  <div className="text-xs font-medium text-arena-textSecondary">Waiting for opponent...</div>
+                  <p className="text-[10px] text-arena-textSubtle">Open a 2nd tab with the link to test dueling yourself</p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Join Another Room Form */}
-          <form onSubmit={handleJoinCustomCode} className="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex gap-2">
+          <form onSubmit={handleJoinCustomCode} className="p-2.5 rounded-xl bg-arena-surface border border-arena-border flex gap-2">
             <input
               type="text"
               value={inputCode}
               onChange={(e) => setInputCode(e.target.value)}
-              placeholder="Have a room code? e.g. MATH-4812"
-              className="flex-1 bg-transparent text-xs text-white px-2 focus:outline-none"
+              placeholder="Join existing room: e.g. MATH-4812"
+              className="flex-1 bg-transparent text-xs text-arena-textPrimary px-2 focus:outline-none"
             />
-            <button type="submit" className="btn-secondary py-1.5 px-3 text-xs font-bold">
-              Join Room
+            <button type="submit" className="btn-secondary py-1 px-3 text-xs font-medium">
+              Join
             </button>
           </form>
         </div>
       )}
 
-      {/* COUNTDOWN OVERLAY */}
+      {/* COUNTDOWN */}
       {countdown !== null && (
-        <div className="my-10 text-center animate-in zoom-in-50">
-          <span className="text-xs font-black text-cyan-400 uppercase tracking-widest block mb-1">
-            MATCH STARTING IN
+        <div className="my-8 text-center animate-in zoom-in-50">
+          <span className="text-[10px] font-bold text-arena-blue uppercase tracking-widest block mb-1">
+            CLASH STARTING
           </span>
-          <div className="text-7xl font-black text-white font-mono animate-bounce">
+          <div className="text-6xl font-black text-arena-textPrimary font-mono animate-bounce">
             {countdown}
           </div>
         </div>
@@ -428,51 +416,41 @@ export const CasualMultiplayerRoom: React.FC<{
       {/* LIVE DUEL STATE */}
       {matchStarted && (
         <div className="w-full space-y-4">
-          {/* Live Progress Duel Header */}
-          <div className="p-4 rounded-2xl bg-slate-900 border border-arena-border space-y-3">
-            <div className="flex items-center justify-between text-xs font-bold">
-              <span className="text-violet-400 flex items-center gap-1.5">
-                <img src={user.avatar} className="w-4 h-4 rounded-full" alt="" />
-                <span>You: {myScore} pts</span>
-              </span>
-              <span className="flex items-center gap-1 text-cyan-400 font-mono text-sm">
-                <Timer className="w-4 h-4" />
+          <div className="p-4 rounded-xl bg-arena-surface border border-arena-border space-y-2.5">
+            <div className="flex items-center justify-between text-xs font-medium">
+              <span className="text-arena-blue font-bold">You: {myScore} pts</span>
+              <span className="flex items-center gap-1 text-arena-teal font-mono font-bold">
+                <Timer className="w-3.5 h-3.5" />
                 <span>{timeLeft}s</span>
               </span>
-              <span className="text-cyan-400 flex items-center gap-1.5">
-                <span>{opponent ? opponent.username : 'Opponent'}: {opponentScore} pts</span>
-                {opponent && <img src={opponent.avatar} className="w-4 h-4 rounded-full" alt="" />}
-              </span>
+              <span className="text-arena-teal font-bold">{opponent ? opponent.username : 'Opponent'}: {opponentScore} pts</span>
             </div>
 
-            {/* Dual Score Bars */}
-            <div className="w-full h-3 rounded-full bg-slate-950 overflow-hidden flex">
+            <div className="w-full h-2 rounded-full bg-arena-elevated overflow-hidden flex">
               <div 
-                className="h-full bg-gradient-to-r from-violet-600 to-indigo-500 transition-all duration-300"
+                className="h-full bg-arena-blue transition-all duration-300"
                 style={{ width: `${Math.min(100, (myScore / 1500) * 100)}%` }}
               />
               <div 
-                className="h-full bg-gradient-to-l from-cyan-500 to-teal-500 transition-all duration-300 ml-auto"
+                className="h-full bg-arena-teal transition-all duration-300 ml-auto"
                 style={{ width: `${Math.min(100, (opponentScore / 1500) * 100)}%` }}
               />
             </div>
           </div>
 
-          {/* Active Question */}
-          <div className="p-6 rounded-3xl bg-slate-900 border border-violet-500/30 text-center">
-            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">CALCULATE RAPIDLY</span>
-            <div className="text-4xl sm:text-5xl font-black text-white my-3 font-mono">
+          <div className="p-6 rounded-xl bg-arena-surface border border-arena-border text-center">
+            <span className="text-[10px] text-arena-textSubtle font-semibold uppercase tracking-wider">CALCULATE RAPIDLY</span>
+            <div className="text-3xl sm:text-4xl font-extrabold text-arena-textPrimary my-3 font-mono">
               {questions[qIndex].question} = ?
             </div>
           </div>
 
-          {/* Options */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2.5">
             {questions[qIndex].options.map((opt, i) => (
               <button
                 key={i}
                 onClick={() => handleAnswer(opt)}
-                className="p-5 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-violet-500/40 text-2xl font-black text-white font-mono active:scale-95 shadow-md"
+                className="p-4 rounded-lg bg-arena-surface hover:bg-arena-elevated border border-arena-border text-xl font-bold text-arena-textPrimary font-mono active:scale-98"
               >
                 {opt}
               </button>
@@ -481,19 +459,19 @@ export const CasualMultiplayerRoom: React.FC<{
         </div>
       )}
 
-      {/* MATCH RESULT STATE */}
+      {/* MATCH RESULT */}
       {matchEnded && (
-        <div className="w-full p-6 rounded-3xl bg-slate-900 border border-violet-500/30 text-center space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-violet-600/20 text-violet-400 flex items-center justify-center mx-auto">
-            <Trophy className="w-7 h-7" />
+        <div className="w-full p-6 rounded-xl bg-arena-surface border border-arena-border text-center space-y-4">
+          <div className="w-10 h-10 rounded-lg bg-arena-elevated border border-arena-border text-arena-blue flex items-center justify-center mx-auto">
+            <Trophy className="w-5 h-5" />
           </div>
 
           <div>
-            <h3 className="text-2xl font-black text-white">
-              {winner === 'you' ? '🏆 VICTORY!' : winner === 'opponent' ? 'DEFEAT' : 'TIED MATCH'}
+            <h3 className="text-xl font-bold text-arena-textPrimary">
+              {winner === 'you' ? 'Victory' : winner === 'opponent' ? 'Defeat' : 'Tied Clash'}
             </h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Final Score: You ({myScore}) vs {opponent?.username || 'Opponent'} ({opponentScore})
+            <p className="text-xs text-arena-textSecondary mt-1">
+              Final: You ({myScore}) vs {opponent?.username || 'Opponent'} ({opponentScore})
             </p>
           </div>
 
@@ -510,7 +488,7 @@ export const CasualMultiplayerRoom: React.FC<{
                 setQIndex(0);
                 setTimeLeft(45);
               }}
-              className="btn-secondary flex-1 py-2.5 text-xs font-bold"
+              className="btn-secondary flex-1 py-2 text-xs font-semibold"
             >
               Rematch
             </button>
@@ -518,19 +496,19 @@ export const CasualMultiplayerRoom: React.FC<{
               onClick={() => {
                 openShareModal({
                   title: 'Multiplayer Clash',
-                  gameOrBattle: 'Quick Math 1v1 Clash',
-                  scoreOrResult: winner === 'you' ? 'Victory 🏆' : `${myScore} Points`,
-                  subtitle: `Duels Score: ${myScore} vs ${opponentScore}`,
+                  gameOrBattle: 'Quick Math Clash',
+                  scoreOrResult: winner === 'you' ? 'Victory' : `${myScore} Points`,
+                  subtitle: `Final: ${myScore} vs ${opponentScore}`,
                   customStats: [
                     { label: 'Your Score', value: `${myScore} pts` },
-                    { label: 'Opponent Score', value: `${opponentScore} pts` }
+                    { label: 'Opponent', value: `${opponentScore} pts` }
                   ]
                 });
               }}
-              className="btn-primary flex-1 py-2.5 text-xs gap-1.5 font-bold"
+              className="btn-primary flex-1 py-2 text-xs gap-1.5 font-semibold"
             >
               <Share2 className="w-3.5 h-3.5" />
-              <span>Share Duel</span>
+              <span>Share Result</span>
             </button>
           </div>
         </div>
@@ -538,4 +516,3 @@ export const CasualMultiplayerRoom: React.FC<{
     </div>
   );
 };
-

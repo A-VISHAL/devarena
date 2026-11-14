@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, RefreshCw, Share2, Compass, Trophy, Check, X, HelpCircle, Lightbulb } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Share2, Compass, Trophy, Check, X, Lightbulb } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { sound } from '../../utils/sound';
 import confetti from 'canvas-confetti';
@@ -54,7 +54,7 @@ const LOGIC_PUZZLES: LogicPuzzle[] = [
       'Fold rope 1 in half and burn from the center'
     ],
     answer: 'Light rope 1 from one end, and rope 2 from both ends simultaneously',
-    explanation: 'Rope 2 burning from both ends finishes in exactly 30 minutes. At that exact moment, light the other end of Rope 1 (which had 30 minutes of burn left, now burning from both ends, taking 15 minutes). 30 + 15 = 45 minutes!'
+    explanation: 'Rope 2 burning from both ends finishes in exactly 30 minutes. At that exact moment, light the other end of Rope 1 (which had 30 minutes of burn left, now burning from both ends, taking 15 minutes). 30 + 15 = 45 minutes.'
   },
   {
     id: 'lp-5',
@@ -67,7 +67,7 @@ const LOGIC_PUZZLES: LogicPuzzle[] = [
       'Both are Knaves'
     ],
     answer: 'A is a Knight, B is a Knave',
-    explanation: 'If A were a Knave, his statement would be false, meaning neither is a knave (both knights), contradiction! Thus A must be a Knight telling the truth. Since at least one is a knave and A is a knight, B must be a Knave.'
+    explanation: 'If A were a Knave, his statement would be false, meaning neither is a knave (both knights), which is a contradiction. Thus A must be a Knight telling the truth. Since at least one is a knave and A is a knight, B must be a Knave.'
   }
 ];
 
@@ -105,7 +105,7 @@ export const LogicSprint: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     if (currentIndex + 1 >= LOGIC_PUZZLES.length) {
       sound.playVictory();
       setGameOver(true);
-      confetti({ particleCount: 75, spread: 65 });
+      confetti({ particleCount: 65, spread: 60 });
       recordCasualGameResult('logic-sprint', score);
     } else {
       setCurrentIndex(prev => prev + 1);
@@ -127,9 +127,9 @@ export const LogicSprint: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const handleShare = () => {
     openShareModal({
       title: 'Logic Sprint',
-      gameOrBattle: 'Logic Sprint Reasoning Sprint',
+      gameOrBattle: 'Logic Sprint',
       scoreOrResult: `${score} Points`,
-      subtitle: `${correctCount}/${LOGIC_PUZZLES.length} Logic Puzzles Solved`,
+      subtitle: `${correctCount}/${LOGIC_PUZZLES.length} Puzzles Solved`,
       customStats: [
         { label: 'Score', value: String(score) },
         { label: 'Accuracy', value: `${correctCount}/${LOGIC_PUZZLES.length}` }
@@ -138,21 +138,21 @@ export const LogicSprint: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   };
 
   return (
-    <div className="max-w-md mx-auto py-4 px-3 flex flex-col items-center">
+    <div className="max-w-md mx-auto py-6 px-4 flex flex-col items-center animate-in fade-in">
       {/* Header */}
       <div className="w-full flex items-center justify-between mb-4 pb-3 border-b border-arena-border">
         <button
           onClick={onBack}
-          className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white"
+          className="flex items-center gap-1.5 text-xs font-medium text-arena-textSecondary hover:text-arena-textPrimary"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>All Games</span>
         </button>
         <div className="text-center">
-          <h2 className="text-base font-black text-white">Logic Sprint</h2>
-          <span className="text-[10px] text-slate-400">Puzzle {currentIndex + 1} of {LOGIC_PUZZLES.length}</span>
+          <h2 className="text-sm font-bold text-arena-textPrimary">Logic Sprint</h2>
+          <span className="text-[11px] text-arena-textSubtle">Puzzle {currentIndex + 1} of {LOGIC_PUZZLES.length}</span>
         </div>
-        <button onClick={handleRestart} className="p-1.5 text-slate-400 hover:text-white">
+        <button onClick={handleRestart} className="p-1.5 text-arena-textSecondary hover:text-arena-textPrimary">
           <RefreshCw className="w-4 h-4" />
         </button>
       </div>
@@ -160,15 +160,15 @@ export const LogicSprint: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       {!gameOver ? (
         <div className="w-full space-y-4">
           {/* Scenario Card */}
-          <div className="p-5 rounded-2xl bg-slate-900 border border-arena-border space-y-3">
-            <div className="flex items-center gap-2 text-xs font-bold text-violet-400 uppercase tracking-wider">
-              <Compass className="w-4 h-4" />
+          <div className="p-4 rounded-xl bg-arena-surface border border-arena-border space-y-2.5">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-arena-blue uppercase tracking-wider">
+              <Compass className="w-3.5 h-3.5" />
               <span>Premise & Scenario</span>
             </div>
-            <p className="text-sm text-slate-200 leading-relaxed font-medium">
+            <p className="text-xs text-arena-textPrimary leading-relaxed">
               {currentPuzzle.scenario}
             </p>
-            <div className="pt-2 border-t border-slate-800 text-xs font-bold text-white">
+            <div className="pt-2 border-t border-arena-border text-xs font-bold text-arena-textPrimary">
               {currentPuzzle.question}
             </div>
           </div>
@@ -179,15 +179,15 @@ export const LogicSprint: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               const isSelected = selectedOption === opt;
               const isCorrectOpt = opt === currentPuzzle.answer;
 
-              let btnClass = 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-slate-200';
+              let btnClass = 'bg-arena-surface hover:bg-arena-elevated border-arena-border text-arena-textPrimary';
 
               if (isAnswered) {
                 if (isCorrectOpt) {
-                  btnClass = 'bg-emerald-600/30 border-emerald-500 text-emerald-200';
+                  btnClass = 'bg-arena-success text-slate-950 font-bold border-arena-success';
                 } else if (isSelected && !isCorrectOpt) {
-                  btnClass = 'bg-rose-600/30 border-rose-500 text-rose-200';
+                  btnClass = 'bg-arena-error/20 border-arena-error text-arena-error';
                 } else {
-                  btnClass = 'bg-slate-900/50 border-slate-800 text-slate-500';
+                  btnClass = 'bg-arena-surface opacity-40 border-arena-border text-arena-textSubtle';
                 }
               }
 
@@ -196,11 +196,11 @@ export const LogicSprint: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   key={idx}
                   onClick={() => handleSelectOption(opt)}
                   disabled={isAnswered}
-                  className={`w-full p-3.5 rounded-xl border text-left text-xs font-semibold flex items-center justify-between gap-3 transition-all ${btnClass}`}
+                  className={`w-full p-3 rounded-lg border text-left text-xs font-medium flex items-center justify-between gap-3 transition-all ${btnClass}`}
                 >
                   <span>{opt}</span>
-                  {isAnswered && isCorrectOpt && <Check className="w-4 h-4 text-emerald-400 shrink-0" />}
-                  {isAnswered && isSelected && !isCorrectOpt && <X className="w-4 h-4 text-rose-400 shrink-0" />}
+                  {isAnswered && isCorrectOpt && <Check className="w-4 h-4 text-slate-950 shrink-0" />}
+                  {isAnswered && isSelected && !isCorrectOpt && <X className="w-4 h-4 text-arena-error shrink-0" />}
                 </button>
               );
             })}
@@ -208,43 +208,43 @@ export const LogicSprint: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
           {/* Explanation drawer */}
           {isAnswered && (
-            <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 animate-in fade-in space-y-2">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-cyan-400">
-                <Lightbulb className="w-4 h-4" />
-                <span>Deduction Breakdown:</span>
+            <div className="p-3.5 rounded-lg bg-arena-surface border border-arena-border animate-in fade-in space-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-arena-teal">
+                <Lightbulb className="w-3.5 h-3.5" />
+                <span>Deduction:</span>
               </div>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <p className="text-xs text-arena-textSecondary leading-relaxed">
                 {currentPuzzle.explanation}
               </p>
               <button
                 onClick={handleNext}
-                className="w-full btn-primary py-2 text-xs font-bold mt-2"
+                className="w-full btn-primary py-2 text-xs font-medium mt-1"
               >
-                {currentIndex + 1 < LOGIC_PUZZLES.length ? 'Next Logic Puzzle ➜' : 'View Sprint Results'}
+                {currentIndex + 1 < LOGIC_PUZZLES.length ? 'Next Logic Puzzle ➜' : 'View Results'}
               </button>
             </div>
           )}
         </div>
       ) : (
         /* Game Over */
-        <div className="w-full p-6 rounded-3xl bg-slate-900 border border-violet-500/30 text-center space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-violet-600/20 text-violet-400 flex items-center justify-center mx-auto">
-            <Trophy className="w-7 h-7" />
+        <div className="w-full p-6 rounded-xl bg-arena-surface border border-arena-border text-center space-y-4">
+          <div className="w-10 h-10 rounded-lg bg-arena-elevated border border-arena-border text-arena-blue flex items-center justify-center mx-auto">
+            <Trophy className="w-5 h-5" />
           </div>
 
           <div>
-            <span className="text-xs uppercase font-bold text-slate-400">LOGIC SPRINT FINISHED</span>
-            <div className="text-4xl font-black text-white mt-1">{score} Points</div>
-            <p className="text-xs text-slate-400 mt-1">
+            <span className="text-[10px] uppercase font-semibold text-arena-textSubtle">LOGIC SPRINT COMPLETE</span>
+            <div className="text-3xl font-extrabold text-arena-textPrimary mt-1">{score} Points</div>
+            <p className="text-xs text-arena-textSecondary mt-1">
               Solved {correctCount} of {LOGIC_PUZZLES.length} puzzles correctly.
             </p>
           </div>
 
           <div className="flex gap-2 pt-2">
-            <button onClick={handleRestart} className="btn-secondary flex-1 py-2.5 text-xs">
+            <button onClick={handleRestart} className="btn-secondary flex-1 py-2 text-xs">
               Play Again
             </button>
-            <button onClick={handleShare} className="btn-primary flex-1 py-2.5 text-xs gap-1.5">
+            <button onClick={handleShare} className="btn-primary flex-1 py-2 text-xs gap-1.5">
               <Share2 className="w-3.5 h-3.5" />
               <span>Share Score</span>
             </button>
@@ -254,4 +254,3 @@ export const LogicSprint: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     </div>
   );
 };
-

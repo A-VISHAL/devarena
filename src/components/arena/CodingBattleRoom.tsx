@@ -6,18 +6,15 @@ import {
   Send, 
   CheckCircle2, 
   XCircle, 
-  Clock, 
   Timer, 
   Swords, 
   Trophy, 
   Share2, 
   Copy, 
   Check, 
-  Users, 
-  AlertCircle,
-  Terminal,
-  Code2,
-  Sparkles
+  Terminal, 
+  Code2, 
+  AlertCircle 
 } from 'lucide-react';
 import { CodingProblem, BattleParticipant } from '../../types';
 import { useApp } from '../../context/AppContext';
@@ -39,21 +36,17 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
 }) => {
   const { user, recordCodingBattleResult, openShareModal } = useApp();
 
-  // Language & Code state
   const [language, setLanguage] = useState<'javascript' | 'typescript' | 'python'>('javascript');
   const [code, setCode] = useState<string>(problem.starterCode.javascript);
 
-  // Match & Lobby state
   const [roomStatus, setRoomStatus] = useState<'lobby' | 'countdown' | 'battle' | 'ended'>('lobby');
-  const [timeRemaining, setTimeRemaining] = useState<number>(900); // 15 mins
+  const [timeRemaining, setTimeRemaining] = useState<number>(900);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
 
-  // Participants
   const [myReady, setMyReady] = useState<boolean>(false);
   const [opponent, setOpponent] = useState<BattleParticipant | null>(null);
 
-  // Execution & Submission
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [execReport, setExecReport] = useState<ExecutionReport | null>(null);
@@ -64,7 +57,6 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
     timeTaken: number;
   } | null>(null);
 
-  // Opponent submission
   const [opponentSubmission, setOpponentSubmission] = useState<{
     passed: boolean;
     testsPassed: number;
@@ -72,7 +64,6 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
     timeTaken: number;
   } | null>(null);
 
-  // Final Battle Result
   const [battleWinner, setBattleWinner] = useState<{
     winner: 'you' | 'opponent' | 'draw';
     reason: string;
@@ -82,14 +73,12 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
 
   const startTimeRef = useRef<number>(0);
 
-  // Update starter code when language switches
   const handleLanguageChange = (newLang: 'javascript' | 'typescript' | 'python') => {
     sound.playClick();
     setLanguage(newLang);
     setCode(problem.starterCode[newLang]);
   };
 
-  // Sync Engine Setup
   useEffect(() => {
     syncEngine.joinRoom(battleId, {
       id: user.id,
@@ -114,7 +103,6 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
         });
         sound.playCorrect();
 
-        // Acknowledge back
         syncEngine.send('battle_ack', {
           user: {
             id: user.id,
@@ -220,7 +208,6 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
     }
   };
 
-  // Timer during active battle
   useEffect(() => {
     if (roomStatus !== 'battle') return;
 
@@ -238,7 +225,6 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
     return () => clearInterval(timer);
   }, [roomStatus, mySubmission, opponentSubmission]);
 
-  // Code editor keystroke listener to sync typing status
   const handleCodeChange = (newCode?: string) => {
     if (newCode !== undefined) {
       setCode(newCode);
@@ -249,7 +235,6 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
     }
   };
 
-  // Run Sample Tests (Visible test cases only)
   const handleRunSampleTests = async () => {
     sound.playClick();
     setIsRunning(true);
@@ -259,11 +244,8 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
     setExecReport(report);
     setIsRunning(false);
 
-    if (report.allPassed) {
-      sound.playCorrect();
-    } else {
-      sound.playWrong();
-    }
+    if (report.allPassed) sound.playCorrect();
+    else sound.playWrong();
 
     syncEngine.send('battle_status_update', {
       userId: user.id,
@@ -272,7 +254,6 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
     });
   };
 
-  // Submit Solution (Judges against ALL test cases including hidden)
   const handleSubmitSolution = async () => {
     sound.playClick();
     setIsSubmitting(true);
@@ -296,19 +277,14 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
       submission: sub
     });
 
-    if (report.allPassed) {
-      sound.playVictory();
-    } else {
-      sound.playWrong();
-    }
+    if (report.allPassed) sound.playVictory();
+    else sound.playWrong();
 
-    // Check if battle should conclude
     if (opponentSubmission || report.allPassed) {
       evaluateFinalWinner(sub, opponentSubmission);
     }
   };
 
-  // Final winner evaluation using official rules
   const evaluateFinalWinner = (
     mySub: typeof mySubmission,
     oppSub: typeof opponentSubmission
@@ -323,24 +299,22 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
 
     if (mySub?.passed && !oppSub?.passed) {
       winner = 'you';
-      reason = 'You solved all test cases first!';
+      reason = 'You solved all test cases first.';
     } else if (!mySub?.passed && oppSub?.passed) {
       winner = 'opponent';
-      reason = `${oppName} solved all test cases!`;
+      reason = `${oppName} solved all test cases.`;
     } else if (mySub?.passed && oppSub?.passed) {
-      // Both passed: fastest submission wins!
       if (mySub.timeTaken < oppSub.timeTaken) {
         winner = 'you';
-        reason = `Both solved correctly! You submitted ${oppSub.timeTaken - mySub.timeTaken}s faster.`;
+        reason = `Both solved correctly. You submitted ${oppSub.timeTaken - mySub.timeTaken}s faster.`;
       } else if (mySub.timeTaken > oppSub.timeTaken) {
         winner = 'opponent';
-        reason = `Both solved correctly! ${oppName} submitted ${mySub.timeTaken - oppSub.timeTaken}s faster.`;
+        reason = `Both solved correctly. ${oppName} submitted ${mySub.timeTaken - oppSub.timeTaken}s faster.`;
       } else {
         winner = 'draw';
-        reason = 'Tied execution time and test results!';
+        reason = 'Tied execution time and test case results.';
       }
     } else {
-      // Neither passed all: most test cases passed wins
       const myCount = mySub?.testsPassed || 0;
       const oppCount = oppSub?.testsPassed || 0;
       if (myCount > oppCount) {
@@ -367,7 +341,7 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
     setBattleWinner({ winner, reason, newRating, ratingDelta });
 
     if (winner === 'you') {
-      confetti({ particleCount: 100, spread: 80 });
+      confetti({ particleCount: 80, spread: 70 });
     }
   };
 
@@ -387,26 +361,26 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col bg-arena-bg">
+    <div className="h-[calc(100vh-3.5rem)] flex flex-col bg-arena-bg">
       {/* Top Battle Header */}
-      <div className="h-14 px-4 bg-arena-surface border-b border-arena-border flex items-center justify-between shrink-0">
+      <div className="h-12 px-4 bg-arena-surface border-b border-arena-border flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="flex items-center gap-1 text-xs font-semibold text-slate-400 hover:text-white"
+            className="flex items-center gap-1 text-xs font-medium text-arena-textSecondary hover:text-arena-textPrimary"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Exit Arena</span>
+            <span className="hidden sm:inline">Exit</span>
           </button>
-          <div className="h-4 w-px bg-slate-800" />
-          <h2 className="font-extrabold text-sm text-white flex items-center gap-2">
+          <div className="h-3.5 w-px bg-arena-border" />
+          <h2 className="font-bold text-xs text-arena-textPrimary flex items-center gap-2">
             <span>{problem.title}</span>
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+            <span className={`text-[10px] font-semibold px-1.5 py-0.2 rounded ${
               problem.difficulty === 'Easy' 
-                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                ? 'bg-arena-success/15 text-arena-success'
                 : problem.difficulty === 'Medium'
-                ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
-                : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                ? 'bg-arena-warning/15 text-arena-warning'
+                : 'bg-arena-error/15 text-arena-error'
             }`}>
               {problem.difficulty}
             </span>
@@ -414,9 +388,9 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
         </div>
 
         {/* Center Countdown / Timer */}
-        <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-slate-900 border border-slate-800 font-mono text-sm font-bold">
-          <Timer className="w-4 h-4 text-cyan-400" />
-          <span className={timeRemaining < 120 ? 'text-rose-400 animate-pulse' : 'text-slate-200'}>
+        <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-arena-elevated border border-arena-border font-mono text-xs font-semibold">
+          <Timer className="w-3.5 h-3.5 text-arena-teal" />
+          <span className={timeRemaining < 120 ? 'text-arena-error animate-pulse' : 'text-arena-textPrimary'}>
             {formatTimer(timeRemaining)}
           </span>
         </div>
@@ -426,10 +400,10 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
           {roomStatus === 'lobby' && (
             <button
               onClick={handleCopyLink}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700"
+              className="btn-secondary py-1 px-2.5 text-xs gap-1.5"
             >
-              {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copiedLink ? 'Link Copied' : 'Invite Friend'}</span>
+              {copiedLink ? <Check className="w-3.5 h-3.5 text-arena-teal" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copiedLink ? 'Copied' : 'Invite'}</span>
             </button>
           )}
 
@@ -438,15 +412,15 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
               <button
                 onClick={handleRunSampleTests}
                 disabled={isRunning || isSubmitting}
-                className="btn-secondary py-1.5 px-3 text-xs gap-1.5"
+                className="btn-secondary py-1 px-2.5 text-xs gap-1.5"
               >
-                <Play className="w-3.5 h-3.5 text-emerald-400 fill-emerald-400" />
-                <span>{isRunning ? 'Running...' : 'Run Tests'}</span>
+                <Play className="w-3.5 h-3.5 text-arena-teal fill-current" />
+                <span>{isRunning ? 'Running...' : 'Run'}</span>
               </button>
               <button
                 onClick={handleSubmitSolution}
                 disabled={isRunning || isSubmitting || mySubmission?.passed}
-                className="btn-primary py-1.5 px-3.5 text-xs gap-1.5 font-bold"
+                className="btn-primary py-1 px-3 text-xs gap-1.5 font-medium"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>{isSubmitting ? 'Judging...' : mySubmission?.passed ? 'Passed ✓' : 'Submit'}</span>
@@ -456,45 +430,41 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
         </div>
       </div>
 
-      {/* LOBBY / PRE-MATCH BANNER */}
+      {/* LOBBY BANNER */}
       {roomStatus === 'lobby' && (
-        <div className="p-4 bg-gradient-to-r from-violet-950/60 via-slate-900 to-cyan-950/60 border-b border-violet-500/20 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="p-3.5 bg-arena-elevated border-b border-arena-border flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-violet-600/20 border border-violet-500/40 flex items-center justify-center text-violet-400">
-              <Swords className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-arena-surface border border-arena-border flex items-center justify-center text-arena-blue">
+              <Swords className="w-4 h-4" />
             </div>
             <div>
-              <div className="font-bold text-sm text-white">Live 1v1 Battle Lobby</div>
-              <p className="text-xs text-slate-400">
+              <div className="font-bold text-xs text-arena-textPrimary">1v1 Battle Lobby</div>
+              <p className="text-[11px] text-arena-textSecondary">
                 {opponent 
-                  ? `${opponent.username} is connected! Click "Ready Up" when prepared.` 
-                  : 'Share the battle link with a friend or test in a second tab!'}
+                  ? `${opponent.username} is connected. Click "Ready" when prepared.` 
+                  : 'Share the battle link with an opponent or open another tab to duel.'}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <button
-              onClick={handleToggleReady}
-              className={`flex-1 sm:flex-none px-5 py-2 rounded-xl text-xs font-extrabold transition-all ${
-                myReady 
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' 
-                  : 'btn-primary'
-              }`}
-            >
-              {myReady ? '✓ You Are Ready' : 'Ready Up'}
-            </button>
-          </div>
+          <button
+            onClick={handleToggleReady}
+            className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              myReady ? 'bg-arena-success text-slate-950 font-bold' : 'btn-primary'
+            }`}
+          >
+            {myReady ? '✓ Ready' : 'Ready Up'}
+          </button>
         </div>
       )}
 
       {/* COUNTDOWN OVERLAY */}
       {countdown !== null && (
-        <div className="absolute inset-0 z-50 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center animate-in fade-in">
-          <span className="text-xs font-black text-cyan-400 uppercase tracking-widest mb-2">
+        <div className="absolute inset-0 z-50 bg-arena-bg/90 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in">
+          <span className="text-[10px] font-bold text-arena-blue uppercase tracking-widest mb-1">
             BATTLE STARTING
           </span>
-          <div className="text-8xl font-black text-white font-mono animate-bounce">
+          <div className="text-7xl font-extrabold text-arena-textPrimary font-mono animate-bounce">
             {countdown}
           </div>
         </div>
@@ -503,77 +473,66 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
       {/* MAIN SPLIT VIEW */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         
-        {/* Left Panel: Problem Statement & Opponent Live Radar */}
-        <div className="w-full lg:w-5/12 border-r border-arena-border flex flex-col overflow-y-auto bg-arena-bg">
+        {/* Left Panel: Problem Statement & Opponent Status */}
+        <div className="w-full lg:w-5/12 border-r border-arena-border flex flex-col overflow-y-auto bg-arena-surface">
           
-          {/* Opponent Live Status Bar */}
-          <div className="p-3.5 bg-arena-surface border-b border-arena-border flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="relative">
-                <img 
-                  src={opponent ? opponent.avatar : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80'} 
-                  alt="" 
-                  className="w-8 h-8 rounded-full object-cover border border-cyan-500/50" 
-                />
-                <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-slate-900 ${
-                  opponent ? 'bg-emerald-400' : 'bg-slate-600'
-                }`} />
-              </div>
+          {/* Opponent Status */}
+          <div className="p-3 bg-arena-elevated border-b border-arena-border flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <img 
+                src={opponent ? opponent.avatar : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80'} 
+                alt="" 
+                className="w-6 h-6 rounded-md object-cover border border-arena-border" 
+              />
               <div>
-                <div className="font-bold text-xs text-white">
+                <div className="font-semibold text-xs text-arena-textPrimary">
                   {opponent ? opponent.username : 'Waiting for opponent...'}
                 </div>
-                <div className="text-[10px] text-slate-400">
-                  {opponent ? `${opponent.rating} Elo` : 'Share invite code'}
+                <div className="text-[10px] text-arena-textSubtle">
+                  {opponent ? `${opponent.rating} Elo` : 'Invite link ready'}
                 </div>
               </div>
             </div>
 
             <div className="text-right">
               {opponent?.status === 'typing' && (
-                <span className="text-[11px] font-semibold text-violet-400 animate-pulse">Typing code...</span>
+                <span className="text-[10px] font-medium text-arena-blue animate-pulse">Typing...</span>
               )}
               {opponent?.status === 'running' && (
-                <span className="text-[11px] font-semibold text-amber-400">Running tests...</span>
+                <span className="text-[10px] font-medium text-arena-teal">Running tests...</span>
               )}
               {opponent?.status === 'submitted' && (
-                <span className="text-[11px] font-bold text-emerald-400">Submitted solution!</span>
+                <span className="text-[10px] font-semibold text-arena-success">Submitted!</span>
               )}
               {(!opponent?.status || opponent?.status === 'idle') && (
-                <span className="text-[11px] text-slate-500">
-                  {opponent ? `Passed ${opponent.testsPassed}/${problem.testCases.length} tests` : 'Offline'}
+                <span className="text-[10px] text-arena-textSubtle">
+                  {opponent ? `${opponent.testsPassed}/${problem.testCases.length} passed` : 'Offline'}
                 </span>
               )}
             </div>
           </div>
 
-          {/* Problem Statement Content */}
-          <div className="p-5 space-y-5 text-sm text-slate-300">
+          {/* Description */}
+          <div className="p-4 space-y-4 text-xs text-arena-textSecondary">
             <div>
-              <h3 className="font-bold text-white text-base mb-2">Description</h3>
-              <p className="whitespace-pre-line leading-relaxed text-slate-300 text-xs sm:text-sm">
+              <h3 className="font-bold text-arena-textPrimary text-xs mb-1.5">Description</h3>
+              <p className="whitespace-pre-line leading-relaxed text-arena-textSecondary">
                 {problem.description}
               </p>
             </div>
 
             {/* Examples */}
             <div>
-              <h4 className="font-bold text-xs text-slate-400 uppercase tracking-wider mb-2.5">
+              <h4 className="font-semibold text-[11px] text-arena-textSubtle uppercase tracking-wider mb-2">
                 Examples
               </h4>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {problem.examples.map((ex, i) => (
-                  <div key={i} className="p-3 rounded-xl bg-slate-900 border border-slate-800 font-mono text-xs space-y-1">
-                    <div>
-                      <span className="text-slate-500">Input: </span>
-                      <span className="text-slate-200">{ex.input}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-500">Output: </span>
-                      <span className="text-emerald-400">{ex.output}</span>
-                    </div>
+                  <div key={i} className="p-2.5 rounded-lg bg-arena-elevated border border-arena-border font-mono text-xs space-y-0.5">
+                    <div><span className="text-arena-textSubtle">Input: </span><span className="text-arena-textPrimary">{ex.input}</span></div>
+                    <div><span className="text-arena-textSubtle">Output: </span><span className="text-arena-teal">{ex.output}</span></div>
                     {ex.explanation && (
-                      <div className="text-[11px] text-slate-400 font-sans pt-1">
+                      <div className="text-[10px] text-arena-textSecondary font-sans pt-0.5">
                         {ex.explanation}
                       </div>
                     )}
@@ -584,42 +543,36 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
 
             {/* Constraints */}
             <div>
-              <h4 className="font-bold text-xs text-slate-400 uppercase tracking-wider mb-2">
+              <h4 className="font-semibold text-[11px] text-arena-textSubtle uppercase tracking-wider mb-1.5">
                 Constraints
               </h4>
-              <ul className="list-disc list-inside space-y-1 text-xs text-slate-400 font-mono">
-                {problem.constraints.map((c, i) => (
-                  <li key={i}>{c}</li>
-                ))}
+              <ul className="list-disc list-inside space-y-0.5 text-arena-textSecondary font-mono text-[11px]">
+                {problem.constraints.map((c, i) => <li key={i}>{c}</li>)}
               </ul>
             </div>
           </div>
         </div>
 
-        {/* Right Panel: Code Editor & Console Output */}
-        <div className="w-full lg:w-7/12 flex flex-col bg-[#1e1e1e]">
+        {/* Right Panel: Editor & Console */}
+        <div className="w-full lg:w-7/12 flex flex-col bg-[#141820]">
           
-          {/* Editor Sub-header */}
-          <div className="h-10 px-4 bg-[#252526] border-b border-[#333333] flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-1 text-xs font-semibold text-slate-400">
-              <Code2 className="w-3.5 h-3.5 text-violet-400" />
+          <div className="h-9 px-4 bg-arena-surface border-b border-arena-border flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-1 text-xs font-medium text-arena-textSecondary">
+              <Code2 className="w-3.5 h-3.5 text-arena-blue" />
               <span>Solution</span>
             </div>
 
-            <div className="flex items-center gap-2">
-              <select
-                value={language}
-                onChange={(e) => handleLanguageChange(e.target.value as any)}
-                className="bg-[#1e1e1e] border border-slate-700 rounded-lg px-2 py-0.5 text-xs text-slate-200 focus:outline-none"
-              >
-                <option value="javascript">JavaScript (ES6)</option>
-                <option value="typescript">TypeScript</option>
-                <option value="python">Python 3</option>
-              </select>
-            </div>
+            <select
+              value={language}
+              onChange={(e) => handleLanguageChange(e.target.value as any)}
+              className="bg-arena-elevated border border-arena-border rounded px-2 py-0.5 text-[11px] text-arena-textPrimary focus:outline-none"
+            >
+              <option value="javascript">JavaScript (ES6)</option>
+              <option value="typescript">TypeScript</option>
+              <option value="python">Python 3</option>
+            </select>
           </div>
 
-          {/* Monaco Editor */}
           <div className="flex-1 min-h-[300px]">
             <Editor
               height="100%"
@@ -640,15 +593,15 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
           </div>
 
           {/* Test Case Output Console */}
-          <div className="h-56 bg-slate-950 border-t border-slate-800 flex flex-col">
-            <div className="h-8 px-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-xs font-semibold text-slate-400">
-              <div className="flex items-center gap-2">
-                <Terminal className="w-3.5 h-3.5 text-cyan-400" />
+          <div className="h-52 bg-arena-bg border-t border-arena-border flex flex-col">
+            <div className="h-8 px-4 bg-arena-surface border-b border-arena-border flex items-center justify-between text-xs font-medium text-arena-textSecondary">
+              <div className="flex items-center gap-1.5">
+                <Terminal className="w-3.5 h-3.5 text-arena-teal" />
                 <span>Test Execution Results</span>
               </div>
               {execReport && (
-                <span className={`text-[11px] font-bold ${
-                  execReport.allPassed ? 'text-emerald-400' : 'text-rose-400'
+                <span className={`text-[11px] font-semibold ${
+                  execReport.allPassed ? 'text-arena-success' : 'text-arena-error'
                 }`}>
                   {execReport.totalPassed} / {execReport.totalTests} Passed ({execReport.totalTimeMs} ms)
                 </span>
@@ -657,61 +610,45 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
 
             <div className="flex-1 p-3 overflow-y-auto space-y-2 text-xs font-mono">
               {!execReport ? (
-                <div className="h-full flex items-center justify-center text-slate-500 font-sans text-xs">
-                  Run or Submit your solution to see test results and execution time.
+                <div className="h-full flex items-center justify-center text-arena-textSubtle font-sans text-xs">
+                  Run or Submit your solution to execute against the test suite.
                 </div>
               ) : execReport.compileError ? (
-                <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-500/40 text-rose-300 font-sans text-xs space-y-1">
+                <div className="p-2.5 rounded-lg bg-arena-error/10 border border-arena-error/30 text-arena-error font-sans text-xs space-y-1">
                   <div className="font-bold flex items-center gap-1.5">
-                    <AlertCircle className="w-4 h-4 text-rose-400" />
-                    <span>Runtime / Syntax Error:</span>
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    <span>Error:</span>
                   </div>
                   <pre className="font-mono text-[11px] whitespace-pre-wrap">{execReport.compileError}</pre>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {execReport.results.map((res) => (
                     <div 
                       key={res.index}
-                      className={`p-2.5 rounded-xl border ${
+                      className={`p-2 rounded-lg border ${
                         res.passed 
-                          ? 'bg-emerald-950/20 border-emerald-500/30' 
-                          : 'bg-rose-950/20 border-rose-500/30'
+                          ? 'bg-arena-success/5 border-arena-success/20' 
+                          : 'bg-arena-error/5 border-arena-error/20'
                       }`}
                     >
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="font-bold flex items-center gap-1.5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-semibold flex items-center gap-1.5">
                           {res.passed ? (
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                            <CheckCircle2 className="w-3.5 h-3.5 text-arena-success" />
                           ) : (
-                            <XCircle className="w-3.5 h-3.5 text-rose-400" />
+                            <XCircle className="w-3.5 h-3.5 text-arena-error" />
                           )}
-                          <span className={res.passed ? 'text-emerald-300' : 'text-rose-300'}>
-                            Test Case #{res.index} {res.isHidden && '(Hidden Test)'}
+                          <span className={res.passed ? 'text-arena-success' : 'text-arena-error'}>
+                            Test #{res.index} {res.isHidden && '(Hidden)'}
                           </span>
                         </span>
-                        <span className="text-[10px] text-slate-400">{res.executionTimeMs} ms</span>
+                        <span className="text-[10px] text-arena-textSubtle">{res.executionTimeMs} ms</span>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300 font-mono">
-                        <div>
-                          <span className="text-slate-500 block text-[10px]">EXPECTED</span>
-                          <span>{JSON.stringify(res.expected)}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block text-[10px]">ACTUAL</span>
-                          <span className={res.passed ? 'text-emerald-400' : 'text-rose-400'}>
-                            {res.error ? `Error: ${res.error}` : JSON.stringify(res.actual)}
-                          </span>
-                        </div>
+                      <div className="text-[11px] text-arena-textSecondary">
+                        Expected: {JSON.stringify(res.expected)} | Actual: {JSON.stringify(res.actual)}
                       </div>
-
-                      {res.logs && res.logs.length > 0 && (
-                        <div className="mt-1.5 pt-1.5 border-t border-slate-800 text-[10px] text-slate-400">
-                          <span className="text-slate-500">Console: </span>
-                          {res.logs.join(' | ')}
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -723,36 +660,35 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
 
       {/* FINAL BATTLE RESULT MODAL */}
       {battleWinner && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in">
-          <div className="w-full max-w-md bg-arena-surface border border-violet-500/40 rounded-3xl p-6 text-center space-y-4 shadow-2xl">
-            <div className="w-16 h-16 rounded-2xl bg-violet-600/20 text-violet-400 flex items-center justify-center mx-auto shadow-lg shadow-violet-500/30">
-              <Trophy className="w-8 h-8" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-arena-bg/85 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-md bg-arena-surface border border-arena-border rounded-2xl p-6 text-center space-y-4">
+            <div className="w-12 h-12 rounded-xl bg-arena-elevated border border-arena-border text-arena-blue flex items-center justify-center mx-auto">
+              <Trophy className="w-6 h-6" />
             </div>
 
             <div>
-              <span className="text-xs uppercase font-extrabold text-slate-400 tracking-wider">
-                1V1 CODING BATTLE CONCLUDED
+              <span className="text-[10px] uppercase font-semibold text-arena-textSubtle tracking-wider">
+                1V1 BATTLE RESULT
               </span>
-              <h3 className="text-3xl font-black text-white mt-1">
-                {battleWinner.winner === 'you' ? '🏆 VICTORY!' : battleWinner.winner === 'opponent' ? 'DEFEAT' : 'TIED BATTLE'}
+              <h3 className="text-2xl font-bold text-arena-textPrimary mt-0.5">
+                {battleWinner.winner === 'you' ? 'Victory' : battleWinner.winner === 'opponent' ? 'Defeat' : 'Tied Match'}
               </h3>
-              <p className="text-xs text-slate-300 mt-1 font-medium">{battleWinner.reason}</p>
+              <p className="text-xs text-arena-textSecondary mt-1">{battleWinner.reason}</p>
             </div>
 
-            {/* Rating Delta Card */}
-            <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-around">
+            <div className="p-3.5 rounded-xl bg-arena-elevated border border-arena-border flex items-center justify-around">
               <div>
-                <span className="text-[10px] text-slate-400 font-semibold block">RATING CHANGE</span>
-                <span className={`text-xl font-black ${
-                  battleWinner.ratingDelta > 0 ? 'text-emerald-400' : 'text-rose-400'
+                <span className="text-[10px] text-arena-textSubtle font-medium block">RATING DELTA</span>
+                <span className={`text-lg font-bold ${
+                  battleWinner.ratingDelta > 0 ? 'text-arena-teal' : 'text-arena-error'
                 }`}>
                   {battleWinner.ratingDelta > 0 ? `+${battleWinner.ratingDelta}` : battleWinner.ratingDelta} Elo
                 </span>
               </div>
-              <div className="h-8 w-px bg-slate-800" />
+              <div className="h-6 w-px bg-arena-border" />
               <div>
-                <span className="text-[10px] text-slate-400 font-semibold block">NEW RATING</span>
-                <span className="text-xl font-black text-violet-400">{battleWinner.newRating} Elo</span>
+                <span className="text-[10px] text-arena-textSubtle font-medium block">NEW RATING</span>
+                <span className="text-lg font-bold text-arena-textPrimary">{battleWinner.newRating} Elo</span>
               </div>
             </div>
 
@@ -767,7 +703,7 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
                   setExecReport(null);
                   setMyReady(false);
                 }}
-                className="btn-secondary flex-1 py-2.5 text-xs font-bold"
+                className="btn-secondary flex-1 py-2 text-xs font-semibold"
               >
                 Rematch
               </button>
@@ -776,7 +712,7 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
                   openShareModal({
                     title: 'Coding Battle Victory',
                     gameOrBattle: `1v1 Battle on ${problem.title}`,
-                    scoreOrResult: battleWinner.winner === 'you' ? 'Victory 🏆' : 'Competed',
+                    scoreOrResult: battleWinner.winner === 'you' ? 'Victory' : 'Competed',
                     subtitle: `${battleWinner.ratingDelta > 0 ? `+${battleWinner.ratingDelta}` : battleWinner.ratingDelta} Elo • ${mySubmission?.testsPassed || 0}/${problem.testCases.length} Tests`,
                     customStats: [
                       { label: 'Rating', value: `${battleWinner.newRating} Elo` },
@@ -784,7 +720,7 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
                     ]
                   });
                 }}
-                className="btn-primary flex-1 py-2.5 text-xs gap-1.5 font-bold"
+                className="btn-primary flex-1 py-2 text-xs gap-1.5 font-semibold"
               >
                 <Share2 className="w-3.5 h-3.5" />
                 <span>Share Card</span>
@@ -796,4 +732,3 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
     </div>
   );
 };
-

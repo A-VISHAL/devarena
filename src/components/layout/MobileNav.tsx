@@ -7,28 +7,28 @@ export const MobileNav: React.FC = () => {
   const { activeTab, setActiveTab } = useApp();
 
   const tabs: { id: NavigationTab; label: string; icon: React.ReactNode }[] = [
-    { id: 'home', label: 'Home', icon: <Sparkles className="w-5 h-5" /> },
-    { id: 'play', label: 'Play', icon: <Gamepad2 className="w-5 h-5 text-emerald-400" /> },
-    { id: 'arena', label: 'Arena', icon: <Swords className="w-5 h-5 text-violet-400" /> },
-    { id: 'learn', label: 'Learn', icon: <BookOpen className="w-5 h-5 text-cyan-400" /> },
-    { id: 'profile', label: 'Profile', icon: <User className="w-5 h-5" /> },
+    { id: 'home', label: 'Home', icon: <Sparkles className="w-4 h-4" /> },
+    { id: 'play', label: 'Play', icon: <Gamepad2 className="w-4 h-4" /> },
+    { id: 'arena', label: 'Arena', icon: <Swords className="w-4 h-4" /> },
+    { id: 'learn', label: 'Learn', icon: <BookOpen className="w-4 h-4" /> },
+    { id: 'profile', label: 'Profile', icon: <User className="w-4 h-4" /> },
   ];
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-arena-bg/95 backdrop-blur-xl border-t border-arena-border px-3 py-2 flex items-center justify-around">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-arena-bg/95 backdrop-blur-md border-t border-arena-border px-3 py-1.5 flex items-center justify-around">
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         return (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all ${
+            className={`flex flex-col items-center gap-1 py-1 px-3 rounded-lg transition-all ${
               isActive 
-                ? 'text-white scale-105' 
-                : 'text-slate-500 hover:text-slate-300'
+                ? 'text-arena-textPrimary' 
+                : 'text-arena-textSubtle hover:text-arena-textSecondary'
             }`}
           >
-            <div className={`p-1 rounded-lg ${isActive ? 'bg-violet-600/20' : ''}`}>
+            <div className={`p-1 rounded-md ${isActive ? 'text-arena-blue' : ''}`}>
               {tab.icon}
             </div>
             <span className="text-[10px] font-medium">{tab.label}</span>
@@ -38,4 +38,3 @@ export const MobileNav: React.FC = () => {
     </div>
   );
 };
-

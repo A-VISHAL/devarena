@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, RefreshCw, Share2, Zap, Trophy, Timer, AlertCircle } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Share2, Trophy, Timer, AlertCircle, Zap } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { sound } from '../../utils/sound';
 import confetti from 'canvas-confetti';
 
 interface LevelConfig {
-  gridSize: number; // 3x3, 4x4, 5x5
+  gridSize: number;
   items: { text: string; bg?: string; rotate?: number; isOdd: boolean }[];
   hint: string;
 }
@@ -26,7 +26,7 @@ function generateLevel(level: number): LevelConfig {
       { normal: '◆', odd: '◇', hint: 'Hollow diamond' },
       { normal: '●', odd: '◐', hint: 'Half-filled circle' },
       { normal: '★', odd: '☆', hint: 'Outline star' },
-      { normal: '⚙', odd: '⚡', hint: 'Lightning bolt' }
+      { normal: '⬟', odd: '⬢', hint: 'Hexagon vs Pentagon' }
     ];
     const pair = pairs[(level - 1) % pairs.length];
     for (let i = 0; i < totalCells; i++) {
@@ -37,10 +37,10 @@ function generateLevel(level: number): LevelConfig {
     }
     return { gridSize, items, hint: pair.hint };
   } else if (type === 'color') {
-    const baseHue = (level * 67) % 360;
-    const diffDelta = Math.max(8, 30 - level * 2); // gets subtler
-    const normalBg = `hsl(${baseHue}, 70%, 50%)`;
-    const oddBg = `hsl(${baseHue + diffDelta}, 75%, 55%)`;
+    const baseLightness = 22;
+    const diffDelta = Math.max(5, 18 - level * 1.5);
+    const normalBg = `hsl(215, 20%, ${baseLightness}%)`;
+    const oddBg = `hsl(215, 25%, ${baseLightness + diffDelta}%)`;
 
     for (let i = 0; i < totalCells; i++) {
       items.push({
@@ -49,7 +49,7 @@ function generateLevel(level: number): LevelConfig {
         isOdd: i === oddIndex
       });
     }
-    return { gridSize, items, hint: 'Spot the subtle shade difference' };
+    return { gridSize, items, hint: 'Identify the subtle shade variant' };
   } else if (type === 'rotation') {
     const icon = '➤';
     for (let i = 0; i < totalCells; i++) {
@@ -59,12 +59,11 @@ function generateLevel(level: number): LevelConfig {
         isOdd: i === oddIndex
       });
     }
-    return { gridSize, items, hint: 'Opposite pointing direction' };
+    return { gridSize, items, hint: 'Opposite pointing orientation' };
   } else {
-    // Number parity / math
     const baseNum = 20 + level * 2;
     for (let i = 0; i < totalCells; i++) {
-      const num = i === oddIndex ? baseNum + 1 : baseNum; // one odd number
+      const num = i === oddIndex ? baseNum + 1 : baseNum;
       items.push({
         text: String(num),
         isOdd: i === oddIndex
@@ -86,7 +85,6 @@ export const OddOneOut: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   const maxLevels = 10;
 
-  // Timer countdown
   useEffect(() => {
     if (gameOver) return;
 
@@ -127,7 +125,7 @@ export const OddOneOut: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       if (level >= maxLevels) {
         sound.playVictory();
         setGameOver(true);
-        confetti({ particleCount: 80, spread: 70 });
+        confetti({ particleCount: 70, spread: 70 });
         recordCasualGameResult('odd-one-out', newScore);
       } else {
         const nextLevel = level + 1;
@@ -138,7 +136,7 @@ export const OddOneOut: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     } else {
       sound.playWrong();
       setStreak(0);
-      setTimeLeft(prev => Math.max(1, prev - 3)); // penalty
+      setTimeLeft(prev => Math.max(1, prev - 3));
     }
   };
 
@@ -155,34 +153,34 @@ export const OddOneOut: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const handleShare = () => {
     openShareModal({
       title: 'Odd One Out',
-      gameOrBattle: 'Odd One Out Challenge',
+      gameOrBattle: 'Odd One Out',
       scoreOrResult: `${score} Points`,
-      subtitle: `Cleared Level ${level}/${maxLevels} • ${streak} Best Streak`,
+      subtitle: `Completed Level ${level}/${maxLevels} • Streak: ${streak}`,
       customStats: [
         { label: 'Score', value: String(score) },
-        { label: 'Level Reached', value: `${level}/${maxLevels}` }
+        { label: 'Level', value: `${level}/${maxLevels}` }
       ]
     });
   };
 
   return (
-    <div className="max-w-md mx-auto py-4 px-3 flex flex-col items-center">
+    <div className="max-w-md mx-auto py-6 px-4 flex flex-col items-center animate-in fade-in">
       {/* Header */}
       <div className="w-full flex items-center justify-between mb-4 pb-3 border-b border-arena-border">
         <button
           onClick={onBack}
-          className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+          className="flex items-center gap-1.5 text-xs font-medium text-arena-textSecondary hover:text-arena-textPrimary"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>All Games</span>
         </button>
         <div className="text-center">
-          <h2 className="text-base font-black text-white">Odd One Out</h2>
-          <span className="text-[10px] text-slate-400">Level {level} of {maxLevels}</span>
+          <h2 className="text-sm font-bold text-arena-textPrimary">Odd One Out</h2>
+          <span className="text-[11px] text-arena-textSubtle">Level {level} of {maxLevels}</span>
         </div>
         <button
           onClick={handleRestart}
-          className="p-1.5 text-slate-400 hover:text-white"
+          className="p-1.5 text-arena-textSecondary hover:text-arena-textPrimary"
           title="Restart"
         >
           <RefreshCw className="w-4 h-4" />
@@ -191,36 +189,36 @@ export const OddOneOut: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       {/* Stats Bar */}
       <div className="w-full grid grid-cols-3 gap-2 mb-4">
-        <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-center">
-          <span className="text-[10px] text-slate-400 font-semibold block">SCORE</span>
-          <span className="text-base font-black text-violet-400">{score}</span>
+        <div className="p-2.5 rounded-lg bg-arena-surface border border-arena-border text-center">
+          <span className="text-[10px] text-arena-textSubtle font-medium block">SCORE</span>
+          <span className="text-base font-bold text-arena-blue">{score}</span>
         </div>
-        <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-center">
-          <span className="text-[10px] text-slate-400 font-semibold block">TIME</span>
-          <div className="flex items-center justify-center gap-1 text-base font-black text-cyan-400">
-            <Timer className="w-4 h-4" />
+        <div className="p-2.5 rounded-lg bg-arena-surface border border-arena-border text-center">
+          <span className="text-[10px] text-arena-textSubtle font-medium block">TIME</span>
+          <div className="flex items-center justify-center gap-1 text-base font-bold text-arena-teal">
+            <Timer className="w-3.5 h-3.5" />
             <span>{timeLeft}s</span>
           </div>
         </div>
-        <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-center">
-          <span className="text-[10px] text-slate-400 font-semibold block">STREAK</span>
-          <div className="flex items-center justify-center gap-1 text-base font-black text-amber-400">
-            <Zap className="w-4 h-4" />
+        <div className="p-2.5 rounded-lg bg-arena-surface border border-arena-border text-center">
+          <span className="text-[10px] text-arena-textSubtle font-medium block">STREAK</span>
+          <div className="flex items-center justify-center gap-1 text-base font-bold text-arena-warning">
+            <Zap className="w-3.5 h-3.5" />
             <span>{streak}x</span>
           </div>
         </div>
       </div>
 
       {/* Hint */}
-      <p className="text-xs text-slate-400 mb-4 flex items-center gap-1.5 font-medium">
-        <AlertCircle className="w-3.5 h-3.5 text-cyan-400" />
+      <p className="text-xs text-arena-textSecondary mb-4 flex items-center gap-1.5 font-medium">
+        <AlertCircle className="w-3.5 h-3.5 text-arena-teal" />
         <span>Hint: {levelConfig.hint}</span>
       </p>
 
       {/* Grid */}
       {!gameOver ? (
         <div 
-          className="grid gap-2 p-3 rounded-2xl bg-slate-900/60 border border-arena-border"
+          className="grid gap-2 p-3 rounded-xl bg-arena-surface border border-arena-border"
           style={{
             gridTemplateColumns: `repeat(${levelConfig.gridSize}, minmax(0, 1fr))`
           }}
@@ -229,9 +227,9 @@ export const OddOneOut: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             <button
               key={idx}
               onClick={() => handleCellClick(item.isOdd)}
-              className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl border border-slate-800 hover:border-violet-500/50 flex items-center justify-center text-xl font-bold transition-all active:scale-95 shadow-sm"
+              className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg border border-arena-border hover:border-arena-borderHover flex items-center justify-center text-lg font-bold transition-all active:scale-95 text-arena-textPrimary"
               style={{
-                backgroundColor: item.bg || '#161d31',
+                backgroundColor: item.bg || '#202936',
                 transform: item.rotate ? `rotate(${item.rotate}deg)` : undefined
               }}
             >
@@ -241,24 +239,24 @@ export const OddOneOut: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         </div>
       ) : (
         /* Game Over Screen */
-        <div className="w-full p-6 rounded-3xl bg-slate-900 border border-violet-500/30 text-center space-y-4">
-          <div className="w-12 h-12 rounded-2xl bg-violet-600/20 text-violet-400 flex items-center justify-center mx-auto">
-            <Trophy className="w-6 h-6" />
+        <div className="w-full p-6 rounded-xl bg-arena-surface border border-arena-border text-center space-y-4">
+          <div className="w-10 h-10 rounded-lg bg-arena-elevated border border-arena-border text-arena-blue flex items-center justify-center mx-auto">
+            <Trophy className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-xl font-black text-white">
-              {level >= maxLevels ? 'All Levels Conquered!' : 'Challenge Ended'}
+            <h3 className="text-lg font-bold text-arena-textPrimary">
+              {level >= maxLevels ? 'All Levels Completed' : 'Session Ended'}
             </h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Final Score: <strong className="text-violet-400">{score}</strong> points at Level {level}
+            <p className="text-xs text-arena-textSecondary mt-1">
+              Final Score: <strong className="text-arena-textPrimary">{score}</strong> at Level {level}
             </p>
           </div>
 
           <div className="flex gap-2 pt-2">
-            <button onClick={handleRestart} className="btn-secondary flex-1 py-2.5 text-xs">
+            <button onClick={handleRestart} className="btn-secondary flex-1 py-2 text-xs">
               Play Again
             </button>
-            <button onClick={handleShare} className="btn-primary flex-1 py-2.5 text-xs gap-1.5">
+            <button onClick={handleShare} className="btn-primary flex-1 py-2 text-xs gap-1.5">
               <Share2 className="w-3.5 h-3.5" />
               <span>Share Score</span>
             </button>
@@ -268,4 +266,3 @@ export const OddOneOut: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     </div>
   );
 };
-

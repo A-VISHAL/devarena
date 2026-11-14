@@ -46,7 +46,7 @@ const PATTERNS: PatternQuestion[] = [
     sequence: [5, 10, 8, 16, 14, '?'],
     options: [20, 24, 28, 18],
     answer: 28,
-    explanation: 'Alternating rule: multiply by 2, then subtract 2. 14 * 2 = 28.'
+    explanation: 'Alternating rule: multiply by 2, then subtract 2 (14 * 2 = 28).'
   },
   {
     sequence: ['▲', '▶', '▼', '◀', '?'],
@@ -58,7 +58,7 @@ const PATTERNS: PatternQuestion[] = [
     sequence: [100, 95, 85, 70, '?'],
     options: [50, 55, 60, 45],
     answer: 50,
-    explanation: 'Subtractions increase by 5 each step: -5, -10, -15, -20. 70 - 20 = 50.'
+    explanation: 'Subtractions increase by 5 each step: -5, -10, -15, -20. (70 - 20 = 50).'
   }
 ];
 
@@ -99,7 +99,7 @@ export const PatternMaster: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     if (currentIndex + 1 >= PATTERNS.length) {
       sound.playVictory();
       setGameOver(true);
-      confetti({ particleCount: 75, spread: 65 });
+      confetti({ particleCount: 65, spread: 60 });
       recordCasualGameResult('pattern-master', score);
     } else {
       setCurrentIndex(prev => prev + 1);
@@ -121,7 +121,7 @@ export const PatternMaster: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const handleShare = () => {
     openShareModal({
       title: 'Pattern Master',
-      gameOrBattle: 'Pattern Master Sequence Challenge',
+      gameOrBattle: 'Pattern Master',
       scoreOrResult: `${score} Points`,
       subtitle: `Completed all ${PATTERNS.length} rounds • Streak: ${streak}`,
       customStats: [
@@ -132,51 +132,51 @@ export const PatternMaster: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   };
 
   return (
-    <div className="max-w-md mx-auto py-4 px-3 flex flex-col items-center">
+    <div className="max-w-md mx-auto py-6 px-4 flex flex-col items-center animate-in fade-in">
       {/* Header */}
       <div className="w-full flex items-center justify-between mb-4 pb-3 border-b border-arena-border">
         <button
           onClick={onBack}
-          className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white"
+          className="flex items-center gap-1.5 text-xs font-medium text-arena-textSecondary hover:text-arena-textPrimary"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>All Games</span>
         </button>
         <div className="text-center">
-          <h2 className="text-base font-black text-white">Pattern Master</h2>
-          <span className="text-[10px] text-slate-400">Round {currentIndex + 1} of {PATTERNS.length}</span>
+          <h2 className="text-sm font-bold text-arena-textPrimary">Pattern Master</h2>
+          <span className="text-[11px] text-arena-textSubtle">Round {currentIndex + 1} of {PATTERNS.length}</span>
         </div>
-        <button onClick={handleRestart} className="p-1.5 text-slate-400 hover:text-white">
+        <button onClick={handleRestart} className="p-1.5 text-arena-textSecondary hover:text-arena-textPrimary">
           <RefreshCw className="w-4 h-4" />
         </button>
       </div>
 
       {/* Stats Bar */}
-      <div className="w-full grid grid-cols-2 gap-2 mb-5">
-        <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-center">
-          <span className="text-[10px] text-slate-400 font-semibold block">TOTAL SCORE</span>
-          <span className="text-base font-black text-violet-400">{score}</span>
+      <div className="w-full grid grid-cols-2 gap-2 mb-4">
+        <div className="p-2.5 rounded-lg bg-arena-surface border border-arena-border text-center">
+          <span className="text-[10px] text-arena-textSubtle font-medium block">SCORE</span>
+          <span className="text-base font-bold text-arena-blue">{score}</span>
         </div>
-        <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-center">
-          <span className="text-[10px] text-slate-400 font-semibold block">COMBO STREAK</span>
-          <div className="flex items-center justify-center gap-1 text-base font-black text-amber-400">
-            <Flame className="w-4 h-4" />
+        <div className="p-2.5 rounded-lg bg-arena-surface border border-arena-border text-center">
+          <span className="text-[10px] text-arena-textSubtle font-medium block">COMBO STREAK</span>
+          <div className="flex items-center justify-center gap-1 text-base font-bold text-arena-warning">
+            <Flame className="w-3.5 h-3.5" />
             <span>{streak}x</span>
           </div>
         </div>
       </div>
 
       {!gameOver ? (
-        <div className="w-full space-y-5">
+        <div className="w-full space-y-4">
           {/* Sequence Display */}
-          <div className="p-5 rounded-2xl bg-slate-900/80 border border-arena-border flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+          <div className="p-5 rounded-xl bg-arena-surface border border-arena-border flex flex-wrap items-center justify-center gap-2">
             {currentPattern.sequence.map((item, idx) => (
               <div
                 key={idx}
-                className={`min-w-12 h-12 px-3 rounded-xl border flex items-center justify-center text-lg font-black transition-all ${
+                className={`min-w-10 h-11 px-3 rounded-lg border flex items-center justify-center text-sm font-bold transition-all ${
                   item === '?'
-                    ? 'bg-violet-600/20 border-violet-500/60 text-violet-300 animate-pulse'
-                    : 'bg-slate-800 border-slate-700 text-white'
+                    ? 'bg-arena-elevated border-arena-blue text-arena-blue'
+                    : 'bg-arena-elevated border-arena-border text-arena-textPrimary'
                 }`}
               >
                 {item}
@@ -185,19 +185,19 @@ export const PatternMaster: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </div>
 
           {/* Options */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2.5">
             {currentPattern.options.map((opt, idx) => {
               const isSelected = selectedOption === opt;
               const isCorrectOpt = opt === currentPattern.answer;
-              let btnClass = 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-white';
+              let btnClass = 'bg-arena-surface hover:bg-arena-elevated border-arena-border text-arena-textPrimary';
 
               if (isAnswered) {
                 if (isCorrectOpt) {
-                  btnClass = 'bg-emerald-600/30 border-emerald-500 text-emerald-200';
+                  btnClass = 'bg-arena-success text-slate-950 font-bold border-arena-success';
                 } else if (isSelected && !isCorrectOpt) {
-                  btnClass = 'bg-rose-600/30 border-rose-500 text-rose-200';
+                  btnClass = 'bg-arena-error/20 border-arena-error text-arena-error';
                 } else {
-                  btnClass = 'bg-slate-900/40 border-slate-800/40 text-slate-600';
+                  btnClass = 'bg-arena-surface opacity-40 border-arena-border text-arena-textSubtle';
                 }
               }
 
@@ -206,11 +206,11 @@ export const PatternMaster: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   key={idx}
                   onClick={() => handleSelectOption(opt)}
                   disabled={isAnswered}
-                  className={`p-4 rounded-xl border font-black text-lg transition-all active:scale-95 flex items-center justify-center gap-2 ${btnClass}`}
+                  className={`p-3.5 rounded-lg border font-semibold text-base transition-all active:scale-98 flex items-center justify-center gap-2 ${btnClass}`}
                 >
                   <span>{opt}</span>
-                  {isAnswered && isCorrectOpt && <Check className="w-4 h-4 text-emerald-400" />}
-                  {isAnswered && isSelected && !isCorrectOpt && <X className="w-4 h-4 text-rose-400" />}
+                  {isAnswered && isCorrectOpt && <Check className="w-4 h-4 text-slate-950" />}
+                  {isAnswered && isSelected && !isCorrectOpt && <X className="w-4 h-4 text-arena-error" />}
                 </button>
               );
             })}
@@ -218,17 +218,17 @@ export const PatternMaster: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
           {/* Explanation Banner */}
           {isAnswered && (
-            <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 animate-in fade-in space-y-2">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-300">
-                <HelpCircle className="w-4 h-4 text-cyan-400" />
+            <div className="p-3.5 rounded-lg bg-arena-surface border border-arena-border animate-in fade-in space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-arena-textPrimary">
+                <HelpCircle className="w-3.5 h-3.5 text-arena-teal" />
                 <span>Pattern Rule:</span>
               </div>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <p className="text-xs text-arena-textSecondary leading-relaxed">
                 {currentPattern.explanation}
               </p>
               <button
                 onClick={handleNext}
-                className="w-full btn-primary py-2 text-xs font-bold mt-2"
+                className="w-full btn-primary py-2 text-xs font-medium mt-1"
               >
                 {currentIndex + 1 < PATTERNS.length ? 'Next Pattern ➜' : 'Finish & See Results'}
               </button>
@@ -237,22 +237,22 @@ export const PatternMaster: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         </div>
       ) : (
         /* Game Over */
-        <div className="w-full p-6 rounded-3xl bg-slate-900 border border-violet-500/30 text-center space-y-4">
-          <div className="w-12 h-12 rounded-2xl bg-violet-600/20 text-violet-400 flex items-center justify-center mx-auto">
-            <Trophy className="w-6 h-6" />
+        <div className="w-full p-6 rounded-xl bg-arena-surface border border-arena-border text-center space-y-4">
+          <div className="w-10 h-10 rounded-lg bg-arena-elevated border border-arena-border text-arena-blue flex items-center justify-center mx-auto">
+            <Trophy className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-xl font-black text-white">Pattern Master Completed!</h3>
-            <p className="text-xs text-slate-400 mt-1">
-              You scored <strong className="text-violet-400">{score}</strong> points across all sequence tests.
+            <h3 className="text-lg font-bold text-arena-textPrimary">Pattern Master Complete</h3>
+            <p className="text-xs text-arena-textSecondary mt-1">
+              Final Score: <strong className="text-arena-textPrimary">{score}</strong> points
             </p>
           </div>
 
           <div className="flex gap-2 pt-2">
-            <button onClick={handleRestart} className="btn-secondary flex-1 py-2.5 text-xs">
+            <button onClick={handleRestart} className="btn-secondary flex-1 py-2 text-xs">
               Play Again
             </button>
-            <button onClick={handleShare} className="btn-primary flex-1 py-2.5 text-xs gap-1.5">
+            <button onClick={handleShare} className="btn-primary flex-1 py-2 text-xs gap-1.5">
               <Share2 className="w-3.5 h-3.5" />
               <span>Share Score</span>
             </button>
@@ -262,4 +262,3 @@ export const PatternMaster: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     </div>
   );
 };
-

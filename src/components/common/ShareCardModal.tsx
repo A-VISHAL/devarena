@@ -1,25 +1,23 @@
-import React, { useState, useRef } from 'react';
-import { X, Copy, Check, Share2, Sparkles, Trophy, Download } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Copy, Check, Share2, Sparkles } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { sound } from '../../utils/sound';
 
 export const ShareCardModal: React.FC = () => {
   const { shareCardData, closeShareModal, user } = useApp();
   const [copied, setCopied] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
 
   if (!shareCardData) return null;
 
   const shareUrl = window.location.origin;
 
   const generateShareText = () => {
-    return `🔥 DEVARENA Competition:
-🎮 ${shareCardData.gameOrBattle}
-🏆 ${shareCardData.scoreOrResult}
-👤 Player: ${user.username}
-⚡ Rating: ${user.rating} Elo • Streak: ${user.streak}d
+    return `DEVARENA:
+${shareCardData.gameOrBattle}
+${shareCardData.scoreOrResult}
+Player: @${user.username} (${user.rating} Elo • ${user.streak}d streak)
 
-Can you beat my score? Challenge me on DEVARENA:
+Can you beat my score?
 ${shareUrl}`;
   };
 
@@ -31,89 +29,79 @@ ${shareUrl}`;
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md bg-arena-surface border border-arena-border rounded-3xl overflow-hidden shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-arena-bg/85 backdrop-blur-sm animate-in fade-in">
+      <div className="relative w-full max-w-sm bg-arena-surface border border-arena-border rounded-2xl overflow-hidden shadow-card">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-arena-border">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-arena-border">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-violet-400" />
-            <h3 className="font-bold text-white text-base">Shareable Result Card</h3>
+            <Sparkles className="w-4 h-4 text-arena-blue" />
+            <h3 className="font-bold text-arena-textPrimary text-sm">Share Result</h3>
           </div>
           <button 
             onClick={closeShareModal}
-            className="p-1 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1 rounded-lg text-arena-textSecondary hover:text-arena-textPrimary hover:bg-arena-elevated"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Card Preview */}
-        <div className="p-6">
-          <div 
-            ref={cardRef}
-            className="relative p-6 rounded-2xl bg-gradient-to-br from-slate-900 via-arena-card to-slate-950 border border-violet-500/30 shadow-xl overflow-hidden"
-          >
-            {/* Ambient background glows */}
-            <div className="absolute -top-12 -right-12 w-32 h-32 bg-violet-600/20 rounded-full blur-2xl pointer-events-none" />
-            <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-cyan-600/20 rounded-full blur-2xl pointer-events-none" />
-
+        <div className="p-5">
+          <div className="p-5 rounded-xl bg-arena-elevated border border-arena-border space-y-4">
+            
             {/* Brand Header */}
-            <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-violet-600 to-cyan-500 flex items-center justify-center font-black text-xs text-white">
+                <div className="w-6 h-6 rounded bg-arena-surface border border-arena-border flex items-center justify-center text-arena-blue font-bold text-xs">
                   DA
                 </div>
-                <div>
-                  <span className="font-extrabold text-sm tracking-tight text-white">DEVARENA</span>
-                  <p className="text-[10px] text-slate-400 font-medium">Casual Gaming & Developer Arena</p>
-                </div>
+                <span className="font-bold text-xs tracking-tight text-arena-textPrimary">DEVARENA</span>
               </div>
-              <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-300 border border-violet-500/30">
+              <span className="text-[10px] uppercase font-semibold px-2 py-0.2 rounded bg-arena-surface text-arena-teal border border-arena-border">
                 VERIFIED
               </span>
             </div>
 
-            {/* Game / Challenge Info */}
-            <div className="text-center py-4 my-2 rounded-xl bg-slate-900/60 border border-slate-800">
-              <span className="text-xs uppercase tracking-wider text-slate-400 font-semibold">
+            {/* Game Info */}
+            <div className="text-center py-3 rounded-lg bg-arena-surface border border-arena-border">
+              <span className="text-[10px] uppercase tracking-wider text-arena-textSubtle font-semibold">
                 {shareCardData.gameOrBattle}
               </span>
-              <div className="mt-1 font-black text-2xl sm:text-3xl bg-gradient-to-r from-violet-300 via-white to-cyan-300 bg-clip-text text-transparent">
+              <div className="mt-0.5 font-extrabold text-2xl text-arena-textPrimary">
                 {shareCardData.scoreOrResult}
               </div>
               {shareCardData.subtitle && (
-                <p className="text-xs text-slate-400 mt-1 font-medium">{shareCardData.subtitle}</p>
+                <p className="text-[11px] text-arena-textSecondary mt-0.5">{shareCardData.subtitle}</p>
               )}
             </div>
 
             {/* Player details */}
-            <div className="flex items-center justify-between pt-3 border-t border-slate-800/80 text-xs">
+            <div className="flex items-center justify-between pt-2 border-t border-arena-border text-xs">
               <div className="flex items-center gap-2">
                 <img 
                   src={user.avatar} 
                   alt={user.username} 
-                  className="w-7 h-7 rounded-full object-cover border border-violet-500/40" 
+                  className="w-6 h-6 rounded-md object-cover border border-arena-border" 
                 />
                 <div>
-                  <div className="font-bold text-slate-200">{user.displayName}</div>
-                  <div className="text-[10px] text-slate-400">@{user.username}</div>
+                  <div className="font-semibold text-arena-textPrimary text-xs">{user.displayName}</div>
+                  <div className="text-[10px] text-arena-textSubtle">@{user.username}</div>
                 </div>
               </div>
 
               <div className="text-right">
-                <div className="font-bold text-violet-400">{user.rating} Elo</div>
-                <div className="text-[10px] text-amber-400 font-semibold">{user.streak}d Streak 🔥</div>
+                <div className="font-bold text-arena-blue">{user.rating} Elo</div>
+                <div className="text-[10px] text-arena-warning font-semibold">{user.streak}d Streak</div>
               </div>
             </div>
 
-            {/* Custom metadata items if any */}
             {shareCardData.customStats && (
-              <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-800/50">
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-arena-border">
                 {shareCardData.customStats.map((stat, idx) => (
-                  <div key={idx} className="bg-slate-950/40 p-2 rounded-lg text-center">
-                    <div className="text-[10px] text-slate-400">{stat.label}</div>
-                    <div className="text-xs font-bold text-white">{stat.value}</div>
+                  <div key={idx} className="bg-arena-surface p-1.5 rounded text-center border border-arena-border">
+                    <div className="text-[9px] text-arena-textSubtle uppercase">{stat.label}</div>
+                    <div className="text-xs font-bold text-arena-textPrimary">{stat.value}</div>
                   </div>
                 ))}
               </div>
@@ -121,13 +109,13 @@ ${shareUrl}`;
           </div>
 
           {/* Action buttons */}
-          <div className="flex gap-3 mt-5">
+          <div className="flex gap-2.5 mt-4">
             <button
               onClick={handleCopy}
-              className="flex-1 btn-primary py-2.5 gap-2 text-sm"
+              className="flex-1 btn-primary py-2 gap-1.5 text-xs font-semibold"
             >
-              {copied ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4" />}
-              <span>{copied ? 'Copied to Clipboard!' : 'Copy Share Text'}</span>
+              {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copied ? 'Copied' : 'Copy Text'}</span>
             </button>
             <button
               onClick={() => {
@@ -142,9 +130,9 @@ ${shareUrl}`;
                   handleCopy();
                 }
               }}
-              className="btn-secondary py-2.5 px-4 gap-2 text-sm"
+              className="btn-secondary py-2 px-3.5 gap-1.5 text-xs font-medium"
             >
-              <Share2 className="w-4 h-4" />
+              <Share2 className="w-3.5 h-3.5" />
               <span>Share</span>
             </button>
           </div>
@@ -154,4 +142,3 @@ ${shareUrl}`;
     </div>
   );
 };
-

@@ -8,9 +8,7 @@ import {
   XCircle, 
   Terminal, 
   Code2, 
-  HelpCircle, 
-  Sparkles,
-  Trophy
+  HelpCircle 
 } from 'lucide-react';
 import { CodingProblem } from '../../types';
 import { useApp } from '../../context/AppContext';
@@ -66,7 +64,7 @@ export const LearnProblemModal: React.FC<LearnProblemModalProps> = ({
 
     if (report.allPassed) {
       sound.playVictory();
-      confetti({ particleCount: 80, spread: 70 });
+      confetti({ particleCount: 70, spread: 60 });
       recordProblemSolved(problem.id, topicId);
     } else {
       sound.playWrong();
@@ -74,54 +72,54 @@ export const LearnProblemModal: React.FC<LearnProblemModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in">
-      <div className="relative w-full max-w-6xl h-[92vh] bg-arena-surface border border-arena-border rounded-3xl overflow-hidden flex flex-col shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-arena-bg/85 backdrop-blur-sm animate-in fade-in">
+      <div className="relative w-full max-w-5xl h-[90vh] bg-arena-surface border border-arena-border rounded-2xl overflow-hidden flex flex-col shadow-card">
         
         {/* Header */}
-        <div className="h-14 px-5 bg-arena-surfaceLight border-b border-arena-border flex items-center justify-between shrink-0">
+        <div className="h-12 px-4 bg-arena-elevated border-b border-arena-border flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <h3 className="font-extrabold text-white text-base flex items-center gap-2">
+            <h3 className="font-bold text-arena-textPrimary text-sm flex items-center gap-2">
               <span>{problem.title}</span>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              <span className={`text-[10px] font-semibold px-1.5 py-0.2 rounded ${
                 problem.difficulty === 'Easy' 
-                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                  ? 'bg-arena-success/15 text-arena-success'
                   : problem.difficulty === 'Medium'
-                  ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
-                  : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                  ? 'bg-arena-warning/15 text-arena-warning'
+                  : 'bg-arena-error/15 text-arena-error'
               }`}>
                 {problem.difficulty}
               </span>
             </h3>
             {isAlreadySolved && (
-              <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+              <span className="flex items-center gap-1 text-[11px] font-semibold text-arena-success px-2 py-0.2 rounded bg-arena-success/10 border border-arena-success/20">
                 <CheckCircle2 className="w-3 h-3" />
                 <span>Solved</span>
               </span>
             )}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={handleRun}
               disabled={isRunning || isSubmitting}
-              className="btn-secondary py-1.5 px-3 text-xs gap-1.5"
+              className="btn-secondary py-1 px-3 text-xs gap-1.5"
             >
-              <Play className="w-3.5 h-3.5 text-emerald-400 fill-emerald-400" />
-              <span>{isRunning ? 'Running...' : 'Run Tests'}</span>
+              <Play className="w-3 h-3 text-arena-teal fill-current" />
+              <span>{isRunning ? 'Running...' : 'Run'}</span>
             </button>
             <button
               onClick={handleSubmit}
               disabled={isRunning || isSubmitting}
-              className="btn-primary py-1.5 px-3.5 text-xs gap-1.5 font-bold"
+              className="btn-primary py-1 px-3 text-xs gap-1.5 font-medium"
             >
-              <Send className="w-3.5 h-3.5" />
+              <Send className="w-3 h-3" />
               <span>{isSubmitting ? 'Evaluating...' : 'Submit'}</span>
             </button>
             <button
               onClick={onClose}
-              className="p-1 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800"
+              className="p-1 rounded-lg text-arena-textSecondary hover:text-arena-textPrimary hover:bg-arena-elevated"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -130,23 +128,23 @@ export const LearnProblemModal: React.FC<LearnProblemModalProps> = ({
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
           
           {/* Left: Problem Details */}
-          <div className="w-full lg:w-5/12 p-5 overflow-y-auto space-y-5 bg-arena-bg border-r border-arena-border">
+          <div className="w-full lg:w-5/12 p-4 overflow-y-auto space-y-4 bg-arena-surface border-r border-arena-border">
             <div>
-              <h4 className="text-xs uppercase font-bold text-slate-400 tracking-wider mb-2">Problem Statement</h4>
-              <p className="whitespace-pre-line text-xs sm:text-sm text-slate-300 leading-relaxed">
+              <h4 className="text-[11px] uppercase font-semibold text-arena-textSubtle tracking-wider mb-1.5">Problem Statement</h4>
+              <p className="whitespace-pre-line text-xs text-arena-textSecondary leading-relaxed">
                 {problem.description}
               </p>
             </div>
 
             {/* Examples */}
             <div>
-              <h4 className="text-xs uppercase font-bold text-slate-400 tracking-wider mb-2">Examples</h4>
-              <div className="space-y-2.5">
+              <h4 className="text-[11px] uppercase font-semibold text-arena-textSubtle tracking-wider mb-1.5">Examples</h4>
+              <div className="space-y-2">
                 {problem.examples.map((ex, i) => (
-                  <div key={i} className="p-3 rounded-xl bg-slate-900 border border-slate-800 font-mono text-xs space-y-1">
-                    <div><span className="text-slate-500">Input: </span>{ex.input}</div>
-                    <div><span className="text-slate-500">Output: </span><span className="text-emerald-400">{ex.output}</span></div>
-                    {ex.explanation && <div className="text-[11px] font-sans text-slate-400">{ex.explanation}</div>}
+                  <div key={i} className="p-2.5 rounded-lg bg-arena-elevated border border-arena-border font-mono text-xs space-y-0.5">
+                    <div><span className="text-arena-textSubtle">Input: </span><span className="text-arena-textPrimary">{ex.input}</span></div>
+                    <div><span className="text-arena-textSubtle">Output: </span><span className="text-arena-teal">{ex.output}</span></div>
+                    {ex.explanation && <div className="text-[10px] font-sans text-arena-textSecondary">{ex.explanation}</div>}
                   </div>
                 ))}
               </div>
@@ -154,41 +152,40 @@ export const LearnProblemModal: React.FC<LearnProblemModalProps> = ({
 
             {/* Constraints */}
             <div>
-              <h4 className="text-xs uppercase font-bold text-slate-400 tracking-wider mb-2">Constraints</h4>
-              <ul className="list-disc list-inside space-y-1 text-xs text-slate-400 font-mono">
+              <h4 className="text-[11px] uppercase font-semibold text-arena-textSubtle tracking-wider mb-1.5">Constraints</h4>
+              <ul className="list-disc list-inside space-y-0.5 text-xs text-arena-textSecondary font-mono">
                 {problem.constraints.map((c, i) => <li key={i}>{c}</li>)}
               </ul>
             </div>
 
-            {/* Hint Button */}
+            {/* Hint */}
             <div className="pt-2">
               <button
                 onClick={() => setShowHint(!showHint)}
-                className="flex items-center gap-1.5 text-xs font-semibold text-violet-400 hover:text-violet-300"
+                className="flex items-center gap-1.5 text-xs font-medium text-arena-blue hover:underline"
               >
                 <HelpCircle className="w-3.5 h-3.5" />
-                <span>{showHint ? 'Hide Hint' : 'Need a Hint?'}</span>
+                <span>{showHint ? 'Hide Hint' : 'View Hint'}</span>
               </button>
               {showHint && (
-                <div className="mt-2 p-3 rounded-xl bg-violet-950/40 border border-violet-500/30 text-xs text-violet-200">
-                  Think about optimal time complexity. Using a hash map or two pointers can reduce quadratic O(N²) iterations down to linear O(N).
+                <div className="mt-2 p-2.5 rounded-lg bg-arena-elevated border border-arena-border text-xs text-arena-textSecondary leading-relaxed">
+                  Consider optimal time complexity. Using an auxiliary hash map or two pointers can reduce quadratic O(N²) time down to linear O(N).
                 </div>
               )}
             </div>
           </div>
 
           {/* Right: Monaco Editor + Console */}
-          <div className="w-full lg:w-7/12 flex flex-col bg-[#1e1e1e]">
-            {/* Editor Subheader */}
-            <div className="h-9 px-4 bg-[#252526] border-b border-[#333333] flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
-                <Code2 className="w-3.5 h-3.5 text-violet-400" />
-                <span>Editor</span>
+          <div className="w-full lg:w-7/12 flex flex-col bg-[#141820]">
+            <div className="h-8 px-4 bg-arena-surface border-b border-arena-border flex items-center justify-between">
+              <span className="text-xs font-medium text-arena-textSecondary flex items-center gap-1.5">
+                <Code2 className="w-3.5 h-3.5 text-arena-blue" />
+                <span>Solution</span>
               </span>
               <select
                 value={language}
                 onChange={(e) => handleLanguageChange(e.target.value as any)}
-                className="bg-[#1e1e1e] border border-slate-700 rounded-lg px-2 py-0.5 text-xs text-slate-200"
+                className="bg-arena-elevated border border-arena-border rounded px-2 py-0.5 text-[11px] text-arena-textPrimary"
               >
                 <option value="javascript">JavaScript</option>
                 <option value="typescript">TypeScript</option>
@@ -196,8 +193,7 @@ export const LearnProblemModal: React.FC<LearnProblemModalProps> = ({
               </select>
             </div>
 
-            {/* Monaco Editor */}
-            <div className="flex-1 min-h-[280px]">
+            <div className="flex-1 min-h-[260px]">
               <Editor
                 height="100%"
                 theme="vs-dark"
@@ -216,46 +212,46 @@ export const LearnProblemModal: React.FC<LearnProblemModalProps> = ({
             </div>
 
             {/* Test Case Output Console */}
-            <div className="h-48 bg-slate-950 border-t border-slate-800 flex flex-col">
-              <div className="h-8 px-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-xs text-slate-400 font-semibold">
-                <div className="flex items-center gap-2">
-                  <Terminal className="w-3.5 h-3.5 text-cyan-400" />
+            <div className="h-44 bg-arena-bg border-t border-arena-border flex flex-col">
+              <div className="h-8 px-4 bg-arena-surface border-b border-arena-border flex items-center justify-between text-xs text-arena-textSecondary font-medium">
+                <div className="flex items-center gap-1.5">
+                  <Terminal className="w-3.5 h-3.5 text-arena-teal" />
                   <span>Execution Output</span>
                 </div>
                 {execReport && (
-                  <span className={`text-[11px] font-bold ${
-                    execReport.allPassed ? 'text-emerald-400' : 'text-rose-400'
+                  <span className={`text-[11px] font-semibold ${
+                    execReport.allPassed ? 'text-arena-success' : 'text-arena-error'
                   }`}>
                     {execReport.totalPassed} / {execReport.totalTests} Passed ({execReport.totalTimeMs} ms)
                   </span>
                 )}
               </div>
 
-              <div className="flex-1 p-3 overflow-y-auto space-y-2 text-xs font-mono">
+              <div className="flex-1 p-3 overflow-y-auto space-y-1.5 text-xs font-mono">
                 {!execReport ? (
-                  <div className="h-full flex items-center justify-center text-slate-500 font-sans text-xs">
-                    Run sample tests or submit solution to execute against test suite.
+                  <div className="h-full flex items-center justify-center text-arena-textSubtle font-sans text-xs">
+                    Run sample tests or submit solution to execute against the test suite.
                   </div>
                 ) : execReport.compileError ? (
-                  <pre className="text-rose-400 whitespace-pre-wrap">{execReport.compileError}</pre>
+                  <pre className="text-arena-error whitespace-pre-wrap">{execReport.compileError}</pre>
                 ) : (
                   execReport.results.map((res) => (
                     <div 
                       key={res.index}
-                      className={`p-2 rounded-xl border ${
-                        res.passed ? 'bg-emerald-950/20 border-emerald-500/30' : 'bg-rose-950/20 border-rose-500/30'
+                      className={`p-2 rounded-lg border ${
+                        res.passed ? 'bg-arena-success/5 border-arena-success/20' : 'bg-arena-error/5 border-arena-error/20'
                       }`}
                     >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-bold flex items-center gap-1.5">
-                          {res.passed ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <XCircle className="w-3.5 h-3.5 text-rose-400" />}
-                          <span className={res.passed ? 'text-emerald-300' : 'text-rose-300'}>
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="font-semibold flex items-center gap-1.5">
+                          {res.passed ? <CheckCircle2 className="w-3.5 h-3.5 text-arena-success" /> : <XCircle className="w-3.5 h-3.5 text-arena-error" />}
+                          <span className={res.passed ? 'text-arena-success' : 'text-arena-error'}>
                             Test #{res.index} {res.isHidden && '(Hidden)'}
                           </span>
                         </span>
-                        <span className="text-[10px] text-slate-500">{res.executionTimeMs} ms</span>
+                        <span className="text-[10px] text-arena-textSubtle">{res.executionTimeMs} ms</span>
                       </div>
-                      <div className="text-[11px] text-slate-400">
+                      <div className="text-[11px] text-arena-textSecondary">
                         Expected: {JSON.stringify(res.expected)} | Actual: {JSON.stringify(res.actual)}
                       </div>
                     </div>
@@ -271,4 +267,3 @@ export const LearnProblemModal: React.FC<LearnProblemModalProps> = ({
     </div>
   );
 };
-

@@ -4,45 +4,42 @@
 
 @layer base {
   body {
-    @apply bg-arena-bg text-slate-100 font-sans;
-    background-image: 
-      radial-gradient(circle at 15% 15%, rgba(139, 92, 246, 0.05) 0%, transparent 40%),
-      radial-gradient(circle at 85% 85%, rgba(6, 182, 212, 0.04) 0%, transparent 40%);
-    background-attachment: fixed;
+    @apply bg-arena-bg text-arena-textPrimary font-sans antialiased;
+    background-color: #101318;
+    color: #F3F5F8;
   }
 
-  /* Custom scrollbar */
+  /* Refined, minimal scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #080a10;
+    background: #101318;
   }
   ::-webkit-scrollbar-thumb {
-    background: #1f2842;
+    background: #202936;
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #374151;
+    background: #293443;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply relative inline-flex items-center justify-center font-medium px-4 py-2 rounded-xl transition-all duration-200 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-lg shadow-violet-500/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center font-medium px-4 py-2 rounded-lg transition-all duration-150 bg-arena-blue hover:bg-arena-blueHover text-white shadow-sm active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center font-medium px-4 py-2 rounded-xl transition-all duration-200 bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700/60 active:scale-[0.98];
+    @apply inline-flex items-center justify-center font-medium px-4 py-2 rounded-lg transition-all duration-150 bg-arena-elevated hover:bg-[#293443] text-arena-textPrimary border border-arena-border hover:border-arena-borderHover active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed;
   }
-  .btn-cyan {
-    @apply relative inline-flex items-center justify-center font-medium px-4 py-2 rounded-xl transition-all duration-200 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-white shadow-lg shadow-cyan-500/20 active:scale-[0.98];
+  .btn-teal {
+    @apply inline-flex items-center justify-center font-medium px-4 py-2 rounded-lg transition-all duration-150 bg-arena-teal hover:bg-arena-tealHover text-slate-950 font-semibold shadow-sm active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .arena-card {
-    @apply bg-arena-card border border-arena-border rounded-2xl transition-all duration-200 hover:border-slate-700;
+    @apply bg-arena-surface border border-arena-border rounded-xl transition-all duration-150 hover:border-arena-borderHover;
   }
-  .arena-card-glow {
-    @apply bg-arena-card border border-arena-border rounded-2xl transition-all duration-300 hover:border-violet-500/40 hover:shadow-xl hover:shadow-violet-500/10;
+  .arena-card-elevated {
+    @apply bg-arena-elevated border border-arena-border rounded-xl transition-all duration-150 hover:border-arena-borderHover;
   }
 }
-

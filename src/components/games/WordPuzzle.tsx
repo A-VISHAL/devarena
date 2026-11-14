@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, Share2, HelpCircle, Trophy, ArrowLeft, Delete, CornerDownLeft } from 'lucide-react';
+import { ArrowLeft, Share2, Trophy, Delete } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { sound } from '../../utils/sound';
 import confetti from 'canvas-confetti';
@@ -11,7 +11,6 @@ const WORD_LIST = [
   'CACHE', 'ROUTE', 'TOKEN', 'ASYNC', 'DEBUG'
 ];
 
-// Determine daily word based on date
 function getDailyWord(): string {
   const dayIndex = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
   return WORD_LIST[dayIndex % WORD_LIST.length];
@@ -20,7 +19,7 @@ function getDailyWord(): string {
 type LetterStatus = 'correct' | 'present' | 'absent' | 'empty';
 
 export const WordPuzzle: React.FC<{ onBack: () => void }> = ({ onBack }) => {
-  const { recordCasualGameResult, openShareModal, user } = useApp();
+  const { recordCasualGameResult, openShareModal } = useApp();
 
   const [targetWord] = useState<string>(getDailyWord);
   const [guesses, setGuesses] = useState<string[]>([]);
@@ -33,7 +32,6 @@ export const WordPuzzle: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const maxAttempts = 6;
   const wordLength = 5;
 
-  // Key status mapping for on-screen keyboard
   const getKeyStatuses = useCallback((): Record<string, LetterStatus> => {
     const statuses: Record<string, LetterStatus> = {};
     guesses.forEach(guess => {
@@ -85,21 +83,20 @@ export const WordPuzzle: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       sound.playVictory();
       setGameOver(true);
       setHasWon(true);
-      setMessage(`Brilliant! You guessed it in ${newGuesses.length}/6 attempts.`);
-      confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+      setMessage(`Solved in ${newGuesses.length}/6 attempts.`);
+      confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 } });
       recordCasualGameResult('word-puzzle', (7 - newGuesses.length) * 100, { won: true, attempts: newGuesses.length });
     } else if (newGuesses.length >= maxAttempts) {
       sound.playWrong();
       setGameOver(true);
       setHasWon(false);
-      setMessage(`Out of attempts! The word was ${targetWord}.`);
+      setMessage(`Out of attempts. The word was ${targetWord}.`);
       recordCasualGameResult('word-puzzle', 20, { won: false, attempts: 6 });
     } else {
       sound.playCorrect();
     }
   }, [currentGuess, gameOver, guesses, maxAttempts, targetWord, recordCasualGameResult]);
 
-  // Physical keyboard listeners
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
@@ -117,7 +114,6 @@ export const WordPuzzle: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   const keyStatuses = getKeyStatuses();
 
-  // Generate shareable emoji grid
   const handleShareResult = () => {
     const emojiRows = guesses.map(guess => {
       return guess.split('').map((ch, idx) => {
@@ -129,12 +125,12 @@ export const WordPuzzle: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     openShareModal({
       title: 'Daily Word Puzzle',
-      gameOrBattle: 'Word Puzzle (Daily)',
+      gameOrBattle: 'Word Puzzle',
       scoreOrResult: hasWon ? `${guesses.length}/6 Attempts` : 'X/6 Attempts',
       subtitle: emojiRows,
       customStats: [
         { label: 'Attempts', value: `${guesses.length}/6` },
-        { label: 'Result', value: hasWon ? 'Solved 🏆' : 'Missed' }
+        { label: 'Result', value: hasWon ? 'Solved' : 'Missed' }
       ]
     });
   };
@@ -146,25 +142,25 @@ export const WordPuzzle: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   ];
 
   return (
-    <div className="max-w-xl mx-auto py-4 px-3 flex flex-col items-center">
+    <div className="max-w-xl mx-auto py-6 px-4 flex flex-col items-center animate-in fade-in">
       {/* Top Header */}
       <div className="w-full flex items-center justify-between mb-4 pb-3 border-b border-arena-border">
         <button
           onClick={onBack}
-          className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors p-1"
+          className="flex items-center gap-1.5 text-xs font-medium text-arena-textSecondary hover:text-arena-textPrimary transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>All Games</span>
         </button>
         <div className="text-center">
-          <h2 className="text-base font-black text-white">Daily Word Puzzle</h2>
-          <span className="text-[10px] text-slate-400 font-medium">Guess today's hidden 5-letter word</span>
+          <h2 className="text-sm font-bold text-arena-textPrimary">Daily Word Puzzle</h2>
+          <span className="text-[11px] text-arena-textSubtle">Guess today's hidden 5-letter word</span>
         </div>
         <div className="w-16 flex justify-end">
           {gameOver && (
             <button
               onClick={handleShareResult}
-              className="p-1.5 rounded-xl bg-violet-600/30 text-violet-300 border border-violet-500/40 hover:bg-violet-600/50"
+              className="p-1.5 rounded-lg bg-arena-surface border border-arena-border text-arena-blue hover:text-white"
               title="Share Result"
             >
               <Share2 className="w-4 h-4" />
@@ -174,7 +170,7 @@ export const WordPuzzle: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       </div>
 
       {message && (
-        <div className="mb-3 px-3 py-1.5 rounded-xl bg-slate-800 text-xs font-bold text-center text-slate-200 border border-slate-700 animate-in fade-in">
+        <div className="mb-4 px-3 py-1.5 rounded-lg bg-arena-elevated border border-arena-border text-xs font-medium text-center text-arena-textPrimary animate-in fade-in">
           {message}
         </div>
       )}
@@ -193,24 +189,24 @@ export const WordPuzzle: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             >
               {Array.from({ length: wordLength }).map((_, colIndex) => {
                 const char = guess[colIndex] || '';
-                let statusBg = 'bg-slate-900/80 border-slate-800 text-white';
+                let tileClass = 'bg-arena-surface border-arena-border text-arena-textPrimary';
 
                 if (isSubmitted) {
                   if (targetWord[colIndex] === char) {
-                    statusBg = 'bg-emerald-600 border-emerald-500 text-white shadow-md shadow-emerald-600/20';
+                    tileClass = 'bg-arena-success border-arena-success text-slate-950 font-bold';
                   } else if (targetWord.includes(char)) {
-                    statusBg = 'bg-amber-600 border-amber-500 text-white shadow-md shadow-amber-600/20';
+                    tileClass = 'bg-arena-warning border-arena-warning text-slate-950 font-bold';
                   } else {
-                    statusBg = 'bg-slate-800/80 border-slate-700 text-slate-400';
+                    tileClass = 'bg-arena-elevated border-arena-border text-arena-textSubtle';
                   }
                 } else if (char) {
-                  statusBg = 'bg-slate-800/90 border-violet-500/60 text-white scale-105';
+                  tileClass = 'bg-arena-elevated border-arena-blue text-arena-textPrimary';
                 }
 
                 return (
                   <div
                     key={colIndex}
-                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl border-2 flex items-center justify-center font-black text-xl tracking-wider transition-all duration-200 ${statusBg}`}
+                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-lg border flex items-center justify-center font-bold text-lg transition-all ${tileClass}`}
                   >
                     {char}
                   </div>
@@ -223,22 +219,22 @@ export const WordPuzzle: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       {/* Completion Banner */}
       {gameOver && (
-        <div className="w-full p-4 mb-4 rounded-2xl bg-gradient-to-r from-violet-950/60 to-slate-900 border border-violet-500/30 flex items-center justify-between">
+        <div className="w-full p-4 mb-5 rounded-xl bg-arena-surface border border-arena-border flex items-center justify-between">
           <div>
-            <div className="font-extrabold text-sm text-white flex items-center gap-1.5">
-              <Trophy className="w-4 h-4 text-amber-400" />
-              <span>{hasWon ? 'Daily Challenge Complete!' : 'Challenge Finished'}</span>
+            <div className="font-bold text-xs text-arena-textPrimary flex items-center gap-1.5">
+              <Trophy className="w-4 h-4 text-arena-warning" />
+              <span>{hasWon ? 'Puzzle Solved' : 'Challenge Finished'}</span>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
-              {hasWon ? `Streak boosted! Solved in ${guesses.length} attempts.` : `The word was ${targetWord}. Try again tomorrow!`}
+            <p className="text-[11px] text-arena-textSecondary mt-0.5">
+              {hasWon ? `Completed in ${guesses.length}/6 attempts.` : `The word was ${targetWord}.`}
             </p>
           </div>
           <button
             onClick={handleShareResult}
-            className="btn-primary text-xs py-2 px-3 gap-1.5"
+            className="btn-primary text-xs py-1.5 px-3 gap-1.5"
           >
             <Share2 className="w-3.5 h-3.5" />
-            <span>Share Result</span>
+            <span>Share</span>
           </button>
         </div>
       )}
@@ -249,14 +245,14 @@ export const WordPuzzle: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           <div key={rowIdx} className="flex justify-center gap-1">
             {row.map((key) => {
               const status = keyStatuses[key];
-              let btnClass = 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700';
+              let keyClass = 'bg-arena-elevated hover:bg-[#293443] text-arena-textPrimary border-arena-border';
 
               if (status === 'correct') {
-                btnClass = 'bg-emerald-600 text-white border-emerald-500';
+                keyClass = 'bg-arena-success text-slate-950 font-bold border-arena-success';
               } else if (status === 'present') {
-                btnClass = 'bg-amber-600 text-white border-amber-500';
+                keyClass = 'bg-arena-warning text-slate-950 font-bold border-arena-warning';
               } else if (status === 'absent') {
-                btnClass = 'bg-slate-900 text-slate-500 border-slate-800';
+                keyClass = 'bg-arena-bg text-arena-textSubtle border-arena-border';
               }
 
               const isWide = key === 'ENTER' || key === 'DEL';
@@ -269,9 +265,9 @@ export const WordPuzzle: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     else if (key === 'DEL') handleDelete();
                     else handleCharInput(key);
                   }}
-                  className={`h-11 rounded-lg font-bold text-xs flex items-center justify-center border transition-all active:scale-95 ${
-                    isWide ? 'px-3 sm:px-4 text-[11px]' : 'w-8 sm:w-10'
-                  } ${btnClass}`}
+                  className={`h-10 rounded-md font-medium text-xs flex items-center justify-center border transition-all active:scale-95 ${
+                    isWide ? 'px-3 sm:px-3.5 text-[11px]' : 'w-8 sm:w-9'
+                  } ${keyClass}`}
                 >
                   {key === 'DEL' ? <Delete className="w-4 h-4" /> : key}
                 </button>
@@ -283,4 +279,3 @@ export const WordPuzzle: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     </div>
   );
 };
-

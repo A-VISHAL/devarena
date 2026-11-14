@@ -34,60 +34,52 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md bg-arena-surface border border-arena-border rounded-3xl overflow-hidden shadow-2xl p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-arena-bg/85 backdrop-blur-sm animate-in fade-in">
+      <div className="relative w-full max-w-sm bg-arena-surface border border-arena-border rounded-2xl overflow-hidden shadow-card p-6">
         
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-1 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          className="absolute top-4 right-4 p-1 rounded-lg text-arena-textSecondary hover:text-arena-textPrimary hover:bg-arena-elevated transition-colors"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         </button>
 
         {/* Header */}
-        <div className="text-center mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-600 to-violet-600 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-violet-500/20">
-            <Sparkles className="w-6 h-6 text-white" />
+        <div className="text-center mb-5">
+          <div className="w-10 h-10 rounded-lg bg-arena-elevated border border-arena-border text-arena-blue flex items-center justify-center mx-auto mb-2">
+            <Sparkles className="w-5 h-5" />
           </div>
-          <h3 className="text-xl font-extrabold text-white">Save Your DEVARENA Account</h3>
-          <p className="text-xs text-slate-400 mt-1">
-            Turn your guest progress into a permanent identity. All ratings, streaks, and achievements are preserved.
+          <h3 className="text-base font-bold text-arena-textPrimary">Save Your Account</h3>
+          <p className="text-xs text-arena-textSecondary mt-1 leading-relaxed">
+            Preserve your guest ratings, streaks, and achievements into a permanent identity.
           </p>
         </div>
 
         {/* Current Guest Stats preserved */}
-        <div className="grid grid-cols-3 gap-2 p-3 mb-5 rounded-2xl bg-slate-900/80 border border-slate-800 text-center">
+        <div className="grid grid-cols-3 gap-2 p-2.5 mb-4 rounded-xl bg-arena-elevated border border-arena-border text-center">
           <div>
-            <div className="text-[10px] text-slate-400">Current Rating</div>
-            <div className="text-sm font-black text-violet-400 flex items-center justify-center gap-1">
-              <Swords className="w-3.5 h-3.5" />
-              <span>{user.rating}</span>
-            </div>
+            <div className="text-[10px] text-arena-textSubtle font-medium">Rating</div>
+            <div className="text-xs font-bold text-arena-blue mt-0.5">{user.rating} Elo</div>
           </div>
           <div>
-            <div className="text-[10px] text-slate-400">Active Streak</div>
-            <div className="text-sm font-black text-amber-400 flex items-center justify-center gap-1">
-              <Flame className="w-3.5 h-3.5" />
-              <span>{user.streak}d</span>
-            </div>
+            <div className="text-[10px] text-arena-textSubtle font-medium">Streak</div>
+            <div className="text-xs font-bold text-arena-warning mt-0.5">{user.streak}d</div>
           </div>
           <div>
-            <div className="text-[10px] text-slate-400">Battles Won</div>
-            <div className="text-sm font-black text-emerald-400">
-              {user.battlesWon}/{user.battlesTotal}
-            </div>
+            <div className="text-[10px] text-arena-textSubtle font-medium">Battles</div>
+            <div className="text-xs font-bold text-arena-teal mt-0.5">{user.battlesWon}W</div>
           </div>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3.5">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-              Choose Handle / Username
+            <label className="block text-[11px] font-semibold text-arena-textSubtle mb-1">
+              Choose Username
             </label>
             <div className="relative">
-              <span className="absolute left-3 top-2.5 text-slate-500 text-xs font-mono">@</span>
+              <span className="absolute left-3 top-2 text-arena-textSubtle text-xs font-mono">@</span>
               <input
                 type="text"
                 value={username}
@@ -95,15 +87,15 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
                   setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''));
                   setError('');
                 }}
-                placeholder="developer_name"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-7 pr-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500 transition-colors"
+                placeholder="handle"
+                className="w-full bg-arena-elevated border border-arena-border rounded-lg pl-7 pr-3 py-1.5 text-xs text-arena-textPrimary focus:outline-none focus:border-arena-borderHover font-mono"
                 maxLength={24}
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+            <label className="block text-[11px] font-semibold text-arena-textSubtle mb-1">
               Display Name
             </label>
             <input
@@ -113,29 +105,29 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
                 setDisplayName(e.target.value);
                 setError('');
               }}
-              placeholder="Your Full Name"
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500 transition-colors"
+              placeholder="Your Name"
+              className="w-full bg-arena-elevated border border-arena-border rounded-lg px-3 py-1.5 text-xs text-arena-textPrimary focus:outline-none focus:border-arena-borderHover"
               maxLength={32}
             />
           </div>
 
           {error && (
-            <p className="text-xs text-rose-400 font-medium">{error}</p>
+            <p className="text-xs text-arena-error font-medium">{error}</p>
           )}
 
-          <div className="pt-2">
+          <div className="pt-1">
             <button
               type="submit"
-              className="w-full btn-primary py-2.5 gap-2 text-sm font-bold shadow-lg shadow-violet-500/20"
+              className="w-full btn-primary py-2 text-xs font-semibold"
             >
-              <UserCheck className="w-4 h-4" />
-              <span>Create Permanent Profile</span>
+              <UserCheck className="w-3.5 h-3.5 mr-1.5" />
+              <span>Create Account</span>
             </button>
           </div>
 
-          <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400 mt-2">
-            <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Instant activation • No password fatigue</span>
+          <div className="flex items-center justify-center gap-1.5 text-[11px] text-arena-textSubtle">
+            <ShieldCheck className="w-3.5 h-3.5 text-arena-teal" />
+            <span>Instant activation</span>
           </div>
         </form>
 
@@ -143,4 +135,3 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
     </div>
   );
 };
-
