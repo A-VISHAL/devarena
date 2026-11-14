@@ -4,7 +4,9 @@ import {
   NavigationTab, 
   CasualGameId, 
   CommunityPost, 
-  BattleRecord 
+  BattleRecord,
+  GameResultData,
+  GameHistoryEntry
 } from '../types';
 import { createDefaultGuest, INITIAL_COMMUNITY_POSTS, ACHIEVEMENTS } from '../data/mockData';
 import { sound } from '../utils/sound';
@@ -36,6 +38,10 @@ interface AppContextType {
   upgradeGuestToAccount: (username: string, displayName: string) => void;
   updateUserProfile: (partial: Partial<UserProfile>) => void;
   recordCasualGameResult: (gameId: CasualGameId, score: number, meta?: any) => void;
+  recordCasualGameCompletion: (result: GameResultData) => void;
+  gameResultData: GameResultData | null;
+  setGameResultData: (data: GameResultData | null) => void;
+  toggleSaveGame: (gameId: CasualGameId) => void;
   recordCodingBattleResult: (
     result: 'won' | 'lost' | 'draw',
     opponentName: string,
@@ -90,8 +96,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return INITIAL_COMMUNITY_POSTS;
   });
 
-  // 5. Share modal
+  // 5. Share modal & game result modal
   const [shareCardData, setShareCardData] = useState<ShareCardData | null>(null);
+  const [gameResultData, setGameResultData] = useState<GameResultData | null>(null);
 
   // Check URL params for direct room links (e.g. ?battle=XYZ or ?room=ABC or ?tab=XYZ)
   useEffect(() => {
@@ -175,8 +182,83 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUser(prev => ({ ...prev, ...partial }));
   };
 
+  const toggleSaveGame = (gameId: CasualGameId) => {
+    sound.playClick();
+    setUser(prev => {
+      const saved = prev.savedGames || [];
+      const isSaved = saved.includes(gameId);
+      const newSaved = isSaved ? saved.filter(g => g !== gameId) : [...saved, gameId];
+      return { ...prev, savedGames: newSaved };
+    });
+  };
+
+  const recordCasualGameCompletion = (result: GameResultData) => {
+    setGameResultData(result);
+    setUser(prev => {
+      const recent = prev.recentlyPlayedGames || [];
+      const updatedRecent = [result.gameId, ...recent.filter(g => g !== result.gameId)].slice(0, 8);
+      
+      const pBests = { ...(prev.personalBests || {}) };
+      const currentBest = pBests[result.gameId];
+      const isNewBest = !currentBest || result.score > currentBest.bestScore;
+
+      if (isNewBest) {
+        pBests[result.gameId] = {
+          bestScore: Math.max(result.score, currentBest?.bestScore || 0),
+          bestTimeSec: result.timeTakenSec > 0 ? (currentBest?.bestTimeSec ? Math.min(result.timeTakenSec, currentBest.bestTimeSec) : result.timeTakenSec) : currentBest?.bestTimeSec,
+          challengeNumber: result.challengeNumber,
+          date: 'Today'
+        };
+      }
+
+      const historyEntry: GameHistoryEntry = {
+        id: `gh-${Date.now()}`,
+        gameId: result.gameId,
+        gameTitle: result.gameTitle,
+        challengeNumber: result.challengeNumber,
+        score: result.score,
+        timeTakenSec: result.timeTakenSec,
+        moves: result.moves,
+        accuracy: result.accuracy,
+        won: result.won,
+        timestamp: 'Just now'
+      };
+
+      const history = [historyEntry, ...(prev.gameHistory || [])].slice(0, 20);
+
+      const newAchievements = [...prev.achievements];
+      let newCasualRating = prev.casualRating + Math.max(5, Math.floor(result.score / 50));
+
+      if (result.gameId === 'zip' && result.won) {
+        if (!newAchievements.includes('puzzle_master')) newAchievements.push('puzzle_master');
+      }
+      if (result.gameId === 'word-puzzle' && result.won) {
+        if (!newAchievements.includes('puzzle_master')) newAchievements.push('puzzle_master');
+        setCompletedDailyChallenge(true);
+        localStorage.setItem(`devarena_daily_${new Date().toDateString()}`, 'true');
+      }
+      if (result.gameId === 'reaction-challenge' && result.score < 220) {
+        if (!newAchievements.includes('reaction_pro')) newAchievements.push('reaction_pro');
+      }
+      if (result.gameId === 'quick-math' && result.score >= 12) {
+        if (!newAchievements.includes('math_wizard')) newAchievements.push('math_wizard');
+      }
+
+      return {
+        ...prev,
+        casualRating: newCasualRating,
+        achievements: newAchievements,
+        recentlyPlayedGames: updatedRecent,
+        personalBests: pBests,
+        gameHistory: history
+      };
+    });
+  };
+
   const recordCasualGameResult = (gameId: CasualGameId, score: number, meta?: any) => {
     setUser(prev => {
+      const recent = prev.recentlyPlayedGames || [];
+      const updatedRecent = [gameId, ...recent.filter(g => g !== gameId)].slice(0, 8);
       const newAchievements = [...prev.achievements];
       let newCasualRating = prev.casualRating + Math.max(5, Math.floor(score / 50));
 
@@ -195,7 +277,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return {
         ...prev,
         casualRating: newCasualRating,
-        achievements: newAchievements
+        achievements: newAchievements,
+        recentlyPlayedGames: updatedRecent
       };
     });
   };
@@ -336,6 +419,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         upgradeGuestToAccount,
         updateUserProfile,
         recordCasualGameResult,
+        recordCasualGameCompletion,
+        gameResultData,
+        setGameResultData,
+        toggleSaveGame,
         recordCodingBattleResult,
         recordProblemSolved,
         isSoundMuted,

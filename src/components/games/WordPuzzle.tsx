@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Share2, Trophy, Delete } from 'lucide-react';
+import { ArrowLeft, Share2, Trophy, Delete, ArrowRight } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { CasualGameId, GameResultData } from '../../types';
 import { sound } from '../../utils/sound';
 import confetti from 'canvas-confetti';
 
@@ -18,8 +19,11 @@ function getDailyWord(): string {
 
 type LetterStatus = 'correct' | 'present' | 'absent' | 'empty';
 
-export const WordPuzzle: React.FC<{ onBack: () => void }> = ({ onBack }) => {
-  const { recordCasualGameResult, openShareModal } = useApp();
+export const WordPuzzle: React.FC<{ 
+  onBack: () => void;
+  onComplete?: (result: GameResultData) => void;
+}> = ({ onBack, onComplete }) => {
+  const { recordCasualGameCompletion, openShareModal } = useApp();
 
   const [targetWord] = useState<string>(getDailyWord);
   const [guesses, setGuesses] = useState<string[]>([]);
@@ -85,17 +89,75 @@ export const WordPuzzle: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setHasWon(true);
       setMessage(`Solved in ${newGuesses.length}/6 attempts.`);
       confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 } });
-      recordCasualGameResult('word-puzzle', (7 - newGuesses.length) * 100, { won: true, attempts: newGuesses.length });
+      const pts = (7 - newGuesses.length) * 100;
+      const res: GameResultData = {
+        gameId: 'word-puzzle',
+        gameTitle: 'Daily Word Puzzle #42',
+        challengeNumber: 42,
+        score: pts,
+        timeTakenSec: 65,
+        moves: newGuesses.length,
+        won: true,
+        streak: 4,
+        headline: `Solved in ${newGuesses.length}/6 Attempts!`,
+        customStats: [
+          { label: 'Attempts', value: `${newGuesses.length}/6` },
+          { label: 'Target Word', value: targetWord },
+          { label: 'Daily Streak', value: '4 Days' }
+        ],
+        shareSummary: `DEVARENA Word Puzzle #42: ${newGuesses.length}/6 attempts 🟩🟨\nplay.devarena.com`
+      };
+      recordCasualGameCompletion(res);
     } else if (newGuesses.length >= maxAttempts) {
       sound.playWrong();
       setGameOver(true);
       setHasWon(false);
       setMessage(`Out of attempts. The word was ${targetWord}.`);
-      recordCasualGameResult('word-puzzle', 20, { won: false, attempts: 6 });
+      const res: GameResultData = {
+        gameId: 'word-puzzle',
+        gameTitle: 'Daily Word Puzzle #42',
+        challengeNumber: 42,
+        score: 30,
+        timeTakenSec: 90,
+        moves: 6,
+        won: false,
+        streak: 0,
+        headline: `Word was ${targetWord}`,
+        customStats: [
+          { label: 'Attempts', value: '6/6' },
+          { label: 'Target Word', value: targetWord },
+          { label: 'Outcome', value: 'Missed' }
+        ],
+        shareSummary: `DEVARENA Word Puzzle #42: Missed after 6 attempts!\nplay.devarena.com`
+      };
+      recordCasualGameCompletion(res);
     } else {
       sound.playCorrect();
     }
-  }, [currentGuess, gameOver, guesses, maxAttempts, targetWord, recordCasualGameResult]);
+  }, [currentGuess, gameOver, guesses, maxAttempts, targetWord, recordCasualGameCompletion]);
+
+  const handleOpenDetailedResults = () => {
+    if (onComplete) {
+      const pts = hasWon ? (7 - guesses.length) * 100 : 30;
+      onComplete({
+        gameId: 'word-puzzle' as CasualGameId,
+        gameTitle: 'Daily Word Puzzle #42',
+        challengeNumber: 42,
+        score: pts,
+        timeTakenSec: 65,
+        moves: guesses.length,
+        won: hasWon,
+        streak: hasWon ? 4 : 0,
+        headline: hasWon ? `Solved in ${guesses.length}/6 attempts!` : `Word was ${targetWord}`,
+        customStats: [
+          { label: 'Attempts', value: `${guesses.length}/6` },
+          { label: 'Target Word', value: targetWord },
+          { label: 'Result', value: hasWon ? 'Solved' : 'Missed' }
+        ],
+        shareSummary: `DEVARENA Word Puzzle #42: ${hasWon ? `${guesses.length}/6 attempts` : 'Missed'} 🟩🟨\nplay.devarena.com`
+      });
+    }
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -229,13 +291,24 @@ export const WordPuzzle: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               {hasWon ? `Completed in ${guesses.length}/6 attempts.` : `The word was ${targetWord}.`}
             </p>
           </div>
-          <button
-            onClick={handleShareResult}
-            className="btn-primary text-xs py-1.5 px-3 gap-1.5"
-          >
-            <Share2 className="w-3.5 h-3.5" />
-            <span>Share</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {onComplete && (
+              <button
+                onClick={handleOpenDetailedResults}
+                className="btn-primary text-xs py-1.5 px-3 gap-1.5"
+              >
+                <span>Full Results</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <button
+              onClick={handleShareResult}
+              className="btn-secondary text-xs py-1.5 px-3 gap-1.5"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              <span>Share</span>
+            </button>
+          </div>
         </div>
       )}
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, RefreshCw, Share2, Calculator, Trophy, Timer, Flame } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Share2, Calculator, Trophy, Timer, Flame, ArrowRight } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { CasualGameId, GameResultData } from '../../types';
 import { sound } from '../../utils/sound';
 import confetti from 'canvas-confetti';
 
@@ -53,8 +54,11 @@ function generateMathQuestion(streak: number): MathQuestion {
   };
 }
 
-export const QuickMath: React.FC<{ onBack: () => void }> = ({ onBack }) => {
-  const { recordCasualGameResult, openShareModal } = useApp();
+export const QuickMath: React.FC<{ 
+  onBack: () => void;
+  onComplete?: (result: GameResultData) => void;
+}> = ({ onBack, onComplete }) => {
+  const { recordCasualGameCompletion, openShareModal } = useApp();
 
   const [timeLeft, setTimeLeft] = useState<number>(60);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -87,7 +91,46 @@ export const QuickMath: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     setIsPlaying(false);
     setGameOver(true);
     confetti({ particleCount: 60, spread: 60 });
-    recordCasualGameResult('quick-math', score);
+    const res: GameResultData = {
+      gameId: 'quick-math',
+      gameTitle: 'Quick Math Sprint',
+      score,
+      timeTakenSec: 60,
+      moves: totalAttempts,
+      accuracy,
+      won: true,
+      streak: Math.max(streak, 1),
+      headline: `Scored ${score} Points!`,
+      customStats: [
+        { label: 'Score', value: String(score) },
+        { label: 'Solved in 60s', value: `${correctCount}/${totalAttempts}` },
+        { label: 'Accuracy', value: `${accuracy}%` }
+      ],
+      shareSummary: `DEVARENA Quick Math Sprint: ${score} points! Solved ${correctCount}/${totalAttempts} (${accuracy}% accuracy) in 60s!\nplay.devarena.com`
+    };
+    recordCasualGameCompletion(res);
+  };
+
+  const handleDetailedResults = () => {
+    if (onComplete) {
+      onComplete({
+        gameId: 'quick-math',
+        gameTitle: 'Quick Math Sprint',
+        score,
+        timeTakenSec: 60,
+        moves: totalAttempts,
+        accuracy,
+        won: true,
+        streak: Math.max(streak, 1),
+        headline: `Scored ${score} Points!`,
+        customStats: [
+          { label: 'Score', value: String(score) },
+          { label: 'Solved in 60s', value: `${correctCount}/${totalAttempts}` },
+          { label: 'Accuracy', value: `${accuracy}%` }
+        ],
+        shareSummary: `DEVARENA Quick Math Sprint: ${score} points! Solved ${correctCount}/${totalAttempts} (${accuracy}% accuracy) in 60s!\nplay.devarena.com`
+      });
+    }
   };
 
   const handleStart = () => {
@@ -233,11 +276,17 @@ export const QuickMath: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             </p>
           </div>
 
-          <div className="flex gap-2 pt-2">
+          <div className="flex flex-col sm:flex-row gap-2 pt-2">
             <button onClick={handleStart} className="btn-secondary flex-1 py-2 text-xs">
               Play Again
             </button>
-            <button onClick={handleShare} className="btn-primary flex-1 py-2 text-xs gap-1.5">
+            {onComplete && (
+              <button onClick={handleDetailedResults} className="btn-primary flex-1 py-2 text-xs gap-1.5">
+                <span>View Full Results</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <button onClick={handleShare} className="btn-secondary flex-1 py-2 text-xs gap-1.5">
               <Share2 className="w-3.5 h-3.5" />
               <span>Share Score</span>
             </button>

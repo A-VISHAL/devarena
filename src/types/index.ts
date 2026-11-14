@@ -1,8 +1,9 @@
 export type NavigationTab = 'home' | 'play' | 'arena' | 'learn' | 'community' | 'leaderboard' | 'profile';
 
-export type GameCategory = 'daily' | 'brain' | 'multiplayer';
+export type GameCategory = 'daily' | 'brain' | 'logic' | 'multiplayer';
 
 export type CasualGameId = 
+  | 'zip'
   | 'word-puzzle' 
   | 'odd-one-out' 
   | 'pattern-master' 
@@ -12,6 +13,52 @@ export type CasualGameId =
   | 'logic-sprint'
   | 'multiplayer-math'
   | 'multiplayer-reaction';
+
+export interface GameHistoryEntry {
+  id: string;
+  gameId: CasualGameId;
+  gameTitle: string;
+  challengeNumber?: number;
+  score: number;
+  timeTakenSec?: number;
+  moves?: number;
+  accuracy?: number;
+  won: boolean;
+  timestamp: string;
+}
+
+export interface PersonalBestRecord {
+  bestScore: number;
+  bestTimeSec?: number;
+  challengeNumber?: number;
+  date: string;
+}
+
+export interface GameResultData {
+  gameId: CasualGameId;
+  gameTitle: string;
+  challengeNumber?: number;
+  score: number;
+  timeTakenSec: number;
+  moves?: number;
+  accuracy?: number;
+  won: boolean;
+  isNewPersonalBest?: boolean;
+  streak: number;
+  headline: string;
+  customStats: { label: string; value: string }[];
+  shareSummary?: string;
+}
+
+export interface FriendChallenge {
+  id: string;
+  fromUser: string;
+  fromAvatar: string;
+  gameId: CasualGameId;
+  gameTitle: string;
+  timestamp: string;
+  scoreToBeat?: string | number;
+}
 
 export interface UserProfile {
   id: string;
@@ -35,6 +82,11 @@ export interface UserProfile {
   achievements: string[]; // Achievement IDs
   topicProgress: Record<string, number>; // topicId -> percent (0-100)
   recentBattles: BattleRecord[];
+  gameHistory?: GameHistoryEntry[];
+  personalBests?: Record<string, PersonalBestRecord>;
+  savedGames?: CasualGameId[];
+  challenges?: FriendChallenge[];
+  recentlyPlayedGames?: CasualGameId[];
   createdAt: string;
 }
 

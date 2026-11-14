@@ -233,6 +233,69 @@ export function createDefaultGuest(): UserProfile {
         timestamp: '2 days ago'
       }
     ],
+    recentlyPlayedGames: ['zip', 'word-puzzle', 'quick-math'],
+    savedGames: ['zip', 'logic-sprint'],
+    personalBests: {
+      'zip': { bestScore: 650, bestTimeSec: 84, challengeNumber: 42, date: 'Today' },
+      'word-puzzle': { bestScore: 500, bestTimeSec: 125, challengeNumber: 184, date: 'Yesterday' },
+      'reaction-challenge': { bestScore: 198, bestTimeSec: 0, date: '2 days ago' },
+      'quick-math': { bestScore: 14, bestTimeSec: 60, date: '3 days ago' },
+      'memory-grid': { bestScore: 480, bestTimeSec: 90, date: '4 days ago' }
+    },
+    gameHistory: [
+      {
+        id: 'gh-1',
+        gameId: 'zip',
+        gameTitle: 'Zip #42',
+        challengeNumber: 42,
+        score: 650,
+        timeTakenSec: 84,
+        moves: 18,
+        won: true,
+        timestamp: 'Today, 2:15 PM'
+      },
+      {
+        id: 'gh-2',
+        gameId: 'word-puzzle',
+        gameTitle: 'Word Puzzle #184',
+        challengeNumber: 184,
+        score: 500,
+        timeTakenSec: 125,
+        moves: 4,
+        won: true,
+        timestamp: 'Yesterday'
+      },
+      {
+        id: 'gh-3',
+        gameId: 'quick-math',
+        gameTitle: 'Quick Math Sprint',
+        score: 14,
+        timeTakenSec: 60,
+        accuracy: 93,
+        won: true,
+        timestamp: '3 days ago'
+      }
+    ],
+    challenges: [
+      {
+        id: 'ch-1',
+        fromUser: 'kavya_codes',
+        fromAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+        gameId: 'multiplayer-math',
+        gameTitle: 'Quick Math 1v1 Clash',
+        timestamp: '20m ago',
+        scoreToBeat: '18 pts'
+      },
+      {
+        id: 'ch-2',
+        fromUser: 'marcus_q',
+        fromAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80',
+        gameId: 'zip',
+        gameTitle: 'Zip #42',
+        timestamp: '1h ago',
+        scoreToBeat: '72s Solve'
+      }
+    ],
     createdAt: new Date().toISOString()
   };
 }
