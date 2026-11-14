@@ -130,6 +130,8 @@ export interface CodingProblem {
     javascript: string;
     typescript: string;
     python: string;
+    java?: string;
+    cpp?: string;
   };
   functionName: string;
   testCases: {
@@ -139,6 +141,8 @@ export interface CodingProblem {
   }[];
 }
 
+export type SupportedLanguage = 'python' | 'javascript' | 'typescript' | 'cpp' | 'java';
+
 export interface BattleParticipant {
   id: string;
   username: string;
@@ -147,7 +151,7 @@ export interface BattleParticipant {
   isReady: boolean;
   status: 'idle' | 'typing' | 'running' | 'submitted';
   code: string;
-  language: 'javascript' | 'typescript' | 'python';
+  language: SupportedLanguage;
   submissionTime?: number; // timestamp ms
   testsPassed: number;
   totalTests: number;

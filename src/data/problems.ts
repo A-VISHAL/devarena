@@ -68,7 +68,34 @@ function twoSum(nums, target) {
         if diff in seen:
             return [seen[diff], i]
         seen[num] = i
-    return []`
+    return []`,
+      java: `class Solution {
+    public int[] twoSum(int[] nums, int target) {
+        Map<Integer, Integer> map = new HashMap<>();
+        for (int i = 0; i < nums.length; i++) {
+            int complement = target - nums[i];
+            if (map.containsKey(complement)) {
+                return new int[] { map.get(complement), i };
+            }
+            map.put(nums[i], i);
+        }
+        return new int[0];
+    }
+}`,
+      cpp: `class Solution {
+public:
+    vector<int> twoSum(vector<int>& nums, int target) {
+        unordered_map<int, int> map;
+        for (int i = 0; i < nums.size(); i++) {
+            int complement = target - nums[i];
+            if (map.find(complement) != map.end()) {
+                return { map[complement], i };
+            }
+            map[nums[i]] = i;
+        }
+        return {};
+    }
+};`
     },
     testCases: [
       { input: [[2, 7, 11, 15], 9], expected: [0, 1], isHidden: false },
@@ -141,7 +168,33 @@ function isValid(s) {
         elif char in pairs:
             if not stack or stack.pop() != pairs[char]:
                 return False
-    return len(stack) == 0`
+    return len(stack) == 0`,
+      java: `class Solution {
+    public boolean isValid(String s) {
+        Stack<Character> stack = new Stack<>();
+        for (char c : s.toCharArray()) {
+            if (c == '(') stack.push(')');
+            else if (c == '{') stack.push('}');
+            else if (c == '[') stack.push(']');
+            else if (stack.isEmpty() || stack.pop() != c) return false;
+        }
+        return stack.isEmpty();
+    }
+}`,
+      cpp: `class Solution {
+public:
+    bool isValid(string s) {
+        stack<char> st;
+        for (char c : s) {
+            if (c == '(') st.push(')');
+            else if (c == '{') st.push('}');
+            else if (c == '[') st.push(']');
+            else if (st.empty() || st.top() != c) return false;
+            else st.pop();
+        }
+        return st.empty();
+    }
+};`
     },
     testCases: [
       { input: ["()"], expected: true, isHidden: false },
@@ -209,7 +262,28 @@ function maxSubArray(nums) {
     for x in nums[1:]:
         cur_sum = max(x, cur_sum + x)
         max_sum = max(max_sum, cur_sum)
-    return max_sum`
+    return max_sum`,
+      java: `class Solution {
+    public int maxSubArray(int[] nums) {
+        int maxSum = nums[0], curSum = nums[0];
+        for (int i = 1; i < nums.length; i++) {
+            curSum = Math.max(nums[i], curSum + nums[i]);
+            maxSum = Math.max(maxSum, curSum);
+        }
+        return maxSum;
+    }
+}`,
+      cpp: `class Solution {
+public:
+    int maxSubArray(vector<int>& nums) {
+        int maxSum = nums[0], curSum = nums[0];
+        for (size_t i = 1; i < nums.size(); ++i) {
+            curSum = max(nums[i], curSum + nums[i]);
+            maxSum = max(maxSum, curSum);
+        }
+        return maxSum;
+    }
+};`
     },
     testCases: [
       { input: [[-2, 1, -3, 4, -1, 2, 1, -5, 4]], expected: 6, isHidden: false },
@@ -290,7 +364,32 @@ function lengthOfLongestSubstring(s) {
             left = seen[ch] + 1
         seen[ch] = right
         max_len = max(max_len, right - left + 1)
-    return max_len`
+    return max_len`,
+      java: `class Solution {
+    public int lengthOfLongestSubstring(String s) {
+        int[] index = new int[128];
+        int maxLen = 0;
+        for (int right = 0, left = 0; right < s.length(); right++) {
+            left = Math.max(index[s.charAt(right)], left);
+            maxLen = Math.max(maxLen, right - left + 1);
+            index[s.charAt(right)] = right + 1;
+        }
+        return maxLen;
+    }
+}`,
+      cpp: `class Solution {
+public:
+    int lengthOfLongestSubstring(string s) {
+        vector<int> index(128, 0);
+        int maxLen = 0;
+        for (int right = 0, left = 0; right < (int)s.length(); ++right) {
+            left = max(index[s[right]], left);
+            maxLen = max(maxLen, right - left + 1);
+            index[s[right]] = right + 1;
+        }
+        return maxLen;
+    }
+};`
     },
     testCases: [
       { input: ["abcabcbb"], expected: 3, isHidden: false },
@@ -372,7 +471,32 @@ function maxArea(height) {
             l += 1
         else:
             r -= 1
-    return max_w`
+    return max_w`,
+      java: `class Solution {
+    public int maxArea(int[] height) {
+        int left = 0, right = height.length - 1, maxWater = 0;
+        while (left < right) {
+            int h = Math.min(height[left], height[right]);
+            maxWater = Math.max(maxWater, h * (right - left));
+            if (height[left] < height[right]) left++;
+            else right--;
+        }
+        return maxWater;
+    }
+}`,
+      cpp: `class Solution {
+public:
+    int maxArea(vector<int>& height) {
+        int left = 0, right = (int)height.size() - 1, maxWater = 0;
+        while (left < right) {
+            int h = min(height[left], height[right]);
+            maxWater = max(maxWater, h * (right - left));
+            if (height[left] < height[right]) left++;
+            else right--;
+        }
+        return maxWater;
+    }
+};`
     },
     testCases: [
       { input: [[1, 8, 6, 2, 5, 4, 8, 3, 7]], expected: 49, isHidden: false },
@@ -436,7 +560,32 @@ function climbStairs(n) {
     a, b = 1, 2
     for _ in range(3, n + 1):
         a, b = b, a + b
-    return b`
+    return b`,
+      java: `class Solution {
+    public int climbStairs(int n) {
+        if (n <= 2) return n;
+        int a = 1, b = 2;
+        for (int i = 3; i <= n; i++) {
+            int c = a + b;
+            a = b;
+            b = c;
+        }
+        return b;
+    }
+}`,
+      cpp: `class Solution {
+public:
+    int climbStairs(int n) {
+        if (n <= 2) return n;
+        int a = 1, b = 2;
+        for (int i = 3; i <= n; ++i) {
+            int c = a + b;
+            a = b;
+            b = c;
+        }
+        return b;
+    }
+};`
     },
     testCases: [
       { input: [2], expected: 2, isHidden: false },

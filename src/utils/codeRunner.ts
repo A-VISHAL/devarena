@@ -74,7 +74,7 @@ function transpilePythonToJS(pyCode: string, functionName: string): string {
 export async function executeCode(
   problem: CodingProblem,
   code: string,
-  language: 'javascript' | 'typescript' | 'python',
+  language: 'javascript' | 'typescript' | 'python' | 'cpp' | 'java',
   includeHidden: boolean = false
 ): Promise<ExecutionReport> {
   const startTime = performance.now();
@@ -90,6 +90,20 @@ export async function executeCode(
     // Strip basic typescript types
     executableCode = code.replace(/:\s*[A-Za-z0-9_\[\]<>, |]+/g, '')
                          .replace(/as\s+[A-Za-z0-9_\[\]<>, |]+/g, '');
+  } else if (language === 'python') {
+    executableCode = transpilePythonToJS(code, problem.functionName);
+  } else if (language === 'java' || language === 'cpp') {
+    // Strip class headers and primitive return types if needed, or fallback
+    executableCode = code
+      .replace(/public\s+class\s+Solution\s*\{/g, '')
+      .replace(/class\s+Solution\s*\{/g, '')
+      .replace(/public\s+[A-Za-z0-9_<>\[\]]+\s+/g, 'function ')
+      .replace(/vector<int>&?\s+/g, '')
+      .replace(/vector<string>&?\s+/g, '')
+      .replace(/int\s+/g, 'let ')
+      .replace(/string\s+/g, 'let ')
+      .replace(/bool\s+/g, 'let ')
+      .replace(/auto\s+/g, 'let ');
   }
 
   try {
