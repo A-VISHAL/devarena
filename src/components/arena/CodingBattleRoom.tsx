@@ -434,7 +434,7 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
       {roomStatus === 'lobby' && (
         <div className="p-3.5 bg-arena-elevated border-b border-arena-border flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-arena-surface border border-arena-border flex items-center justify-center text-arena-blue">
+            <div className="w-8 h-8 rounded-lg bg-arena-surface border border-arena-border flex items-center justify-center text-arena-amber">
               <Swords className="w-4 h-4" />
             </div>
             <div>
@@ -461,7 +461,7 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
       {/* COUNTDOWN OVERLAY */}
       {countdown !== null && (
         <div className="absolute inset-0 z-50 bg-arena-bg/90 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in">
-          <span className="text-[10px] font-bold text-arena-blue uppercase tracking-widest mb-1">
+          <span className="text-[10px] font-bold text-arena-amber uppercase tracking-widest mb-1">
             BATTLE STARTING
           </span>
           <div className="text-7xl font-extrabold text-arena-textPrimary font-mono animate-bounce">
@@ -496,7 +496,7 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
 
             <div className="text-right">
               {opponent?.status === 'typing' && (
-                <span className="text-[10px] font-medium text-arena-blue animate-pulse">Typing...</span>
+                <span className="text-[10px] font-medium text-arena-amber animate-pulse">Typing...</span>
               )}
               {opponent?.status === 'running' && (
                 <span className="text-[10px] font-medium text-arena-teal">Running tests...</span>
@@ -554,11 +554,11 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
         </div>
 
         {/* Right Panel: Editor & Console */}
-        <div className="w-full lg:w-7/12 flex flex-col bg-[#141820]">
+        <div className="w-full lg:w-7/12 flex flex-col bg-arena-bg">
           
           <div className="h-9 px-4 bg-arena-surface border-b border-arena-border flex items-center justify-between shrink-0">
             <div className="flex items-center gap-1 text-xs font-medium text-arena-textSecondary">
-              <Code2 className="w-3.5 h-3.5 text-arena-blue" />
+              <Code2 className="w-3.5 h-3.5 text-arena-amber" />
               <span>Solution</span>
             </div>
 
@@ -662,7 +662,7 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
       {battleWinner && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-arena-bg/85 backdrop-blur-sm animate-in fade-in">
           <div className="w-full max-w-md bg-arena-surface border border-arena-border rounded-2xl p-6 text-center space-y-4">
-            <div className="w-12 h-12 rounded-xl bg-arena-elevated border border-arena-border text-arena-blue flex items-center justify-center mx-auto">
+            <div className="w-12 h-12 rounded-xl bg-arena-elevated border border-arena-border text-arena-amber flex items-center justify-center mx-auto">
               <Trophy className="w-6 h-6" />
             </div>
 

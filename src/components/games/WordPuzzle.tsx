@@ -142,7 +142,7 @@ export const WordPuzzle: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   ];
 
   return (
-    <div className="max-w-xl mx-auto py-6 px-4 flex flex-col items-center animate-in fade-in">
+    <div className="w-full max-w-2xl mx-auto py-6 px-4 flex flex-col items-center animate-in fade-in">
       {/* Top Header */}
       <div className="w-full flex items-center justify-between mb-4 pb-3 border-b border-arena-border">
         <button
@@ -160,7 +160,7 @@ export const WordPuzzle: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           {gameOver && (
             <button
               onClick={handleShareResult}
-              className="p-1.5 rounded-lg bg-arena-surface border border-arena-border text-arena-blue hover:text-white"
+              className="p-1.5 rounded-lg bg-arena-surface border border-arena-border text-arena-amber hover:text-white"
               title="Share Result"
             >
               <Share2 className="w-4 h-4" />
@@ -200,7 +200,7 @@ export const WordPuzzle: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     tileClass = 'bg-arena-elevated border-arena-border text-arena-textSubtle';
                   }
                 } else if (char) {
-                  tileClass = 'bg-arena-elevated border-arena-blue text-arena-textPrimary';
+                  tileClass = 'bg-arena-elevated border-arena-amber text-arena-textPrimary';
                 }
 
                 return (
@@ -245,12 +245,12 @@ export const WordPuzzle: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           <div key={rowIdx} className="flex justify-center gap-1">
             {row.map((key) => {
               const status = keyStatuses[key];
-              let keyClass = 'bg-arena-elevated hover:bg-[#293443] text-arena-textPrimary border-arena-border';
+              let keyClass = 'bg-arena-elevated hover:bg-arena-border text-arena-textPrimary border-arena-border';
 
               if (status === 'correct') {
-                keyClass = 'bg-arena-success text-slate-950 font-bold border-arena-success';
+                keyClass = 'bg-arena-success text-[#141719] font-bold border-arena-success';
               } else if (status === 'present') {
-                keyClass = 'bg-arena-warning text-slate-950 font-bold border-arena-warning';
+                keyClass = 'bg-arena-warning text-[#141719] font-bold border-arena-warning';
               } else if (status === 'absent') {
                 keyClass = 'bg-arena-bg text-arena-textSubtle border-arena-border';
               }

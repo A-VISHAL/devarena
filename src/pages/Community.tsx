@@ -8,7 +8,9 @@ import {
   Send, 
   Sparkles,
   Gamepad2,
-  Trophy
+  Trophy,
+  Zap,
+  ArrowRight
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { CommunityPost } from '../types';
@@ -78,7 +80,7 @@ export const Community: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6 animate-in fade-in">
+    <div className="page-container py-8 space-y-6 animate-in fade-in">
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-arena-border">
@@ -97,166 +99,254 @@ export const Community: React.FC = () => {
             sound.playClick();
             setShowCreateModal(true);
           }}
-          className="btn-primary py-2 px-3.5 text-xs font-semibold gap-1.5 self-start sm:self-auto"
+          className="btn-primary py-2 px-4 text-xs font-semibold gap-1.5 self-start sm:self-auto"
         >
           <PlusCircle className="w-4 h-4" />
           <span>New Post</span>
         </button>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex flex-wrap items-center gap-2">
-        {[
-          { id: 'all', label: 'All Feed' },
-          { id: 'coding', label: 'Coding Battles', icon: <Swords className="w-3.5 h-3.5 text-arena-blue" /> },
-          { id: 'games', label: 'Casual Puzzles', icon: <Gamepad2 className="w-3.5 h-3.5 text-arena-teal" /> },
-          { id: 'achievements', label: 'Achievements', icon: <Trophy className="w-3.5 h-3.5 text-arena-warning" /> },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => {
-              sound.playClick();
-              setFilter(tab.id as any);
-            }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-              filter === tab.id
-                ? 'bg-arena-elevated text-arena-textPrimary border border-arena-border shadow-subtle'
-                : 'bg-arena-surface text-arena-textSecondary hover:text-arena-textPrimary border border-arena-border'
-            }`}
-          >
-            {tab.icon}
-            <span>{tab.label}</span>
-          </button>
-        ))}
-      </div>
+      {/* Main Grid: 8 Cols Feed + 4 Cols Side Panel on Wide Screens */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        {/* Main Feed Column (8 Cols) */}
+        <div className="lg:col-span-8 space-y-4">
+          
+          {/* Filter Tabs */}
+          <div className="flex flex-wrap items-center gap-2">
+            {[
+              { id: 'all', label: 'All Feed' },
+              { id: 'coding', label: 'Coding Battles', icon: <Swords className="w-3.5 h-3.5 text-arena-amber" /> },
+              { id: 'games', label: 'Casual Puzzles', icon: <Gamepad2 className="w-3.5 h-3.5 text-arena-teal" /> },
+              { id: 'achievements', label: 'Achievements', icon: <Trophy className="w-3.5 h-3.5 text-arena-warning" /> },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  sound.playClick();
+                  setFilter(tab.id as any);
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  filter === tab.id
+                    ? 'bg-arena-elevated text-arena-textPrimary border border-arena-border shadow-subtle'
+                    : 'bg-arena-surface text-arena-textSecondary hover:text-arena-textPrimary border border-arena-border'
+                }`}
+              >
+                {tab.icon}
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
 
-      {/* Post Feed */}
-      <div className="space-y-3.5">
-        {filteredPosts.map((post) => {
-          const isLiked = post.likedBy.includes(user.id);
-          const showComments = activeCommentPostId === post.id;
+          {/* Post Feed */}
+          <div className="space-y-4">
+            {filteredPosts.map((post) => {
+              const isLiked = post.likedBy.includes(user.id);
+              const showComments = activeCommentPostId === post.id;
 
-          return (
-            <div key={post.id} className="arena-card p-5 space-y-3.5">
-              
-              {/* Author Row */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <img
-                    src={post.author.avatar}
-                    alt={post.author.username}
-                    className="w-9 h-9 rounded-md object-cover border border-arena-border"
-                  />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-xs text-arena-textPrimary">{post.author.displayName}</span>
-                      <span className="text-[11px] text-arena-textSubtle">@{post.author.username}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-[10px] text-arena-textSubtle mt-0.5">
-                      <span className="text-arena-blue font-medium">{post.author.rating} Elo</span>
-                      <span>•</span>
-                      <span>{post.createdAt}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {post.author.id !== user.id && (
-                  <button
-                    onClick={() => handleChallengeUser(post.author.username)}
-                    className="btn-secondary py-1 px-2.5 text-xs gap-1.5 font-medium"
-                  >
-                    <Swords className="w-3.5 h-3.5 text-arena-blue" />
-                    <span className="hidden sm:inline">Challenge</span>
-                  </button>
-                )}
-              </div>
-
-              {/* Title & Body */}
-              <div className="space-y-1">
-                <h3 className="font-semibold text-sm text-arena-textPrimary">{post.title}</h3>
-                <p className="text-xs text-arena-textSecondary leading-relaxed whitespace-pre-line">
-                  {post.content}
-                </p>
-              </div>
-
-              {/* Attached Metadata Banner */}
-              {post.metadata && (
-                <div className="p-2.5 rounded-lg bg-arena-elevated border border-arena-border flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-3.5 h-3.5 text-arena-teal" />
-                    <span className="font-medium text-arena-textPrimary">{post.metadata.gameName || post.metadata.problemTitle || 'Challenge Result'}</span>
-                  </div>
-                  {post.metadata.score && (
-                    <span className="font-semibold text-arena-blue">{post.metadata.score}</span>
-                  )}
-                </div>
-              )}
-
-              {/* Interaction Bar */}
-              <div className="pt-3 border-t border-arena-border flex items-center justify-between text-xs text-arena-textSecondary">
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => likePost(post.id)}
-                    className={`flex items-center gap-1.5 font-medium transition-colors ${
-                      isLiked ? 'text-arena-error' : 'hover:text-arena-textPrimary'
-                    }`}
-                  >
-                    <Heart className={`w-3.5 h-3.5 ${isLiked ? 'fill-arena-error text-arena-error' : ''}`} />
-                    <span>{post.likesCount}</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      sound.playClick();
-                      setActiveCommentPostId(showComments ? null : post.id);
-                    }}
-                    className="flex items-center gap-1.5 hover:text-arena-textPrimary transition-colors"
-                  >
-                    <MessageSquare className="w-3.5 h-3.5" />
-                    <span>{post.comments.length} Comments</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Comments Accordion */}
-              {showComments && (
-                <div className="pt-3 border-t border-arena-border space-y-2.5 animate-in fade-in">
-                  <div className="space-y-1.5">
-                    {post.comments.map((c) => (
-                      <div key={c.id} className="p-2.5 rounded-lg bg-arena-elevated border border-arena-border text-xs space-y-0.5">
-                        <div className="flex items-center justify-between text-[10px] text-arena-textSubtle">
-                          <span className="font-semibold text-arena-textPrimary">@{c.author.username}</span>
-                          <span>{c.timestamp}</span>
+              return (
+                <div key={post.id} className="arena-card p-5 space-y-3.5">
+                  
+                  {/* Author Row */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={post.author.avatar}
+                        alt={post.author.username}
+                        className="w-9 h-9 rounded-md object-cover border border-arena-border"
+                      />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-xs text-arena-textPrimary">{post.author.displayName}</span>
+                          <span className="text-[11px] text-arena-textSubtle">@{post.author.username}</span>
                         </div>
-                        <p className="text-arena-textSecondary">{c.text}</p>
+                        <div className="flex items-center gap-2 text-[10px] text-arena-textSubtle mt-0.5">
+                          <span className="text-arena-amber font-mono font-medium">{post.author.rating} Elo</span>
+                          <span>•</span>
+                          <span>{post.createdAt}</span>
+                        </div>
                       </div>
-                    ))}
+                    </div>
+
+                    {post.author.id !== user.id && (
+                      <button
+                        onClick={() => handleChallengeUser(post.author.username)}
+                        className="btn-secondary py-1 px-3 text-xs gap-1.5 font-medium"
+                      >
+                        <Swords className="w-3.5 h-3.5 text-arena-amber" />
+                        <span className="hidden sm:inline">Challenge</span>
+                      </button>
+                    )}
                   </div>
 
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={commentInput}
-                      onChange={(e) => setCommentInput(e.target.value)}
-                      placeholder="Write a comment..."
-                      className="flex-1 bg-arena-elevated border border-arena-border rounded-lg px-2.5 py-1 text-xs text-arena-textPrimary focus:outline-none focus:border-arena-borderHover"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleSendComment(post.id);
-                      }}
-                    />
-                    <button
-                      onClick={() => handleSendComment(post.id)}
-                      className="btn-primary py-1 px-3 text-xs"
-                    >
-                      <Send className="w-3 h-3" />
-                    </button>
+                  {/* Title & Body */}
+                  <div className="space-y-1">
+                    <h3 className="font-semibold text-sm text-arena-textPrimary">{post.title}</h3>
+                    <p className="text-xs text-arena-textSecondary leading-relaxed whitespace-pre-line">
+                      {post.content}
+                    </p>
                   </div>
+
+                  {/* Attached Metadata Banner */}
+                  {post.metadata && (
+                    <div className="p-2.5 rounded-lg bg-arena-elevated border border-arena-border flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-3.5 h-3.5 text-arena-teal" />
+                        <span className="font-medium text-arena-textPrimary">{post.metadata.gameName || post.metadata.problemTitle || 'Challenge Result'}</span>
+                      </div>
+                      {post.metadata.score && (
+                        <span className="font-semibold text-arena-amber font-mono">{post.metadata.score}</span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Interaction Bar */}
+                  <div className="pt-3 border-t border-arena-border flex items-center justify-between text-xs text-arena-textSecondary">
+                    <div className="flex items-center gap-4">
+                      <button
+                        onClick={() => likePost(post.id)}
+                        className={`flex items-center gap-1.5 font-medium transition-colors ${
+                          isLiked ? 'text-arena-error' : 'hover:text-arena-textPrimary'
+                        }`}
+                      >
+                        <Heart className={`w-3.5 h-3.5 ${isLiked ? 'fill-arena-error text-arena-error' : ''}`} />
+                        <span>{post.likesCount}</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          sound.playClick();
+                          setActiveCommentPostId(showComments ? null : post.id);
+                        }}
+                        className="flex items-center gap-1.5 hover:text-arena-textPrimary transition-colors"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        <span>{post.comments.length} Comments</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Comments Accordion */}
+                  {showComments && (
+                    <div className="pt-3 border-t border-arena-border space-y-2.5 animate-in fade-in">
+                      <div className="space-y-1.5">
+                        {post.comments.map((c) => (
+                          <div key={c.id} className="p-2.5 rounded-lg bg-arena-elevated border border-arena-border text-xs space-y-0.5">
+                            <div className="flex items-center justify-between text-[10px] text-arena-textSubtle">
+                              <span className="font-semibold text-arena-textPrimary">@{c.author.username}</span>
+                              <span>{c.timestamp}</span>
+                            </div>
+                            <p className="text-arena-textSecondary">{c.text}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={commentInput}
+                          onChange={(e) => setCommentInput(e.target.value)}
+                          placeholder="Write a comment..."
+                          className="flex-1 bg-arena-elevated border border-arena-border rounded-lg px-2.5 py-1.5 text-xs text-arena-textPrimary focus:outline-none focus:border-arena-borderHover"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSendComment(post.id);
+                          }}
+                        />
+                        <button
+                          onClick={() => handleSendComment(post.id)}
+                          className="btn-primary py-1 px-3 text-xs"
+                        >
+                          <Send className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                 </div>
-              )}
+              );
+            })}
+          </div>
 
+        </div>
+
+        {/* Right Sidebar Column (4 Cols on Wide Screen) */}
+        <div className="lg:col-span-4 space-y-5">
+          
+          {/* Quick Duel Launcher Card */}
+          <div className="arena-card p-5 space-y-3.5">
+            <div className="flex items-center gap-2 text-xs font-semibold text-arena-amber">
+              <Zap className="w-4 h-4" />
+              <span>COMMUNITY DUEL</span>
             </div>
-          );
-        })}
+            <h3 className="font-bold text-sm text-arena-textPrimary">Challenge the Community</h3>
+            <p className="text-xs text-arena-textSecondary leading-relaxed">
+              Open a public match queue or generate an instant challenge link to share with anyone.
+            </p>
+
+            <button
+              onClick={() => {
+                sound.playClick();
+                setActiveTab('arena');
+              }}
+              className="w-full btn-primary py-2 text-xs font-semibold gap-1.5"
+            >
+              <Swords className="w-3.5 h-3.5" />
+              <span>Launch 1v1 Battle Lobby</span>
+            </button>
+          </div>
+
+          {/* Active Community Members */}
+          <div className="arena-card p-5 space-y-3.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-semibold text-arena-textPrimary">
+                <Trophy className="w-4 h-4 text-arena-teal" />
+                <span>Featured Developers</span>
+              </div>
+              <button
+                onClick={() => setActiveTab('leaderboard')}
+                className="text-[11px] text-arena-amber hover:underline flex items-center gap-0.5"
+              >
+                <span>Rankings</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {[
+                { name: 'Alex Rivera', handle: 'alex_codes', rating: 1420, won: 24 },
+                { name: 'David Kim', handle: 'dkim_dev', rating: 1395, won: 21 },
+                { name: 'Priya Sharma', handle: 'priya_algos', rating: 1380, won: 19 },
+              ].map((dev, idx) => (
+                <div key={idx} className="p-2.5 rounded-lg bg-arena-elevated border border-arena-border flex items-center justify-between text-xs">
+                  <div>
+                    <div className="font-semibold text-arena-textPrimary">{dev.name}</div>
+                    <div className="text-[10px] text-arena-textSubtle font-mono">@{dev.handle} • {dev.rating} Elo</div>
+                  </div>
+                  <button
+                    onClick={() => handleChallengeUser(dev.handle)}
+                    className="p-1.5 rounded-md bg-arena-surface hover:bg-arena-border text-arena-amber transition-colors"
+                    title={`Challenge @${dev.handle}`}
+                  >
+                    <Swords className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Community Guidelines */}
+          <div className="p-4 rounded-xl bg-arena-surface border border-arena-border text-xs space-y-2 text-arena-textSecondary">
+            <h4 className="font-semibold text-arena-textPrimary text-xs flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-arena-amber" />
+              <span>Community Standards</span>
+            </h4>
+            <p className="text-[11px] leading-relaxed text-arena-textSubtle">
+              Share code solutions, celebrate puzzle streaks, and challenge rivals with good sportsmanship. Automated test judging keeps ratings fair and verified.
+            </p>
+          </div>
+
+        </div>
+
       </div>
 
       {/* CREATE POST MODAL */}

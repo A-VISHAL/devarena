@@ -138,7 +138,7 @@ export const LogicSprint: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   };
 
   return (
-    <div className="max-w-md mx-auto py-6 px-4 flex flex-col items-center animate-in fade-in">
+    <div className="w-full max-w-xl mx-auto py-6 px-4 flex flex-col items-center animate-in fade-in">
       {/* Header */}
       <div className="w-full flex items-center justify-between mb-4 pb-3 border-b border-arena-border">
         <button
@@ -161,7 +161,7 @@ export const LogicSprint: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         <div className="w-full space-y-4">
           {/* Scenario Card */}
           <div className="p-4 rounded-xl bg-arena-surface border border-arena-border space-y-2.5">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-arena-blue uppercase tracking-wider">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-arena-amber uppercase tracking-wider">
               <Compass className="w-3.5 h-3.5" />
               <span>Premise & Scenario</span>
             </div>
@@ -228,7 +228,7 @@ export const LogicSprint: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       ) : (
         /* Game Over */
         <div className="w-full p-6 rounded-xl bg-arena-surface border border-arena-border text-center space-y-4">
-          <div className="w-10 h-10 rounded-lg bg-arena-elevated border border-arena-border text-arena-blue flex items-center justify-center mx-auto">
+          <div className="w-10 h-10 rounded-lg bg-arena-elevated border border-arena-border text-arena-amber flex items-center justify-center mx-auto">
             <Trophy className="w-5 h-5" />
           </div>
 

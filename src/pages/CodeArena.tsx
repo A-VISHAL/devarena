@@ -6,7 +6,6 @@ import {
   Zap, 
   Clock, 
   CheckCircle2, 
-  ArrowRight, 
   Code2, 
   Shield,
   Activity,
@@ -61,13 +60,13 @@ export const CodeArena: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in">
+    <div className="page-container py-8 space-y-8 animate-in fade-in">
       
       {/* Banner */}
       <div className="rounded-2xl bg-arena-surface border border-arena-border p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-          <div className="max-w-2xl space-y-2.5">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-arena-elevated border border-arena-border text-arena-blue text-xs font-semibold">
+          <div className="flex-1 space-y-2.5 max-w-3xl">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-arena-elevated border border-arena-border text-arena-amber text-xs font-semibold">
               <Swords className="w-3.5 h-3.5" />
               <span>COMPETITIVE DEVELOPER ECOSYSTEM</span>
             </div>
@@ -75,30 +74,30 @@ export const CodeArena: React.FC = () => {
               1v1 Live Coding Arena
             </h1>
             <p className="text-xs sm:text-sm text-arena-textSecondary leading-relaxed">
-              Real-time algorithm duels with synchronized problems and automated sandbox test judging. Correct submissions claim verified Elo rating.
+              Real-time algorithm duels with synchronized problems and automated sandbox test judging. Correct submissions claim verified Elo rating points.
             </p>
           </div>
 
           <div className="p-4 rounded-xl bg-arena-elevated border border-arena-border flex items-center gap-4 shrink-0">
-            <div className="w-10 h-10 rounded-lg bg-arena-surface border border-arena-border text-arena-blue flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-arena-surface border border-arena-border text-arena-amber flex items-center justify-center">
               <Trophy className="w-5 h-5" />
             </div>
             <div>
               <span className="text-[10px] text-arena-textSubtle font-semibold uppercase">VERIFIED RATING</span>
-              <div className="text-xl font-bold text-arena-textPrimary">{user.rating} Elo</div>
+              <div className="text-xl font-bold text-arena-textPrimary font-mono">{user.rating} Elo</div>
               <div className="text-[11px] text-arena-teal font-medium">{user.battlesWon}W / {user.battlesTotal} Matches</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* MATCHMAKING CARDS */}
+      {/* MATCHMAKING CARDS — 3 Columns across viewport */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         
         {/* Quick Match Card */}
         <div className="arena-card p-5 flex flex-col justify-between space-y-4">
           <div>
-            <div className="w-9 h-9 rounded-lg bg-arena-elevated border border-arena-border text-arena-blue flex items-center justify-center mb-3">
+            <div className="w-9 h-9 rounded-lg bg-arena-elevated border border-arena-border text-arena-amber flex items-center justify-center mb-3">
               <Zap className="w-4 h-4" />
             </div>
             <h3 className="font-bold text-sm text-arena-textPrimary">Ranked Matchmaking</h3>
@@ -110,11 +109,11 @@ export const CodeArena: React.FC = () => {
           <button
             onClick={handleQuickMatch}
             disabled={matchmaking}
-            className="w-full btn-primary py-2 text-xs font-medium gap-2"
+            className="w-full btn-primary py-2 text-xs font-semibold gap-2"
           >
             {matchmaking ? (
               <>
-                <Activity className="w-3.5 h-3.5 animate-spin text-white" />
+                <Activity className="w-3.5 h-3.5 animate-spin" />
                 <span>Finding Opponent...</span>
               </>
             ) : (
@@ -175,17 +174,17 @@ export const CodeArena: React.FC = () => {
 
       </div>
 
-      {/* CURATED PROBLEM BANK */}
+      {/* CURATED PROBLEM BANK — 1 to 4 Columns on Wide Displays */}
       <div className="space-y-4">
         <div>
           <h2 className="text-base font-bold text-arena-textPrimary flex items-center gap-2">
-            <Code2 className="w-4 h-4 text-arena-blue" />
+            <Code2 className="w-4 h-4 text-arena-amber" />
             <span>Problem Bank</span>
           </h2>
-          <p className="text-xs text-arena-textSecondary">Select a specific algorithm problem to challenge or practice</p>
+          <p className="text-xs text-arena-textSecondary">Select a specific algorithm problem to challenge an opponent or practice in sandbox</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {CODING_PROBLEMS.map((problem) => {
             const isSolved = user.problemsSolved.includes(problem.id);
             return (
@@ -198,7 +197,7 @@ export const CodeArena: React.FC = () => {
                     <span className="text-[10px] font-semibold text-arena-textSubtle uppercase tracking-wider">
                       {problem.category}
                     </span>
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded font-mono ${
                       problem.difficulty === 'Easy'
                         ? 'bg-arena-success/15 text-arena-success border border-arena-success/30'
                         : problem.difficulty === 'Medium'
@@ -226,7 +225,7 @@ export const CodeArena: React.FC = () => {
 
                   <button
                     onClick={() => handleCreateBattle(problem)}
-                    className="btn-primary py-1 px-3 text-xs gap-1 font-medium"
+                    className="btn-primary py-1 px-3 text-xs gap-1 font-semibold"
                   >
                     <Swords className="w-3.5 h-3.5" />
                     <span>Battle</span>
@@ -273,7 +272,7 @@ export const CodeArena: React.FC = () => {
                 </div>
 
                 <div className="text-right">
-                  <span className={`font-bold ${
+                  <span className={`font-bold font-mono ${
                     b.ratingChange > 0 ? 'text-arena-teal' : 'text-arena-error'
                   }`}>
                     {b.ratingChange > 0 ? `+${b.ratingChange}` : b.ratingChange} Elo

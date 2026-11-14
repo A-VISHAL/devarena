@@ -5,36 +5,42 @@
 @layer base {
   body {
     @apply bg-arena-bg text-arena-textPrimary font-sans antialiased;
-    background-color: #101318;
-    color: #F3F5F8;
+    background-color: #141719;
+    color: #F2F0E9;
+    overflow-x: hidden;
   }
 
-  /* Refined, minimal scrollbar */
+  /* Refined, minimal scrollbar with Midnight & Amber palette */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #101318;
+    background: #141719;
   }
   ::-webkit-scrollbar-thumb {
-    background: #202936;
+    background: #242A2D;
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #293443;
+    background: #30383A;
   }
 }
 
 @layer components {
+  /* Full-width responsive main content container */
+  .page-container {
+    @apply w-[94%] max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
   .btn-primary {
-    @apply inline-flex items-center justify-center font-medium px-4 py-2 rounded-lg transition-all duration-150 bg-arena-blue hover:bg-arena-blueHover text-white shadow-sm active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center font-semibold px-4 py-2 rounded-lg transition-all duration-150 bg-arena-amber hover:bg-arena-amberHover text-[#141719] shadow-sm active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center font-medium px-4 py-2 rounded-lg transition-all duration-150 bg-arena-elevated hover:bg-[#293443] text-arena-textPrimary border border-arena-border hover:border-arena-borderHover active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center font-medium px-4 py-2 rounded-lg transition-all duration-150 bg-arena-elevated hover:bg-arena-surface text-arena-textPrimary border border-arena-border hover:border-arena-borderHover active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-teal {
-    @apply inline-flex items-center justify-center font-medium px-4 py-2 rounded-lg transition-all duration-150 bg-arena-teal hover:bg-arena-tealHover text-slate-950 font-semibold shadow-sm active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center font-semibold px-4 py-2 rounded-lg transition-all duration-150 bg-arena-teal hover:bg-arena-tealHover text-[#141719] shadow-sm active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .arena-card {
     @apply bg-arena-surface border border-arena-border rounded-xl transition-all duration-150 hover:border-arena-borderHover;

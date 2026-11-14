@@ -73,7 +73,7 @@ export const LearnProblemModal: React.FC<LearnProblemModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-arena-bg/85 backdrop-blur-sm animate-in fade-in">
-      <div className="relative w-full max-w-5xl h-[90vh] bg-arena-surface border border-arena-border rounded-2xl overflow-hidden flex flex-col shadow-card">
+      <div className="relative w-[94%] max-w-[1440px] h-[92vh] bg-arena-surface border border-arena-border rounded-2xl overflow-hidden flex flex-col shadow-card">
         
         {/* Header */}
         <div className="h-12 px-4 bg-arena-elevated border-b border-arena-border flex items-center justify-between shrink-0">
@@ -162,7 +162,7 @@ export const LearnProblemModal: React.FC<LearnProblemModalProps> = ({
             <div className="pt-2">
               <button
                 onClick={() => setShowHint(!showHint)}
-                className="flex items-center gap-1.5 text-xs font-medium text-arena-blue hover:underline"
+                className="flex items-center gap-1.5 text-xs font-medium text-arena-amber hover:underline"
               >
                 <HelpCircle className="w-3.5 h-3.5" />
                 <span>{showHint ? 'Hide Hint' : 'View Hint'}</span>
@@ -176,10 +176,10 @@ export const LearnProblemModal: React.FC<LearnProblemModalProps> = ({
           </div>
 
           {/* Right: Monaco Editor + Console */}
-          <div className="w-full lg:w-7/12 flex flex-col bg-[#141820]">
+          <div className="w-full lg:w-7/12 flex flex-col bg-arena-bg">
             <div className="h-8 px-4 bg-arena-surface border-b border-arena-border flex items-center justify-between">
               <span className="text-xs font-medium text-arena-textSecondary flex items-center gap-1.5">
-                <Code2 className="w-3.5 h-3.5 text-arena-blue" />
+                <Code2 className="w-3.5 h-3.5 text-arena-amber" />
                 <span>Solution</span>
               </span>
               <select

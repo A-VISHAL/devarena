@@ -47,7 +47,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
 
         {/* Header */}
         <div className="text-center mb-5">
-          <div className="w-10 h-10 rounded-lg bg-arena-elevated border border-arena-border text-arena-blue flex items-center justify-center mx-auto mb-2">
+          <div className="w-10 h-10 rounded-lg bg-arena-elevated border border-arena-border text-arena-amber flex items-center justify-center mx-auto mb-2">
             <Sparkles className="w-5 h-5" />
           </div>
           <h3 className="text-base font-bold text-arena-textPrimary">Save Your Account</h3>
@@ -60,7 +60,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
         <div className="grid grid-cols-3 gap-2 p-2.5 mb-4 rounded-xl bg-arena-elevated border border-arena-border text-center">
           <div>
             <div className="text-[10px] text-arena-textSubtle font-medium">Rating</div>
-            <div className="text-xs font-bold text-arena-blue mt-0.5">{user.rating} Elo</div>
+            <div className="text-xs font-bold text-arena-amber mt-0.5 font-mono">{user.rating} Elo</div>
           </div>
           <div>
             <div className="text-[10px] text-arena-textSubtle font-medium">Streak</div>

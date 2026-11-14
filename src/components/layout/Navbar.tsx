@@ -43,17 +43,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAccountModal }) => {
 
   return (
     <header className="sticky top-0 z-50 bg-arena-bg border-b border-arena-border">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+      <div className="w-[94%] max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
         
-        {/* Brand Logo - Minimal & Refined */}
+        {/* Brand Logo - Minimal & Refined Midnight & Amber */}
         <div 
           onClick={() => setActiveTab('home')}
           className="flex items-center gap-2.5 cursor-pointer select-none group"
         >
           <div className="w-7 h-7 rounded-lg bg-arena-surface border border-arena-border flex items-center justify-center transition-colors group-hover:border-arena-borderHover">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-arena-blue">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-arena-amber">
               <path d="M6 4L14 12L6 20" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-              <circle cx="18" cy="18" r="2.5" fill="#39C6B5"/>
+              <circle cx="18" cy="18" r="2.5" fill="#83B6A3"/>
             </svg>
           </div>
           <span className="font-bold text-sm tracking-tight text-arena-textPrimary">
@@ -75,7 +75,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAccountModal }) => {
                     : 'text-arena-textSecondary hover:text-arena-textPrimary hover:bg-arena-elevated/50'
                 }`}
               >
-                <span className={isActive ? 'text-arena-blue' : 'text-arena-textSubtle'}>
+                <span className={isActive ? 'text-arena-amber' : 'text-arena-textSubtle'}>
                   {item.icon}
                 </span>
                 <span>{item.label}</span>
@@ -105,15 +105,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAccountModal }) => {
             className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-lg bg-arena-surface border border-arena-border text-xs font-semibold text-arena-textPrimary"
           >
             <Flame className="w-3.5 h-3.5 text-arena-warning" />
-            <span>{user.streak}d</span>
+            <span className="font-mono">{user.streak}d</span>
           </div>
 
           {/* Dev Rating Badge */}
           <div 
             title={`Rating: ${user.rating} Elo`}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-arena-surface border border-arena-border text-xs font-semibold text-arena-textPrimary"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-arena-surface border border-arena-border text-xs font-semibold text-arena-textPrimary font-mono"
           >
-            <Swords className="w-3.5 h-3.5 text-arena-blue" />
+            <Swords className="w-3.5 h-3.5 text-arena-amber" />
             <span>{user.rating}</span>
           </div>
 
@@ -121,10 +121,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAccountModal }) => {
           {user.isGuest ? (
             <button
               onClick={onOpenAccountModal}
-              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-arena-elevated hover:bg-[#293443] border border-arena-border text-xs font-medium text-arena-textPrimary transition-colors"
+              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-arena-elevated hover:bg-arena-border text-xs font-medium text-arena-textPrimary transition-colors border border-arena-border"
             >
               <span>Save Progress</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-arena-blue" />
+              <span className="w-1.5 h-1.5 rounded-full bg-arena-amber" />
             </button>
           ) : (
             <button
@@ -167,7 +167,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAccountModal }) => {
               }`}
             >
               <div className="flex items-center gap-2.5">
-                <span className={activeTab === item.id ? 'text-arena-blue' : 'text-arena-textSubtle'}>
+                <span className={activeTab === item.id ? 'text-arena-amber' : 'text-arena-textSubtle'}>
                   {item.icon}
                 </span>
                 <span>{item.label}</span>

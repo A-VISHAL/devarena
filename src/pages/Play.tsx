@@ -74,8 +74,8 @@ export const Play: React.FC = () => {
       id: 'odd-one-out' as CasualGameId,
       title: 'Odd One Out',
       category: 'daily' as GameCategory,
-      description: 'Spot the subtle symbol, rotation, or shade difference across 10 levels before the timer runs out.',
-      icon: <Eye className="w-5 h-5 text-arena-blue" />,
+      description: 'Spot subtle symbols, rotations, or shade differences across 10 levels before the timer runs out.',
+      icon: <Eye className="w-5 h-5 text-arena-amber" />,
       difficulty: 'Dynamic',
       playerCount: 'Solo',
       playTime: '2 mins'
@@ -95,7 +95,7 @@ export const Play: React.FC = () => {
       title: 'Memory Grid',
       category: 'brain' as GameCategory,
       description: 'Working memory workout: memorize flashing spatial tiles on an expanding grid from 3x3 to 5x5.',
-      icon: <Brain className="w-5 h-5 text-arena-blue" />,
+      icon: <Brain className="w-5 h-5 text-arena-amber" />,
       difficulty: '3x3 to 5x5',
       playerCount: 'Solo',
       playTime: '3 mins'
@@ -115,7 +115,7 @@ export const Play: React.FC = () => {
       title: 'Quick Math Sprint',
       category: 'brain' as GameCategory,
       description: '60-second rapid-fire mental arithmetic sprint with combo streaks and answers-per-minute rating.',
-      icon: <Calculator className="w-5 h-5 text-arena-blue" />,
+      icon: <Calculator className="w-5 h-5 text-arena-amber" />,
       difficulty: 'Adaptive',
       playerCount: 'Solo',
       playTime: '60 secs'
@@ -135,7 +135,7 @@ export const Play: React.FC = () => {
       title: 'Quick Math 1v1 Clash',
       category: 'multiplayer' as GameCategory,
       description: 'Live 1v1 real-time math duel. Challenge a friend with a share link or room code and watch live score bars.',
-      icon: <Swords className="w-5 h-5 text-arena-blue" />,
+      icon: <Swords className="w-5 h-5 text-arena-amber" />,
       difficulty: 'Competitive',
       playerCount: '2 Players (Live)',
       playTime: '45 secs',
@@ -151,7 +151,7 @@ export const Play: React.FC = () => {
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-in fade-in">
+    <div className="page-container py-8 space-y-6 animate-in fade-in">
       
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-arena-border">
@@ -166,7 +166,7 @@ export const Play: React.FC = () => {
         </div>
 
         {/* Search */}
-        <div className="relative w-full sm:w-64">
+        <div className="relative w-full sm:w-72">
           <Search className="w-4 h-4 text-arena-textSubtle absolute left-3 top-2.5" />
           <input
             type="text"
@@ -183,7 +183,7 @@ export const Play: React.FC = () => {
         {[
           { id: 'all', label: 'All Games' },
           { id: 'daily', label: 'Daily Puzzles', icon: <Flame className="w-3.5 h-3.5 text-arena-warning" /> },
-          { id: 'brain', label: 'Brain & Reflexes', icon: <Brain className="w-3.5 h-3.5 text-arena-blue" /> },
+          { id: 'brain', label: 'Brain & Reflexes', icon: <Brain className="w-3.5 h-3.5 text-arena-amber" /> },
           { id: 'multiplayer', label: 'Multiplayer Rooms', icon: <Users className="w-3.5 h-3.5 text-arena-teal" /> },
         ].map((cat) => (
           <button
@@ -204,8 +204,8 @@ export const Play: React.FC = () => {
         ))}
       </div>
 
-      {/* Games Catalog Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {/* Games Catalog Grid — Responsive 1 to 4 Columns */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
         {filteredGames.map((game) => (
           <div
             key={game.id}
@@ -216,7 +216,7 @@ export const Play: React.FC = () => {
             className="arena-card p-5 flex flex-col justify-between cursor-pointer group relative"
           >
             {game.isMultiplayer && (
-              <div className="absolute top-3 right-3 text-[10px] font-semibold px-2 py-0.5 rounded bg-arena-elevated text-arena-blue border border-arena-border">
+              <div className="absolute top-3 right-3 text-[10px] font-semibold px-2 py-0.5 rounded bg-arena-elevated text-arena-amber border border-arena-border font-mono">
                 LIVE 1V1
               </div>
             )}
@@ -233,7 +233,7 @@ export const Play: React.FC = () => {
                 )}
               </div>
 
-              <h3 className="font-bold text-sm text-arena-textPrimary group-hover:text-arena-blue transition-colors flex items-center gap-1.5">
+              <h3 className="font-bold text-sm text-arena-textPrimary group-hover:text-arena-amber transition-colors flex items-center gap-1.5">
                 <span>{game.title}</span>
                 {game.completed && (
                   <CheckCircle2 className="w-3.5 h-3.5 text-arena-success shrink-0" />
@@ -252,7 +252,7 @@ export const Play: React.FC = () => {
                 <span>{game.playerCount}</span>
               </div>
 
-              <span className="text-xs font-semibold text-arena-blue group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+              <span className="text-xs font-semibold text-arena-amber group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
                 <span>{game.isMultiplayer ? 'Enter Room' : 'Play'}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </span>

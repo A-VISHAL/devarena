@@ -28,7 +28,7 @@ export const MobileNav: React.FC = () => {
                 : 'text-arena-textSubtle hover:text-arena-textSecondary'
             }`}
           >
-            <div className={`p-1 rounded-md ${isActive ? 'text-arena-blue' : ''}`}>
+            <div className={`p-1 rounded-md ${isActive ? 'text-arena-amber' : ''}`}>
               {tab.icon}
             </div>
             <span className="text-[10px] font-medium">{tab.label}</span>

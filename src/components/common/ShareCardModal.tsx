@@ -35,7 +35,7 @@ ${shareUrl}`;
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-arena-border">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-arena-blue" />
+            <Sparkles className="w-4 h-4 text-arena-amber" />
             <h3 className="font-bold text-arena-textPrimary text-sm">Share Result</h3>
           </div>
           <button 
@@ -53,7 +53,7 @@ ${shareUrl}`;
             {/* Brand Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded bg-arena-surface border border-arena-border flex items-center justify-center text-arena-blue font-bold text-xs">
+                <div className="w-6 h-6 rounded bg-arena-surface border border-arena-border flex items-center justify-center text-arena-amber font-bold text-xs">
                   DA
                 </div>
                 <span className="font-bold text-xs tracking-tight text-arena-textPrimary">DEVARENA</span>
@@ -91,7 +91,7 @@ ${shareUrl}`;
               </div>
 
               <div className="text-right">
-                <div className="font-bold text-arena-blue">{user.rating} Elo</div>
+                <div className="font-bold text-arena-amber font-mono">{user.rating} Elo</div>
                 <div className="text-[10px] text-arena-warning font-semibold">{user.streak}d Streak</div>
               </div>
             </div>

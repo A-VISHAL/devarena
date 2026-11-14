@@ -7,7 +7,7 @@ import confetti from 'canvas-confetti';
 type GameState = 'idle' | 'waiting' | 'ready' | 'too_early' | 'round_result' | 'game_complete';
 
 function getPercentile(ms: number): { percentile: string; rank: string; color: string } {
-  if (ms < 185) return { percentile: 'Top 1%', rank: 'Superhuman Reflexes', color: 'text-arena-blue' };
+  if (ms < 185) return { percentile: 'Top 1%', rank: 'Superhuman Reflexes', color: 'text-arena-amber' };
   if (ms < 215) return { percentile: 'Top 5%', rank: 'Pro Esports Caliber', color: 'text-arena-teal' };
   if (ms < 250) return { percentile: 'Top 25%', rank: 'Above Average', color: 'text-arena-success' };
   if (ms < 300) return { percentile: 'Top 50%', rank: 'Average Human', color: 'text-arena-warning' };
@@ -104,7 +104,7 @@ export const ReactionChallenge: React.FC<{ onBack: () => void }> = ({ onBack }) 
   };
 
   return (
-    <div className="max-w-md mx-auto py-6 px-4 flex flex-col items-center animate-in fade-in">
+    <div className="w-full max-w-xl mx-auto py-6 px-4 flex flex-col items-center animate-in fade-in">
       {/* Header */}
       <div className="w-full flex items-center justify-between mb-4 pb-3 border-b border-arena-border">
         <button
@@ -129,11 +129,11 @@ export const ReactionChallenge: React.FC<{ onBack: () => void }> = ({ onBack }) 
       <div className="w-full grid grid-cols-2 gap-2 mb-4">
         <div className="p-2.5 rounded-lg bg-arena-surface border border-arena-border text-center">
           <span className="text-[10px] text-arena-textSubtle font-medium block">BEST TIME</span>
-          <span className="text-base font-bold text-arena-teal">{bestMs ? `${bestMs} ms` : '--'}</span>
+          <span className="text-base font-bold text-arena-teal font-mono">{bestMs ? `${bestMs} ms` : '--'}</span>
         </div>
         <div className="p-2.5 rounded-lg bg-arena-surface border border-arena-border text-center">
           <span className="text-[10px] text-arena-textSubtle font-medium block">5-ROUND AVG</span>
-          <span className="text-base font-bold text-arena-blue">{averageMs ? `${averageMs} ms` : '--'}</span>
+          <span className="text-base font-bold text-arena-amber font-mono">{averageMs ? `${averageMs} ms` : '--'}</span>
         </div>
       </div>
 
@@ -147,7 +147,7 @@ export const ReactionChallenge: React.FC<{ onBack: () => void }> = ({ onBack }) 
               : state === 'waiting'
               ? 'bg-arena-error/15 border border-arena-error text-arena-error'
               : state === 'ready'
-              ? 'bg-arena-success text-slate-950 font-bold border border-arena-success'
+              ? 'bg-arena-success text-[#141719] font-bold border border-arena-success'
               : state === 'too_early'
               ? 'bg-arena-warning/15 border border-arena-warning text-arena-warning'
               : 'bg-arena-surface border border-arena-border'
@@ -155,7 +155,7 @@ export const ReactionChallenge: React.FC<{ onBack: () => void }> = ({ onBack }) 
         >
           {state === 'idle' && (
             <div className="space-y-3">
-              <div className="w-12 h-12 rounded-lg bg-arena-elevated border border-arena-border text-arena-blue flex items-center justify-center mx-auto">
+              <div className="w-12 h-12 rounded-lg bg-arena-elevated border border-arena-border text-arena-amber flex items-center justify-center mx-auto">
                 <Zap className="w-6 h-6" />
               </div>
               <h3 className="text-lg font-bold text-arena-textPrimary">Click to Start</h3>
@@ -175,7 +175,7 @@ export const ReactionChallenge: React.FC<{ onBack: () => void }> = ({ onBack }) 
 
           {state === 'ready' && (
             <div className="space-y-2">
-              <h3 className="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-wider">
+              <h3 className="text-3xl sm:text-4xl font-extrabold text-[#141719] tracking-wider font-mono">
                 CLICK NOW!
               </h3>
             </div>
@@ -191,8 +191,8 @@ export const ReactionChallenge: React.FC<{ onBack: () => void }> = ({ onBack }) 
 
           {state === 'round_result' && (
             <div className="space-y-2">
-              <Activity className="w-8 h-8 text-arena-blue mx-auto" />
-              <div className="text-3xl font-bold text-arena-textPrimary">{currentMs} ms</div>
+              <Activity className="w-8 h-8 text-arena-amber mx-auto" />
+              <div className="text-3xl font-bold text-arena-textPrimary font-mono">{currentMs} ms</div>
               <p className="text-xs text-arena-textSecondary">Click to continue ({history.length}/{totalRounds})</p>
             </div>
           )}
@@ -200,7 +200,7 @@ export const ReactionChallenge: React.FC<{ onBack: () => void }> = ({ onBack }) 
       ) : (
         /* Final Results */
         <div className="w-full p-6 rounded-xl bg-arena-surface border border-arena-border text-center space-y-4">
-          <div className="w-10 h-10 rounded-lg bg-arena-elevated border border-arena-border text-arena-blue flex items-center justify-center mx-auto">
+          <div className="w-10 h-10 rounded-lg bg-arena-elevated border border-arena-border text-arena-amber flex items-center justify-center mx-auto">
             <Trophy className="w-5 h-5" />
           </div>
 

@@ -268,7 +268,7 @@ export const CasualMultiplayerRoom: React.FC<{
   const winner = myScore > opponentScore ? 'you' : myScore < opponentScore ? 'opponent' : 'draw';
 
   return (
-    <div className="max-w-xl mx-auto py-6 px-4 flex flex-col items-center animate-in fade-in">
+    <div className="w-full max-w-2xl mx-auto py-6 px-4 flex flex-col items-center animate-in fade-in">
       {/* Header */}
       <div className="w-full flex items-center justify-between mb-4 pb-3 border-b border-arena-border">
         <button
@@ -280,7 +280,7 @@ export const CasualMultiplayerRoom: React.FC<{
         </button>
         <div className="text-center">
           <div className="flex items-center justify-center gap-1.5">
-            <Swords className="w-4 h-4 text-arena-blue" />
+            <Swords className="w-4 h-4 text-arena-amber" />
             <h2 className="text-sm font-bold text-arena-textPrimary">Quick Math Clash</h2>
           </div>
           <span className="text-[10px] text-arena-teal font-mono font-bold">ROOM {roomCode}</span>
@@ -301,7 +301,7 @@ export const CasualMultiplayerRoom: React.FC<{
           <div className="p-4 rounded-xl bg-arena-surface border border-arena-border flex flex-col sm:flex-row items-center justify-between gap-3">
             <div>
               <span className="text-xs font-bold text-arena-textPrimary flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5 text-arena-blue" />
+                <Users className="w-3.5 h-3.5 text-arena-amber" />
                 <span>Invite a Friend to Clash</span>
               </span>
               <p className="text-[11px] text-arena-textSecondary mt-0.5">
@@ -404,7 +404,7 @@ export const CasualMultiplayerRoom: React.FC<{
       {/* COUNTDOWN */}
       {countdown !== null && (
         <div className="my-8 text-center animate-in zoom-in-50">
-          <span className="text-[10px] font-bold text-arena-blue uppercase tracking-widest block mb-1">
+          <span className="text-[10px] font-bold text-arena-amber uppercase tracking-widest block mb-1">
             CLASH STARTING
           </span>
           <div className="text-6xl font-black text-arena-textPrimary font-mono animate-bounce">
@@ -418,17 +418,17 @@ export const CasualMultiplayerRoom: React.FC<{
         <div className="w-full space-y-4">
           <div className="p-4 rounded-xl bg-arena-surface border border-arena-border space-y-2.5">
             <div className="flex items-center justify-between text-xs font-medium">
-              <span className="text-arena-blue font-bold">You: {myScore} pts</span>
+              <span className="text-arena-amber font-bold font-mono">You: {myScore} pts</span>
               <span className="flex items-center gap-1 text-arena-teal font-mono font-bold">
                 <Timer className="w-3.5 h-3.5" />
                 <span>{timeLeft}s</span>
               </span>
-              <span className="text-arena-teal font-bold">{opponent ? opponent.username : 'Opponent'}: {opponentScore} pts</span>
+              <span className="text-arena-teal font-bold font-mono">{opponent ? opponent.username : 'Opponent'}: {opponentScore} pts</span>
             </div>
 
             <div className="w-full h-2 rounded-full bg-arena-elevated overflow-hidden flex">
               <div 
-                className="h-full bg-arena-blue transition-all duration-300"
+                className="h-full bg-arena-amber transition-all duration-300"
                 style={{ width: `${Math.min(100, (myScore / 1500) * 100)}%` }}
               />
               <div 
@@ -462,7 +462,7 @@ export const CasualMultiplayerRoom: React.FC<{
       {/* MATCH RESULT */}
       {matchEnded && (
         <div className="w-full p-6 rounded-xl bg-arena-surface border border-arena-border text-center space-y-4">
-          <div className="w-10 h-10 rounded-lg bg-arena-elevated border border-arena-border text-arena-blue flex items-center justify-center mx-auto">
+          <div className="w-10 h-10 rounded-lg bg-arena-elevated border border-arena-border text-arena-amber flex items-center justify-center mx-auto">
             <Trophy className="w-5 h-5" />
           </div>
 

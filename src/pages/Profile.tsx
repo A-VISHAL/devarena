@@ -7,7 +7,8 @@ import {
   Share2, 
   Edit3, 
   Layers, 
-  BookOpen 
+  BookOpen,
+  Code2
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { ACHIEVEMENTS } from '../data/mockData';
@@ -54,7 +55,7 @@ export const Profile: React.FC = () => {
     : 100;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-6 animate-in fade-in">
+    <div className="page-container py-8 space-y-6 animate-in fade-in">
       
       {/* Profile Header Hero */}
       <div className="rounded-2xl bg-arena-surface border border-arena-border p-6 sm:p-8">
@@ -74,19 +75,19 @@ export const Profile: React.FC = () => {
                   GUEST IDENTITY
                 </span>
               ) : (
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-arena-elevated text-arena-blue border border-arena-border">
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-arena-elevated text-arena-amber border border-arena-border font-mono">
                   VERIFIED DEVELOPER
                 </span>
               )}
             </div>
 
-            <p className="text-xs text-arena-textSecondary max-w-xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-arena-textSecondary leading-relaxed">
               {user.bio}
             </p>
 
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 pt-1">
               {user.skills.map((skill, i) => (
-                <span key={i} className="text-[11px] font-medium px-2 py-0.5 rounded bg-arena-elevated border border-arena-border text-arena-textSecondary">
+                <span key={i} className="text-[11px] font-medium px-2 py-0.5 rounded bg-arena-elevated border border-arena-border text-arena-textSecondary font-mono">
                   {skill}
                 </span>
               ))}
@@ -103,7 +104,7 @@ export const Profile: React.FC = () => {
             </button>
             <button
               onClick={handleShareProfile}
-              className="btn-primary py-1.5 px-3 text-xs gap-1.5 font-medium"
+              className="btn-primary py-1.5 px-3 text-xs gap-1.5 font-semibold"
             >
               <Share2 className="w-3.5 h-3.5" />
               <span>Share Profile</span>
@@ -114,7 +115,7 @@ export const Profile: React.FC = () => {
 
       {/* Edit Form Modal Drawer */}
       {isEditing && (
-        <form onSubmit={handleSaveProfile} className="arena-card p-4 space-y-3 animate-in fade-in">
+        <form onSubmit={handleSaveProfile} className="arena-card p-5 space-y-3.5 animate-in fade-in">
           <h3 className="font-bold text-xs text-arena-textPrimary">Edit Profile Details</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -145,21 +146,21 @@ export const Profile: React.FC = () => {
               className="w-full bg-arena-elevated border border-arena-border rounded-lg p-2 text-xs text-arena-textPrimary focus:outline-none focus:border-arena-borderHover resize-none"
             />
           </div>
-          <button type="submit" className="btn-primary py-1.5 px-3 text-xs font-medium">
+          <button type="submit" className="btn-primary py-1.5 px-3.5 text-xs font-semibold">
             Save Changes
           </button>
         </form>
       )}
 
-      {/* COMPETITIVE METRICS OVERVIEW */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {/* COMPETITIVE METRICS OVERVIEW — 4 Columns across full container */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="arena-card p-4 text-center">
           <div className="flex items-center justify-center gap-1.5 text-xs text-arena-textSubtle font-medium mb-1">
-            <Swords className="w-3.5 h-3.5 text-arena-blue" />
+            <Swords className="w-3.5 h-3.5 text-arena-amber" />
             <span>Coding Rating</span>
           </div>
-          <div className="text-xl font-bold text-arena-textPrimary">{user.rating} Elo</div>
-          <span className="text-[10px] text-arena-blue font-semibold">RANKED</span>
+          <div className="text-2xl font-bold text-arena-textPrimary font-mono">{user.rating} Elo</div>
+          <span className="text-[10px] text-arena-amber font-semibold">RANKED</span>
         </div>
 
         <div className="arena-card p-4 text-center">
@@ -167,7 +168,7 @@ export const Profile: React.FC = () => {
             <Trophy className="w-3.5 h-3.5 text-arena-teal" />
             <span>Win Rate</span>
           </div>
-          <div className="text-xl font-bold text-arena-teal">{winRate}%</div>
+          <div className="text-2xl font-bold text-arena-teal font-mono">{winRate}%</div>
           <span className="text-[10px] text-arena-textSubtle">{user.battlesWon}W / {user.battlesTotal} Total</span>
         </div>
 
@@ -176,7 +177,7 @@ export const Profile: React.FC = () => {
             <Flame className="w-3.5 h-3.5 text-arena-warning" />
             <span>Active Streak</span>
           </div>
-          <div className="text-xl font-bold text-arena-warning">{user.streak} Days</div>
+          <div className="text-2xl font-bold text-arena-warning font-mono">{user.streak} Days</div>
           <span className="text-[10px] text-arena-textSubtle">Consecutive Days</span>
         </div>
 
@@ -185,12 +186,12 @@ export const Profile: React.FC = () => {
             <BookOpen className="w-3.5 h-3.5 text-arena-textPrimary" />
             <span>Problems Solved</span>
           </div>
-          <div className="text-xl font-bold text-arena-textPrimary">{user.problemsSolved.length}</div>
+          <div className="text-2xl font-bold text-arena-textPrimary font-mono">{user.problemsSolved.length}</div>
           <span className="text-[10px] text-arena-textSubtle">DSA Practice</span>
         </div>
       </div>
 
-      {/* TOPIC MASTERY BARS & BADGES */}
+      {/* TOPIC MASTERY BARS & BADGES — 2 Columns */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Topic Breakdown */}
@@ -203,7 +204,7 @@ export const Profile: React.FC = () => {
             <span className="text-[11px] text-arena-textSubtle">Practice coverage</span>
           </div>
 
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {[
               { label: 'Arrays & Vectors', id: 'arrays', defaultPct: 65 },
               { label: 'Stacks & Queues', id: 'stacks-queues', defaultPct: 50 },
@@ -216,11 +217,11 @@ export const Profile: React.FC = () => {
                 <div key={topic.id} className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-arena-textSecondary">{topic.label}</span>
-                    <span className="text-arena-blue font-mono font-medium text-[11px]">{pct}%</span>
+                    <span className="text-arena-amber font-mono font-medium text-[11px]">{pct}%</span>
                   </div>
                   <div className="w-full h-1.5 rounded-full bg-arena-elevated overflow-hidden">
                     <div 
-                      className="h-full bg-arena-blue rounded-full transition-all duration-300"
+                      className="h-full bg-arena-amber rounded-full transition-all duration-300"
                       style={{ width: `${pct}%` }}
                     />
                   </div>
@@ -242,7 +243,7 @@ export const Profile: React.FC = () => {
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-2 gap-3">
             {ACHIEVEMENTS.slice(0, 4).map((ach) => {
               const isUnlocked = user.achievements.includes(ach.id);
               return (
@@ -254,7 +255,7 @@ export const Profile: React.FC = () => {
                       : 'bg-arena-surface border-arena-border text-arena-textSubtle opacity-40'
                   }`}
                 >
-                  <div className="w-7 h-7 rounded-md bg-arena-surface border border-arena-border text-arena-blue flex items-center justify-center mx-auto mb-1">
+                  <div className="w-7 h-7 rounded-md bg-arena-surface border border-arena-border text-arena-amber flex items-center justify-center mx-auto mb-1">
                     <Trophy className="w-3.5 h-3.5 text-arena-teal" />
                   </div>
                   <div className="font-semibold text-xs truncate">{ach.title}</div>
@@ -270,16 +271,16 @@ export const Profile: React.FC = () => {
       {/* RECENT BATTLES */}
       <div className="arena-card p-5 space-y-3">
         <h3 className="font-bold text-xs text-arena-textPrimary flex items-center gap-2">
-          <Swords className="w-4 h-4 text-arena-blue" />
+          <Swords className="w-4 h-4 text-arena-amber" />
           <span>Competitive Battle History</span>
         </h3>
 
         <div className="space-y-2">
           {user.recentBattles.map((b) => (
-            <div key={b.id} className="p-2.5 rounded-lg bg-arena-elevated border border-arena-border flex items-center justify-between text-xs">
+            <div key={b.id} className="p-3 rounded-lg bg-arena-elevated border border-arena-border flex items-center justify-between text-xs">
               <div className="flex items-center gap-2.5">
-                <span className={`px-2 py-0.2 rounded font-bold text-[10px] ${
-                  b.result === 'won' ? 'bg-arena-success/15 text-arena-success' : 'bg-arena-error/15 text-arena-error'
+                <span className={`px-2 py-0.5 rounded font-bold text-[10px] font-mono ${
+                  b.result === 'won' ? 'bg-arena-success/15 text-arena-success border border-arena-success/30' : 'bg-arena-error/15 text-arena-error border border-arena-error/30'
                 }`}>
                   {b.result.toUpperCase()}
                 </span>
@@ -290,7 +291,7 @@ export const Profile: React.FC = () => {
               </div>
 
               <div className="text-right">
-                <span className={`font-semibold ${b.ratingChange > 0 ? 'text-arena-teal' : 'text-arena-error'}`}>
+                <span className={`font-semibold font-mono ${b.ratingChange > 0 ? 'text-arena-teal' : 'text-arena-error'}`}>
                   {b.ratingChange > 0 ? `+${b.ratingChange}` : b.ratingChange} Elo
                 </span>
                 <span className="text-[10px] text-arena-textSubtle block">{b.timestamp}</span>

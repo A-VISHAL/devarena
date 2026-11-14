@@ -132,7 +132,7 @@ export const PatternMaster: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   };
 
   return (
-    <div className="max-w-md mx-auto py-6 px-4 flex flex-col items-center animate-in fade-in">
+    <div className="w-full max-w-xl mx-auto py-6 px-4 flex flex-col items-center animate-in fade-in">
       {/* Header */}
       <div className="w-full flex items-center justify-between mb-4 pb-3 border-b border-arena-border">
         <button
@@ -155,11 +155,11 @@ export const PatternMaster: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       <div className="w-full grid grid-cols-2 gap-2 mb-4">
         <div className="p-2.5 rounded-lg bg-arena-surface border border-arena-border text-center">
           <span className="text-[10px] text-arena-textSubtle font-medium block">SCORE</span>
-          <span className="text-base font-bold text-arena-blue">{score}</span>
+          <span className="text-base font-bold text-arena-amber font-mono">{score}</span>
         </div>
         <div className="p-2.5 rounded-lg bg-arena-surface border border-arena-border text-center">
           <span className="text-[10px] text-arena-textSubtle font-medium block">COMBO STREAK</span>
-          <div className="flex items-center justify-center gap-1 text-base font-bold text-arena-warning">
+          <div className="flex items-center justify-center gap-1 text-base font-bold text-arena-warning font-mono">
             <Flame className="w-3.5 h-3.5" />
             <span>{streak}x</span>
           </div>
@@ -175,7 +175,7 @@ export const PatternMaster: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 key={idx}
                 className={`min-w-10 h-11 px-3 rounded-lg border flex items-center justify-center text-sm font-bold transition-all ${
                   item === '?'
-                    ? 'bg-arena-elevated border-arena-blue text-arena-blue'
+                    ? 'bg-arena-elevated border-arena-amber text-arena-amber'
                     : 'bg-arena-elevated border-arena-border text-arena-textPrimary'
                 }`}
               >
@@ -238,7 +238,7 @@ export const PatternMaster: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       ) : (
         /* Game Over */
         <div className="w-full p-6 rounded-xl bg-arena-surface border border-arena-border text-center space-y-4">
-          <div className="w-10 h-10 rounded-lg bg-arena-elevated border border-arena-border text-arena-blue flex items-center justify-center mx-auto">
+          <div className="w-10 h-10 rounded-lg bg-arena-elevated border border-arena-border text-arena-amber flex items-center justify-center mx-auto">
             <Trophy className="w-5 h-5" />
           </div>
           <div>
