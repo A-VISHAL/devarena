@@ -41,60 +41,60 @@ export const CollectibleCardItem: React.FC<CollectibleCardItemProps> = ({
 }) => {
   const { rarity, unlocked } = card;
 
-  // Rarity-driven aesthetics
+  // Rarity-driven aesthetics matching Dark Monochromatic + Neon Accents
   const getRarityConfig = (r: CardRarity) => {
     switch (r) {
       case 'legendary':
         return {
           label: 'LEGENDARY',
-          badgeBg: 'bg-amber-500/15 text-[#F5AA3B] border-amber-500/40',
-          borderClass: 'border-[#F5AA3B]/50 hover:border-[#F5AA3B]',
-          surfaceClass: 'bg-gradient-to-b from-[#1C2528] via-[#161D20] to-[#12181A]',
-          glowShadow: 'shadow-[0_12px_36px_-8px_rgba(245,170,59,0.22)]',
-          accentText: 'text-[#F5AA3B]',
+          badgeBg: 'bg-[#FFAD42]/15 text-[#FFAD42] border-[#FFAD42]/40',
+          borderClass: 'border-[#FFAD42]/50 hover:border-[#FFAD42]',
+          surfaceClass: 'bg-gradient-to-b from-[#1C2426] via-[#161D1F] to-[#101314]',
+          glowShadow: 'shadow-[0_12px_36px_-8px_rgba(255,173,66,0.25)]',
+          accentText: 'text-[#FFAD42]',
           animatedBorder: true,
-          sealIcon: <Trophy className="w-3 h-3 text-[#F5AA3B]" />
+          sealIcon: <Trophy className="w-3 h-3 text-[#FFAD42]" />
         };
       case 'epic':
         return {
           label: 'EPIC',
-          badgeBg: 'bg-amber-400/10 text-amber-300 border-amber-400/30',
-          borderClass: 'border-[#4D3F28] hover:border-amber-400/60',
-          surfaceClass: 'bg-gradient-to-b from-[#1B2426] via-[#151D1F] to-[#111719]',
-          glowShadow: 'shadow-[0_8px_28px_-6px_rgba(214,158,46,0.18)]',
-          accentText: 'text-amber-400',
+          badgeBg: 'bg-[#00E5FF]/15 text-[#00E5FF] border-[#00E5FF]/40',
+          borderClass: 'border-[#00E5FF]/40 hover:border-[#00E5FF]',
+          surfaceClass: 'bg-gradient-to-b from-[#1C2426] via-[#151D20] to-[#101314]',
+          glowShadow: 'shadow-[0_8px_28px_-6px_rgba(0,229,255,0.22)]',
+          accentText: 'text-[#00E5FF]',
           animatedBorder: false,
-          sealIcon: <Sparkles className="w-3 h-3 text-amber-400" />
+          sealIcon: <Sparkles className="w-3 h-3 text-[#00E5FF]" />
         };
       case 'rare':
         return {
           label: 'RARE',
-          badgeBg: 'bg-amber-500/10 text-arena-amber border-arena-amber/30',
-          borderClass: 'border-[#423726] hover:border-arena-amber/50',
-          surfaceClass: 'bg-[#192224]',
-          glowShadow: 'shadow-[0_6px_20px_-4px_rgba(230,167,70,0.12)]',
-          accentText: 'text-arena-amber',
+          badgeBg: 'bg-[#B5FF4A]/15 text-[#B5FF4A] border-[#B5FF4A]/40',
+          borderClass: 'border-[#B5FF4A]/40 hover:border-[#B5FF4A]',
+          surfaceClass: 'bg-gradient-to-b from-[#1C2426] via-[#161F18] to-[#101314]',
+          glowShadow: 'shadow-[0_6px_22px_-4px_rgba(181,255,74,0.2)]',
+          accentText: 'text-[#B5FF4A]',
           animatedBorder: false,
-          sealIcon: <ShieldCheck className="w-3 h-3 text-arena-amber" />
+          sealIcon: <ShieldCheck className="w-3 h-3 text-[#B5FF4A]" />
         };
       case 'uncommon':
         return {
           label: 'UNCOMMON',
-          badgeBg: 'bg-teal-500/10 text-arena-teal border-arena-teal/30',
-          borderClass: 'border-[#28383B] hover:border-arena-teal/50',
-          surfaceClass: 'bg-[#172022]',
-          glowShadow: 'shadow-[0_6px_20px_-4px_rgba(105,185,167,0.1)]',
-          accentText: 'text-arena-teal',
+          badgeBg: 'bg-[#00E5FF]/10 text-arena-cyan border-arena-cyan/30',
+          borderClass: 'border-[#28383B] hover:border-arena-cyan/50',
+          surfaceClass: 'bg-[#182124]',
+          glowShadow: 'shadow-[0_6px_20px_-4px_rgba(0,229,255,0.12)]',
+          accentText: 'text-arena-cyan',
           animatedBorder: false,
-          sealIcon: <ShieldCheck className="w-3 h-3 text-arena-teal" />
+          sealIcon: <ShieldCheck className="w-3 h-3 text-arena-cyan" />
         };
       case 'common':
       default:
         return {
           label: 'COMMON',
-          badgeBg: 'bg-[#243033] text-arena-textSecondary border-[#344447]',
-          borderClass: 'border-[#2D3A3D] hover:border-[#3D4F53]',
-          surfaceClass: 'bg-[#171E20]',
+          badgeBg: 'bg-[#252D30] text-arena-textSecondary border-[#333D41]',
+          borderClass: 'border-[#2B3538] hover:border-[#3E4C50]',
+          surfaceClass: 'bg-[#161D1F]',
           glowShadow: 'shadow-card',
           accentText: 'text-arena-textPrimary',
           animatedBorder: false,

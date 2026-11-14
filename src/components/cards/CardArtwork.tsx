@@ -14,28 +14,28 @@ export const CardArtwork: React.FC<CardArtworkProps> = ({
   unlocked,
   className = "w-full h-full"
 }) => {
-  // Theme colors
+  // Theme colors - Monochromatic base with selective Neon Orange, Cyan, Lime
   const primaryAccent = rarity === 'legendary' 
-    ? '#F5AA3B' 
+    ? '#FFAD42' 
     : rarity === 'epic' 
-    ? '#D69E2E' 
+    ? '#00E5FF' 
     : rarity === 'rare' 
-    ? '#E6A746' 
+    ? '#B5FF4A' 
     : rarity === 'uncommon' 
-    ? '#69B9A7' 
-    : '#7E8E91';
+    ? '#00E5FF' 
+    : '#9AA5A6';
 
   const secondaryAccent = rarity === 'legendary'
-    ? '#69B9A7'
+    ? '#00E5FF'
     : rarity === 'epic'
-    ? '#83B6A3'
-    : '#4C6065';
+    ? '#B5FF4A'
+    : '#3E4C50';
 
-  const gridMuted = unlocked ? '#253135' : '#1A2124';
-  const glow = unlocked ? (rarity === 'legendary' ? 0.8 : rarity === 'epic' ? 0.6 : 0.4) : 0.15;
+  const gridMuted = unlocked ? '#252D30' : '#182123';
+  const glow = unlocked ? (rarity === 'legendary' ? 0.8 : rarity === 'epic' ? 0.7 : 0.5) : 0.15;
 
   return (
-    <div className={`relative flex items-center justify-center overflow-hidden rounded-lg bg-[#141A1C] border border-[#273438] ${className}`}>
+    <div className={`relative flex items-center justify-center overflow-hidden rounded-xl bg-[#101314] border border-[#2B3538] ${className}`}>
       {/* Background Subtle Technical Grid */}
       <svg className="absolute inset-0 w-full h-full opacity-20 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
         <defs>

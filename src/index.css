@@ -5,25 +5,25 @@
 @layer base {
   body {
     @apply bg-arena-bg text-arena-textPrimary font-sans antialiased;
-    background-color: #141719;
-    color: #F2F0E9;
+    background-color: #101314;
+    color: #F5F5F5;
     overflow-x: hidden;
   }
 
-  /* Refined, minimal scrollbar with Midnight & Amber palette */
+  /* Refined, minimal dark monochromatic scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #141719;
+    background: #101314;
   }
   ::-webkit-scrollbar-thumb {
-    background: #242A2D;
+    background: #252D30;
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #30383A;
+    background: #3E4C50;
   }
 }
 
@@ -34,19 +34,33 @@
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center font-semibold px-4 py-2 rounded-lg transition-all duration-150 bg-arena-amber hover:bg-arena-amberHover text-[#141719] shadow-sm active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center font-semibold px-4 py-2 rounded-xl transition-all duration-200 bg-arena-amber hover:bg-arena-amberHover text-[#101314] shadow-sm hover:shadow-[0_0_16px_-3px_rgba(255,173,66,0.35)] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center font-medium px-4 py-2 rounded-lg transition-all duration-150 bg-arena-elevated hover:bg-arena-surface text-arena-textPrimary border border-arena-border hover:border-arena-borderHover active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center font-medium px-4 py-2 rounded-xl transition-all duration-200 bg-arena-elevated hover:bg-arena-surface text-arena-textPrimary border border-arena-border hover:border-arena-borderHover active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed;
   }
-  .btn-teal {
-    @apply inline-flex items-center justify-center font-semibold px-4 py-2 rounded-lg transition-all duration-150 bg-arena-teal hover:bg-arena-tealHover text-[#141719] shadow-sm active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed;
+  .btn-cyan {
+    @apply inline-flex items-center justify-center font-semibold px-4 py-2 rounded-xl transition-all duration-200 bg-arena-cyan hover:bg-arena-cyanHover text-[#101314] shadow-sm hover:shadow-[0_0_16px_-3px_rgba(0,229,255,0.35)] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-lime {
+    @apply inline-flex items-center justify-center font-semibold px-4 py-2 rounded-xl transition-all duration-200 bg-arena-lime hover:bg-arena-limeHover text-[#101314] shadow-sm hover:shadow-[0_0_16px_-3px_rgba(181,255,74,0.35)] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .arena-card {
-    @apply bg-arena-surface border border-arena-border rounded-xl transition-all duration-150 hover:border-arena-borderHover;
+    @apply bg-arena-surface border border-arena-border rounded-2xl transition-all duration-200 hover:border-arena-borderHover hover:shadow-card;
   }
   .arena-card-elevated {
-    @apply bg-arena-elevated border border-arena-border rounded-xl transition-all duration-150 hover:border-arena-borderHover;
+    @apply bg-arena-elevated border border-arena-border rounded-2xl transition-all duration-200 hover:border-arena-borderHover;
+  }
+
+  /* Neon Accent Glow Helpers */
+  .glow-orange {
+    box-shadow: 0 0 20px -4px rgba(255, 173, 66, 0.3);
+  }
+  .glow-cyan {
+    box-shadow: 0 0 20px -4px rgba(0, 229, 255, 0.3);
+  }
+  .glow-lime {
+    box-shadow: 0 0 20px -4px rgba(181, 255, 74, 0.3);
   }
 
   /* 3D and Motion Utilities for Premium Landing Experience */

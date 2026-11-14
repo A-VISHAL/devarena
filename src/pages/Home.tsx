@@ -139,41 +139,45 @@ export const Home: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Column: Balanced Statistics Grid */}
+          {/* Right Column: Balanced Statistics Grid with Semantic Highlights */}
           <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3">
-            <div className="p-4 rounded-xl bg-arena-elevated border border-arena-border">
+            
+            {/* Coding Rating - Cyan (Competitive Arena) */}
+            <div className="p-4 rounded-xl bg-arena-elevated border border-arena-border hover:border-arena-cyan/30 transition-colors">
               <div className="flex items-center justify-between text-xs text-arena-textSecondary font-medium mb-1">
                 <span className="flex items-center gap-1.5">
-                  <Swords className="w-3.5 h-3.5 text-arena-amber" />
+                  <Swords className="w-3.5 h-3.5 text-arena-cyan" />
                   <span>Coding Rating</span>
                 </span>
-                <span className="text-[10px] text-arena-teal font-medium">Ranked Arena</span>
+                <span className="text-[10px] text-arena-cyan font-mono font-semibold px-1.5 py-0.2 rounded bg-arena-cyan/10 border border-arena-cyan/25">Ranked Arena</span>
               </div>
-              <div className="text-2xl font-bold text-arena-textPrimary font-mono">{user.rating} Elo</div>
+              <div className="text-2xl font-bold text-arena-cyan font-mono">{user.rating} Elo</div>
               <p className="text-[11px] text-arena-textSubtle mt-0.5">Top 15% active competitive coders</p>
             </div>
 
-            <div className="p-4 rounded-xl bg-arena-elevated border border-arena-border">
+            {/* Active Streak - Orange (Daily Multiplier) */}
+            <div className="p-4 rounded-xl bg-arena-elevated border border-arena-border hover:border-arena-amber/30 transition-colors">
               <div className="flex items-center justify-between text-xs text-arena-textSecondary font-medium mb-1">
                 <span className="flex items-center gap-1.5">
-                  <Flame className="w-3.5 h-3.5 text-arena-warning" />
+                  <Flame className="w-3.5 h-3.5 text-arena-amber fill-arena-amber/30" />
                   <span>Active Streak</span>
                 </span>
-                <span className="text-[10px] text-arena-textSubtle font-medium">Daily multiplier</span>
+                <span className="text-[10px] text-arena-amber font-mono font-semibold px-1.5 py-0.2 rounded bg-arena-amber/10 border border-arena-amber/25">Multiplier</span>
               </div>
-              <div className="text-2xl font-bold text-arena-warning font-mono">{user.streak} Days</div>
+              <div className="text-2xl font-bold text-arena-amber font-mono">{user.streak} Days</div>
               <p className="text-[11px] text-arena-textSubtle mt-0.5">Next milestone bonus in 4 days</p>
             </div>
 
-            <div className="p-4 rounded-xl bg-arena-elevated border border-arena-border">
+            {/* Win Rate - Lime (Verified Victories) */}
+            <div className="p-4 rounded-xl bg-arena-elevated border border-arena-border hover:border-arena-lime/30 transition-colors">
               <div className="flex items-center justify-between text-xs text-arena-textSecondary font-medium mb-1">
                 <span className="flex items-center gap-1.5">
-                  <Trophy className="w-3.5 h-3.5 text-arena-teal" />
+                  <Trophy className="w-3.5 h-3.5 text-arena-lime" />
                   <span>Win Rate</span>
                 </span>
-                <span className="text-[10px] text-arena-textSubtle font-medium">{user.battlesWon}W / {user.battlesTotal} Total</span>
+                <span className="text-[10px] text-arena-lime font-mono font-semibold px-1.5 py-0.2 rounded bg-arena-lime/10 border border-arena-lime/25">{user.battlesWon}W / {user.battlesTotal} Total</span>
               </div>
-              <div className="text-2xl font-bold text-arena-textPrimary font-mono">
+              <div className="text-2xl font-bold text-arena-lime font-mono">
                 {user.battlesTotal > 0 ? `${Math.round((user.battlesWon / user.battlesTotal) * 100)}%` : '100%'}
               </div>
               <p className="text-[11px] text-arena-textSubtle mt-0.5">{user.problemsSolved.length} Algorithm problems mastered</p>
@@ -191,7 +195,7 @@ export const Home: React.FC = () => {
           <div>
             <div className="flex items-start justify-between gap-4 mb-3">
               <div>
-                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-arena-elevated border border-arena-border text-arena-teal text-[11px] font-semibold mb-2">
+                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-arena-elevated border border-arena-border text-arena-lime text-[11px] font-semibold mb-2">
                   <span>DAILY PUZZLE</span>
                 </div>
                 <h3 className="text-xl font-bold text-arena-textPrimary">Word Puzzle — Daily 5-Letter Challenge</h3>
@@ -201,8 +205,8 @@ export const Home: React.FC = () => {
               </div>
 
               {completedDailyChallenge ? (
-                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-arena-elevated text-arena-success text-xs font-medium border border-arena-border shrink-0">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-arena-success" />
+                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-arena-elevated text-arena-lime text-xs font-semibold border border-arena-lime/30 shrink-0 shadow-[0_0_8px_rgba(181,255,74,0.15)]">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-arena-lime" />
                   <span>Completed</span>
                 </span>
               ) : (
@@ -216,19 +220,19 @@ export const Home: React.FC = () => {
 
           <div className="flex flex-wrap items-center justify-between pt-4 mt-2 border-t border-arena-border gap-3">
             <div className="flex items-center gap-3 text-xs text-arena-textSecondary">
-              <span className="flex items-center gap-1 text-arena-warning font-medium">
+              <span className="flex items-center gap-1 text-arena-amber font-medium">
                 <Flame className="w-3.5 h-3.5" />
                 <span>+1 Streak Day</span>
               </span>
               <span>•</span>
               <span className="text-arena-textSubtle">Casual • No code required</span>
               <span>•</span>
-              <span className="text-arena-teal">Word length: 5</span>
+              <span className="text-arena-cyan font-mono text-[11px]">Word length: 5</span>
             </div>
 
             <button
               onClick={() => handleStartGame('word-puzzle')}
-              className="btn-primary text-xs py-2 px-4 gap-1.5"
+              className="btn-primary text-xs py-2 px-4 gap-1.5 shadow-sm"
             >
               <Play className="w-3.5 h-3.5 fill-current" />
               <span>{completedDailyChallenge ? 'Review Board' : "Play Today's Puzzle"}</span>
@@ -239,8 +243,8 @@ export const Home: React.FC = () => {
         {/* Challenge a Friend Card (4 Cols on Wide Screen) */}
         <div className="lg:col-span-4 arena-card p-6 flex flex-col justify-between">
           <div>
-            <div className="inline-flex items-center gap-1.5 text-arena-amber text-[11px] font-semibold mb-2">
-              <Zap className="w-3.5 h-3.5" />
+            <div className="inline-flex items-center gap-1.5 text-arena-cyan text-[11px] font-semibold mb-2">
+              <Zap className="w-3.5 h-3.5 text-arena-cyan" />
               <span>INSTANT CHALLENGE</span>
             </div>
             <h3 className="text-base font-bold text-arena-textPrimary">Challenge a Friend</h3>

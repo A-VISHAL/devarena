@@ -164,28 +164,48 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {section.items.map(item => {
                 const isActive = item.id !== 'settings' && activeTab === item.id;
                 const IconComponent = item.icon;
+                const isArena = item.id === 'arena';
+                const isCards = item.id === 'cards';
+
+                // Badge semantic styling
+                const badgeClass = isArena
+                  ? 'bg-arena-cyan/15 text-arena-cyan border-arena-cyan/30 shadow-[0_0_8px_rgba(0,229,255,0.2)]'
+                  : isCards
+                  ? 'bg-arena-lime/15 text-arena-lime border-arena-lime/30 shadow-[0_0_8px_rgba(181,255,74,0.2)]'
+                  : isActive
+                  ? 'bg-arena-amber/20 border-arena-amber/40 text-arena-amber font-bold'
+                  : 'bg-[#101314] border-[#2B3538] text-arena-textSubtle group-hover:text-arena-textSecondary';
 
                 if (isCollapsed) {
                   return (
                     <div key={item.id} className="relative group flex justify-center">
                       <button
                         onClick={() => handleItemClick(item)}
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-150 ${
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 ${
                           isActive
-                            ? 'bg-[#E6A746]/15 text-arena-amber border border-arena-amber/40 shadow-sm'
-                            : 'text-arena-textSecondary hover:bg-[#1D2427] hover:text-arena-textPrimary'
+                            ? 'bg-arena-amber/15 text-arena-amber border border-arena-amber/40 shadow-[0_0_12px_rgba(255,173,66,0.25)]'
+                            : 'text-arena-textSecondary hover:bg-[#1C2426] hover:text-arena-textPrimary'
                         }`}
                       >
-                        <IconComponent className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-105 ${
-                          isActive ? 'text-arena-amber' : 'text-arena-textSubtle group-hover:text-arena-textPrimary'
+                        <IconComponent className={`w-4 h-4 shrink-0 transition-transform duration-200 group-hover:scale-105 ${
+                          isActive 
+                            ? 'text-arena-amber' 
+                            : isArena 
+                            ? 'text-arena-cyan' 
+                            : isCards 
+                            ? 'text-arena-lime' 
+                            : 'text-arena-textSubtle group-hover:text-arena-textPrimary'
                         }`} />
+                        {isArena && (
+                          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-arena-cyan shadow-[0_0_6px_#00E5FF]" />
+                        )}
                       </button>
 
                       {/* Floating Tooltip to the Right */}
-                      <div className="absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#182225] border border-[#2B3B3F] text-xs font-semibold text-arena-textPrimary shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 z-50 whitespace-nowrap flex items-center gap-2">
+                      <div className="absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-arena-surface border border-arena-border text-xs font-semibold text-arena-textPrimary shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-50 whitespace-nowrap flex items-center gap-2">
                         <span>{item.label}</span>
                         {item.badge && (
-                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-arena-amber/15 text-arena-amber border border-arena-amber/30">
+                          <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded ${badgeClass}`}>
                             {item.badge}
                           </span>
                         )}
@@ -199,25 +219,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <button
                     key={item.id}
                     onClick={() => handleItemClick(item)}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-150 group relative ${
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200 group relative ${
                       isActive
-                        ? 'bg-[#E6A746]/10 text-arena-amber border border-arena-amber/30 shadow-subtle'
-                        : 'text-arena-textSecondary hover:bg-[#182326] hover:text-arena-textPrimary'
+                        ? 'bg-arena-amber/10 text-arena-amber border border-arena-amber/30 shadow-[0_0_12px_rgba(255,173,66,0.15)]'
+                        : 'text-arena-textSecondary hover:bg-[#1C2426] hover:text-arena-textPrimary'
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <span className={isActive ? 'text-arena-amber' : 'text-arena-textSubtle group-hover:text-arena-textSecondary transition-colors'}>
+                      <span className={`transition-colors duration-200 ${
+                        isActive 
+                          ? 'text-arena-amber' 
+                          : isArena 
+                          ? 'text-arena-cyan' 
+                          : isCards 
+                          ? 'text-arena-lime' 
+                          : 'text-arena-textSubtle group-hover:text-arena-textSecondary'
+                      }`}>
                         <IconComponent className="w-4 h-4 shrink-0" />
                       </span>
                       <span className="truncate">{item.label}</span>
+                      {isArena && !isActive && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-arena-cyan shadow-[0_0_6px_#00E5FF] animate-pulse" />
+                      )}
                     </div>
 
                     {item.badge && (
-                      <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full border transition-colors ${
-                        isActive 
-                          ? 'bg-arena-amber/20 border-arena-amber/40 text-arena-amber font-bold'
-                          : 'bg-[#111719] border-[#2A373A] text-arena-textSubtle group-hover:text-arena-textSecondary'
-                      }`}>
+                      <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full border transition-colors ${badgeClass}`}>
                         {item.badge}
                       </span>
                     )}
@@ -232,14 +259,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Desktop Sidebar Footer */}
         <div className={`p-3 border-t border-arena-border/70 text-xs ${isCollapsed ? 'text-center' : ''}`}>
           {isCollapsed ? (
-            <div className="w-2.5 h-2.5 rounded-full bg-arena-teal mx-auto ring-4 ring-arena-teal/15" title="Connected to DEVARENA" />
+            <div className="w-2.5 h-2.5 rounded-full bg-arena-cyan mx-auto ring-4 ring-arena-cyan/20 shadow-[0_0_8px_#00E5FF]" title="Online Duels: Ready" />
           ) : (
             <div className="flex items-center justify-between text-[11px] text-arena-textSubtle font-mono">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-arena-teal inline-block" />
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-arena-cyan shadow-[0_0_8px_#00E5FF] animate-pulse inline-block" />
                 <span>ONLINE DUELS</span>
               </div>
-              <span className="text-arena-teal">READY</span>
+              <span className="text-arena-cyan font-bold">READY</span>
             </div>
           )}
         </div>

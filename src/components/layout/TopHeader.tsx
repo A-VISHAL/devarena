@@ -119,7 +119,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             <div className="w-8 h-8 rounded-xl bg-arena-surface border border-arena-border flex items-center justify-center transition-all group-hover:border-arena-amber/50 shadow-sm">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-arena-amber">
                 <path d="M6 4L14 12L6 20" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                <circle cx="18" cy="18" r="2.5" fill="#83B6A3"/>
+                <circle cx="18" cy="18" r="2.5" fill="#00E5FF"/>
               </svg>
             </div>
 
@@ -127,7 +127,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
               <span className="font-extrabold text-sm sm:text-base tracking-tight text-arena-textPrimary group-hover:text-arena-amber transition-colors">
                 DEVARENA
               </span>
-              <span className="hidden sm:inline-block text-[10px] font-mono text-arena-teal font-semibold tracking-wider">
+              <span className="hidden sm:inline-block text-[10px] font-mono text-arena-cyan font-semibold tracking-wider">
                 PLATFORM
               </span>
             </div>
@@ -233,22 +233,22 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             )}
           </div>
 
-          {/* Active Streak Indicator */}
+          {/* Active Streak Indicator - Orange */}
           <div 
             title={`Active streak: ${user.streak} days`}
             className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-arena-surface border border-arena-border text-xs font-semibold text-arena-textPrimary"
           >
-            <Flame className="w-4 h-4 text-arena-warning fill-arena-warning/30" />
-            <span className="font-mono font-bold text-arena-warning">{user.streak}d</span>
+            <Flame className="w-4 h-4 text-arena-amber fill-arena-amber/30" />
+            <span className="font-mono font-bold text-arena-amber">{user.streak}d</span>
           </div>
 
-          {/* Elo Rating Badge */}
+          {/* Elo Rating Badge - Cyan (Competitive Arena) */}
           <div 
             title={`Competitive Coding Rating: ${user.rating} Elo`}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-arena-surface border border-arena-border text-xs font-semibold text-arena-textPrimary font-mono"
           >
-            <Swords className="w-3.5 h-3.5 text-arena-amber" />
-            <span className="text-arena-amber font-bold">{user.rating}</span>
+            <Swords className="w-3.5 h-3.5 text-arena-cyan" />
+            <span className="text-arena-cyan font-bold">{user.rating}</span>
           </div>
 
           {/* User Profile Menu Dropdown */}

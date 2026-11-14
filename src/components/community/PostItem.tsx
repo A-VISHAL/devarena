@@ -138,7 +138,7 @@ export const PostItem: React.FC<PostItemProps> = ({
             <div className="flex items-center gap-1.5 text-[10px] text-arena-textSubtle">
               <span>{post.createdAt}</span>
               <span>•</span>
-              <span className="capitalize text-arena-teal font-medium">
+              <span className="capitalize text-arena-textSecondary font-medium">
                 {post.type.replace('_', ' ')}
               </span>
             </div>
@@ -250,7 +250,7 @@ export const PostItem: React.FC<PostItemProps> = ({
                 Open Source Repository
               </span>
             </div>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#182326] text-arena-teal border border-[#293A3E]">
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-arena-lime/10 text-arena-lime border border-arena-lime/30">
               VERIFIED BUILD
             </span>
           </div>
@@ -315,7 +315,7 @@ export const PostItem: React.FC<PostItemProps> = ({
             </div>
           </div>
 
-          <span className="font-mono font-bold text-xs px-2.5 py-1 rounded bg-[#172225] border border-arena-teal/40 text-arena-teal">
+          <span className="font-mono font-bold text-xs px-2.5 py-1 rounded bg-arena-lime/10 border border-arena-lime/40 text-arena-lime">
             {post.metadata.score || '+26 Elo'}
           </span>
         </div>
@@ -343,7 +343,7 @@ export const PostItem: React.FC<PostItemProps> = ({
             }}
             className="flex items-center gap-1.5 font-medium hover:text-arena-textPrimary transition-colors"
           >
-            <MessageSquare className="w-4 h-4 text-arena-teal" />
+            <MessageSquare className="w-4 h-4 text-arena-textSubtle" />
             <span>{post.comments.length} Comments</span>
           </button>
 

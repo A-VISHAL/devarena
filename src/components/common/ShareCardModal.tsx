@@ -186,8 +186,8 @@ export const ShareCardModal: React.FC = () => {
                 </div>
                 <span className="font-bold text-xs tracking-tight text-arena-textPrimary">DEVARENA</span>
               </div>
-              <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded bg-arena-surface text-arena-teal border border-arena-border flex items-center gap-1">
-                <Check className="w-3 h-3 text-arena-teal" />
+              <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded bg-arena-lime/10 text-arena-lime border border-arena-lime/30 flex items-center gap-1">
+                <Check className="w-3 h-3 text-arena-lime" />
                 VERIFIED
               </span>
             </div>
@@ -287,8 +287,8 @@ export const ShareCardModal: React.FC = () => {
             >
               {copiedText ? (
                 <>
-                  <Check className="w-3.5 h-3.5 text-arena-teal" />
-                  <span className="text-arena-teal">Copied Text!</span>
+                  <Check className="w-3.5 h-3.5 text-arena-lime" />
+                  <span className="text-arena-lime">Copied Text!</span>
                 </>
               ) : (
                 <>
@@ -305,12 +305,12 @@ export const ShareCardModal: React.FC = () => {
             >
               {copiedLink ? (
                 <>
-                  <Check className="w-3.5 h-3.5 text-arena-teal" />
-                  <span className="text-arena-teal">Copied Link!</span>
+                  <Check className="w-3.5 h-3.5 text-arena-lime" />
+                  <span className="text-arena-lime">Copied Link!</span>
                 </>
               ) : (
                 <>
-                  <LinkIcon className="w-3.5 h-3.5 text-arena-teal" />
+                  <LinkIcon className="w-3.5 h-3.5 text-arena-cyan" />
                   <span>Copy Result Link</span>
                 </>
               )}
@@ -323,7 +323,7 @@ export const ShareCardModal: React.FC = () => {
               onClick={handleNativeShare}
               className="w-full py-2 px-3 rounded-lg bg-arena-surface border border-arena-border text-xs text-arena-textSecondary hover:text-arena-textPrimary hover:bg-arena-elevated flex items-center justify-center gap-1.5 transition-colors"
             >
-              <Share2 className="w-3.5 h-3.5 text-arena-teal" />
+              <Share2 className="w-3.5 h-3.5 text-arena-cyan" />
               <span>More Share Options...</span>
             </button>
           )}

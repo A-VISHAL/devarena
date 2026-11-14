@@ -336,9 +336,9 @@ export const Play: React.FC = () => {
                 {[
                   { id: 'all', label: 'All Games', icon: <Gamepad2 className="w-4 h-4 text-arena-amber" />, count: allGames.length },
                   { id: 'daily', label: 'Daily Puzzles', icon: <Flame className="w-4 h-4 text-arena-warning" />, count: 2 },
-                  { id: 'brain', label: 'Brain & Reflex', icon: <Brain className="w-4 h-4 text-arena-teal" />, count: 4 },
+                  { id: 'brain', label: 'Brain & Reflex', icon: <Brain className="w-4 h-4 text-arena-textSecondary" />, count: 4 },
                   { id: 'logic', label: 'Logic & Sequences', icon: <Compass className="w-4 h-4 text-arena-amber" />, count: 2 },
-                  { id: 'multiplayer', label: 'Multiplayer Rooms', icon: <Swords className="w-4 h-4 text-arena-teal" />, badge: 'LIVE' },
+                  { id: 'multiplayer', label: 'Multiplayer Rooms', icon: <Swords className="w-4 h-4 text-arena-cyan" />, badge: 'LIVE' },
                 ].map((item) => {
                   const isActive = navTab === item.id;
                   return (
@@ -364,7 +364,7 @@ export const Play: React.FC = () => {
                         </span>
                       )}
                       {item.badge && (
-                        <span className="text-[9px] font-mono font-bold text-arena-amber bg-arena-amber/15 px-1.5 py-0.2 rounded border border-arena-amber/25">
+                        <span className="text-[9px] font-mono font-bold text-arena-cyan bg-arena-cyan/15 px-1.5 py-0.2 rounded border border-arena-cyan/30 animate-pulse">
                           {item.badge}
                         </span>
                       )}
@@ -437,7 +437,7 @@ export const Play: React.FC = () => {
                     <span>Friend Challenges</span>
                   </div>
                   {user.challenges && user.challenges.length > 0 && (
-                    <span className="text-[10px] font-mono font-bold text-arena-teal bg-arena-teal/15 px-1.5 py-0.2 rounded border border-arena-teal/30">
+                    <span className="text-[10px] font-mono font-bold text-arena-cyan bg-arena-cyan/15 px-1.5 py-0.2 rounded border border-arena-cyan/30">
                       {user.challenges.length} New
                     </span>
                   )}
@@ -700,7 +700,7 @@ export const Play: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-sm text-arena-textPrimary flex items-center gap-1.5">
-                  <Users className="w-4 h-4 text-arena-teal" />
+                  <Users className="w-4 h-4 text-arena-cyan" />
                   <span>Friends & Community Activity</span>
                 </h3>
                 <p className="text-[11px] text-arena-textSecondary">Real results and streaks from other DEVARENA players</p>
@@ -864,7 +864,7 @@ export const Play: React.FC = () => {
                 <Trophy className="w-4 h-4 text-arena-amber" />
                 <span>Your Gaming Stats</span>
               </div>
-              <span className="text-[10px] font-mono text-arena-teal font-semibold">Active</span>
+              <span className="text-[10px] font-mono text-arena-lime font-semibold">Active</span>
             </div>
 
             <div className="grid grid-cols-2 gap-2.5">
@@ -877,7 +877,7 @@ export const Play: React.FC = () => {
 
               <div className="p-2.5 rounded-lg bg-arena-elevated border border-arena-border text-center">
                 <span className="text-[10px] text-arena-textSubtle block font-semibold uppercase">CASUAL RATING</span>
-                <div className="text-lg font-bold text-arena-amber font-mono mt-0.5">
+                <div className="text-lg font-bold text-arena-cyan font-mono mt-0.5">
                   {user.casualRating}
                 </div>
               </div>
@@ -886,15 +886,15 @@ export const Play: React.FC = () => {
             <div className="space-y-1.5 pt-1 text-xs">
               <div className="flex items-center justify-between text-arena-textSecondary">
                 <span>Daily Streak:</span>
-                <span className="font-bold text-arena-warning font-mono">{user.streak} Days 🔥</span>
+                <span className="font-bold text-arena-amber font-mono">{user.streak} Days 🔥</span>
               </div>
               <div className="flex items-center justify-between text-arena-textSecondary">
                 <span>Zip Best Time:</span>
-                <span className="font-bold text-arena-teal font-mono">1m 24s</span>
+                <span className="font-bold text-arena-lime font-mono">1m 24s</span>
               </div>
               <div className="flex items-center justify-between text-arena-textSecondary">
                 <span>Reaction Best:</span>
-                <span className="font-bold text-arena-textPrimary font-mono">198 ms</span>
+                <span className="font-bold text-arena-cyan font-mono">198 ms</span>
               </div>
             </div>
 
@@ -911,7 +911,7 @@ export const Play: React.FC = () => {
           <div className="arena-card p-5 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-arena-border">
               <div className="flex items-center gap-2 text-xs font-bold text-arena-textPrimary">
-                <Award className="w-4 h-4 text-arena-teal" />
+                <Award className="w-4 h-4 text-arena-amber" />
                 <span>Weekly Leaderboard</span>
               </div>
 
@@ -952,7 +952,7 @@ export const Play: React.FC = () => {
                     />
                     <span className="font-semibold text-arena-textPrimary">@{entry.username}</span>
                   </div>
-                  <span className="font-bold text-arena-teal font-mono">{entry.score} pts</span>
+                  <span className="font-bold text-arena-amber font-mono">{entry.score} pts</span>
                 </div>
               ))}
 

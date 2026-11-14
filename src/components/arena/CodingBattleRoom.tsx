@@ -420,7 +420,11 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
               <button
                 onClick={handleSubmitSolution}
                 disabled={isRunning || isSubmitting || mySubmission?.passed}
-                className="btn-primary py-1 px-3 text-xs gap-1.5 font-medium"
+                className={`py-1 px-3.5 text-xs gap-1.5 font-bold rounded-xl transition-all ${
+                  mySubmission?.passed
+                    ? 'bg-arena-lime text-[#101314] shadow-[0_0_14px_rgba(181,255,74,0.35)]'
+                    : 'btn-primary'
+                }`}
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>{isSubmitting ? 'Judging...' : mySubmission?.passed ? 'Passed ✓' : 'Submit'}</span>
@@ -434,11 +438,19 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
       {roomStatus === 'lobby' && (
         <div className="p-3.5 bg-arena-elevated border-b border-arena-border flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-arena-surface border border-arena-border flex items-center justify-center text-arena-amber">
+            <div className="w-8 h-8 rounded-lg bg-arena-surface border border-arena-border flex items-center justify-center text-arena-cyan">
               <Swords className="w-4 h-4" />
             </div>
             <div>
-              <div className="font-bold text-xs text-arena-textPrimary">1v1 Battle Lobby</div>
+              <div className="font-bold text-xs text-arena-textPrimary flex items-center gap-2">
+                <span>1v1 Battle Lobby</span>
+                {opponent && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.2 rounded-full bg-arena-cyan/15 text-arena-cyan border border-arena-cyan/30 text-[10px] font-mono font-semibold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-arena-cyan animate-pulse shadow-[0_0_6px_#00E5FF]" />
+                    Opponent Online
+                  </span>
+                )}
+              </div>
               <p className="text-[11px] text-arena-textSecondary">
                 {opponent 
                   ? `${opponent.username} is connected. Click "Ready" when prepared.` 
@@ -449,8 +461,8 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
 
           <button
             onClick={handleToggleReady}
-            className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              myReady ? 'bg-arena-success text-slate-950 font-bold' : 'btn-primary'
+            className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+              myReady ? 'bg-arena-lime text-[#101314] font-bold shadow-[0_0_12px_rgba(181,255,74,0.3)]' : 'btn-primary'
             }`}
           >
             {myReady ? '✓ Ready' : 'Ready Up'}
@@ -662,7 +674,13 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
       {battleWinner && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-arena-bg/85 backdrop-blur-sm animate-in fade-in">
           <div className="w-full max-w-md bg-arena-surface border border-arena-border rounded-2xl p-6 text-center space-y-4">
-            <div className="w-12 h-12 rounded-xl bg-arena-elevated border border-arena-border text-arena-amber flex items-center justify-center mx-auto">
+            <div className={`w-12 h-12 rounded-xl border flex items-center justify-center mx-auto ${
+              battleWinner.winner === 'you'
+                ? 'bg-arena-lime/15 border-arena-lime/40 text-arena-lime shadow-[0_0_16px_rgba(181,255,74,0.3)]'
+                : battleWinner.winner === 'opponent'
+                ? 'bg-arena-error/15 border-arena-error/40 text-arena-error'
+                : 'bg-arena-elevated border-arena-border text-arena-amber'
+            }`}>
               <Trophy className="w-6 h-6" />
             </div>
 
@@ -670,8 +688,10 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
               <span className="text-[10px] uppercase font-semibold text-arena-textSubtle tracking-wider">
                 1V1 BATTLE RESULT
               </span>
-              <h3 className="text-2xl font-bold text-arena-textPrimary mt-0.5">
-                {battleWinner.winner === 'you' ? 'Victory' : battleWinner.winner === 'opponent' ? 'Defeat' : 'Tied Match'}
+              <h3 className={`text-2xl font-bold mt-0.5 ${
+                battleWinner.winner === 'you' ? 'text-arena-lime' : battleWinner.winner === 'opponent' ? 'text-arena-error' : 'text-arena-textPrimary'
+              }`}>
+                {battleWinner.winner === 'you' ? 'Victory 🏆' : battleWinner.winner === 'opponent' ? 'Defeat' : 'Tied Match'}
               </h3>
               <p className="text-xs text-arena-textSecondary mt-1">{battleWinner.reason}</p>
             </div>
@@ -679,8 +699,8 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
             <div className="p-3.5 rounded-xl bg-arena-elevated border border-arena-border flex items-center justify-around">
               <div>
                 <span className="text-[10px] text-arena-textSubtle font-medium block">RATING DELTA</span>
-                <span className={`text-lg font-bold ${
-                  battleWinner.ratingDelta > 0 ? 'text-arena-teal' : 'text-arena-error'
+                <span className={`text-lg font-bold font-mono ${
+                  battleWinner.ratingDelta > 0 ? 'text-arena-lime' : 'text-arena-error'
                 }`}>
                   {battleWinner.ratingDelta > 0 ? `+${battleWinner.ratingDelta}` : battleWinner.ratingDelta} Elo
                 </span>
@@ -688,7 +708,7 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
               <div className="h-6 w-px bg-arena-border" />
               <div>
                 <span className="text-[10px] text-arena-textSubtle font-medium block">NEW RATING</span>
-                <span className="text-lg font-bold text-arena-textPrimary">{battleWinner.newRating} Elo</span>
+                <span className="text-lg font-bold text-arena-textPrimary font-mono">{battleWinner.newRating} Elo</span>
               </div>
             </div>
 

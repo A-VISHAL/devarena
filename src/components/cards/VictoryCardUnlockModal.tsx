@@ -48,10 +48,10 @@ export const VictoryCardUnlockModal: React.FC<VictoryCardUnlockModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#090C0E]/90 backdrop-blur-md animate-in fade-in">
       <div className="relative w-full max-w-md bg-[#141B1D] border border-arena-amber/50 rounded-3xl p-6 sm:p-8 text-center shadow-[0_0_50px_rgba(245,170,59,0.25)] space-y-6">
         
-        {/* Top Eyebrow Badge */}
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-arena-amber/15 border border-arena-amber/40 text-arena-amber text-xs font-bold uppercase tracking-wider">
+        {/* Top Eyebrow Badge - Neon Lime */}
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-arena-lime/15 border border-arena-lime/40 text-arena-lime text-xs font-bold uppercase tracking-wider shadow-[0_0_12px_rgba(181,255,74,0.25)]">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>New Collectible Card Unlocked!</span>
+          <span>New Collectible Card Earned!</span>
         </div>
 
         {/* Card Display with subtle hover */}
