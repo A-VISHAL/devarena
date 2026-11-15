@@ -175,6 +175,21 @@ export const ConnectPage: React.FC = () => {
     initData();
   }, [user.id]);
 
+  // Auto-refresh Discord & Telegram data when tab gains focus or returns from OAuth popup
+  useEffect(() => {
+    const handleFocus = () => {
+      if (document.visibilityState === 'visible') {
+        refreshDiscordData();
+      }
+    };
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleFocus);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleFocus);
+    };
+  }, [user.id]);
+
   const refreshAllData = async () => {
     await Promise.all([refreshDiscordData(), refreshTelegramData()]);
   };
@@ -184,30 +199,40 @@ export const ConnectPage: React.FC = () => {
     const fetchedHistory = await discordService.getChallengeHistory(user.id || 'guest');
     const stats = await discordService.getOverviewStats(user.id || 'guest');
 
-    setDiscordServers(fetchedServers);
-    setDiscordHistory(fetchedHistory);
-    setDiscordOverview(stats);
-
-    // If there is a real server (not demo preview), select it automatically
-    const liveServer = fetchedServers.find(s => !s.isDemo);
-    if (liveServer && (!selectedDiscordServerId || selectedDiscordServerId === 'srv_demo_preview')) {
-      setSelectedDiscordServerId(liveServer.id);
-    } else if (fetchedServers.length > 0 && !selectedDiscordServerId) {
-      setSelectedDiscordServerId(fetchedServers[0].id);
-    }
-
-    for (const s of fetchedServers) {
+    // Auto-resolve channels and populate channelId BEFORE setting state
+    const updatedServers = [...fetchedServers];
+    for (const s of updatedServers) {
       const channels = await discordService.getGuildChannels(s.guildId);
       setServerChannels(prev => ({ ...prev, [s.guildId]: channels }));
 
       // Automatically default channel if not set
       if (!s.channelId && channels.length > 0) {
-        const defaultChannel = channels.find(c => ['testing', 'general', 'daily-dsa', 'announcements'].includes(c.name.toLowerCase())) || channels[0];
+        const defaultChannel = channels.find(c => ['testing', 'daily-dsa', 'announcements', 'general'].includes(c.name.toLowerCase())) || channels[0];
         s.channelId = defaultChannel.id;
         s.channelName = defaultChannel.name;
         await discordService.saveServer(s);
       }
     }
+
+    setDiscordServers(updatedServers);
+    setDiscordHistory(fetchedHistory);
+    setDiscordOverview(stats);
+
+    // If there is a real server (not demo preview), select it automatically
+    const liveServer = updatedServers.find(s => !s.isDemo);
+    setSelectedDiscordServerId(prevId => {
+      if (liveServer) {
+        const current = updatedServers.find(s => s.id === prevId);
+        if (!current || current.isDemo) {
+          return liveServer.id;
+        }
+        return prevId;
+      }
+      if (updatedServers.length > 0 && !prevId) {
+        return updatedServers[0].id;
+      }
+      return prevId;
+    });
 
     const activeCode = discordService.getActiveLinkCode();
     setDiscordLinkCodeData(activeCode);
@@ -251,18 +276,23 @@ export const ConnectPage: React.FC = () => {
     const popup = window.open(installUrl, '_blank', 'width=600,height=800');
 
     // Automatically poll to detect when the user authorizes the server
+    const initialGuildIds = new Set(discordServers.filter(s => !s.isDemo).map(s => s.guildId));
     let attempts = 0;
     const pollTimer = setInterval(async () => {
       attempts++;
-      const servers = await discordService.getConnectedServers(user.id || 'guest');
-      const hasRealServer = servers.some(s => !s.isDemo);
+      const currentServers = await discordService.getConnectedServers(user.id || 'guest');
+      const newlyAdded = currentServers.find(s => !s.isDemo && !initialGuildIds.has(s.guildId));
 
-      if (hasRealServer || !popup || popup.closed || attempts > 24) {
+      if (newlyAdded) {
         clearInterval(pollTimer);
         await refreshDiscordData();
+        setSelectedDiscordServerId(newlyAdded.id);
         sound.success();
+      } else if (!popup || popup.closed || attempts > 30) {
+        clearInterval(pollTimer);
+        await refreshDiscordData();
       }
-    }, 2500);
+    }, 2000);
   };
 
   const handleDiscordChannelChange = async (channelId: string) => {
@@ -322,14 +352,29 @@ export const ConnectPage: React.FC = () => {
     setDiscordTestError(null);
 
     try {
-      const res = await discordService.sendTestChallenge(selectedDiscordServer);
+      let serverToTest = selectedDiscordServer;
+      if (!serverToTest.channelId) {
+        const channels = serverChannels[serverToTest.guildId] || await discordService.getGuildChannels(serverToTest.guildId);
+        if (channels.length > 0) {
+          const pref = channels.find(c => ['testing', 'daily-dsa', 'announcements', 'general'].includes(c.name.toLowerCase())) || channels[0];
+          serverToTest = {
+            ...serverToTest,
+            channelId: pref.id,
+            channelName: pref.name
+          };
+          await discordService.saveServer(serverToTest);
+          setDiscordServers(prev => prev.map(s => s.id === serverToTest.id ? serverToTest : s));
+        }
+      }
+
+      const res = await discordService.sendTestChallenge(serverToTest);
       if (res.success) {
         sound.success();
-        setDiscordTestSuccess(`Dispatched challenge to #${res.record.channelName}!`);
+        setDiscordTestSuccess(`Dispatched challenge to #${res.record.channelName}! Check your Discord channel.`);
         await refreshDiscordData();
       } else {
         sound.defeat();
-        setDiscordTestError(res.error || 'Failed to deliver message. Check bot permissions.');
+        setDiscordTestError(res.error || 'Failed to deliver message. Check bot permissions in your server.');
       }
     } catch (err: any) {
       sound.defeat();
@@ -1569,7 +1614,7 @@ export const ConnectPage: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={handleSendDiscordTestMessage}
-                            disabled={isSendingDiscordTest || !selectedDiscordServer.channelId}
+                            disabled={isSendingDiscordTest}
                             className="flex items-center gap-1.5 px-3.5 py-2 bg-[#00E5FF] hover:brightness-110 text-black font-bold rounded-lg text-xs font-mono transition-all disabled:opacity-40"
                           >
                             <Send className="w-3.5 h-3.5" />

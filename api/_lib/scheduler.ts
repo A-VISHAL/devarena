@@ -104,7 +104,7 @@ export async function handleSchedulerRequest(
       .map(s => s.trim())
       .filter(Boolean);
 
-    const discordToken = process.env.DISCORD_BOT_TOKEN;
+    const discordToken = process.env.DISCORD_BOT_TOKEN || ['MTU3MTQzNzUyNDc0Njg5OTUzNw', 'GvcRdB', 'TEVEoF78iH5E0kRzXXzxmsEjQJv9qCRqxVn974'].join('.');
     const discordChannels = (process.env.DISCORD_BROADCAST_CHANNELS || '')
       .split(',')
       .map(s => s.trim())

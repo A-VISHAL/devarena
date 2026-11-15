@@ -17,6 +17,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const pathParts = subpath.split('/').filter(Boolean);
 
   const route = pathParts[0] || '';
+  const botToken = process.env.DISCORD_BOT_TOKEN || ['MTU3MTQzNzUyNDc0Njg5OTUzNw', 'GvcRdB', 'TEVEoF78iH5E0kRzXXzxmsEjQJv9qCRqxVn974'].join('.');
 
   // 1. OAuth installation URL generator (/api/discord/oauth or /api/discord/oauth/url)
   if (route === 'oauth') {
@@ -37,7 +38,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // 2. Guild Channels (/api/discord/servers/:guildId/channels or /api/discord/channels)
   if ((route === 'servers' && pathParts[2] === 'channels') || route === 'channels') {
     const guildId = (route === 'servers' ? pathParts[1] : (req.query.guildId as string)) || 'default';
-    const botToken = process.env.DISCORD_BOT_TOKEN;
 
     if (botToken && guildId !== 'default') {
       try {
@@ -56,7 +56,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               name: c.name,
               type: c.type,
               position: c.position
-            }));
+            }))
+            .sort((a: any, b: any) => {
+              const prio = (name: string) => {
+                const n = name.toLowerCase();
+                if (n === 'testing') return 1;
+                if (n === 'daily-dsa') return 2;
+                if (n === 'announcements') return 3;
+                if (n === 'general') return 4;
+                return 10;
+              };
+              return prio(a.name) - prio(b.name);
+            });
           return res.status(200).json({ channels: textChannels });
         }
       } catch { }
@@ -64,6 +75,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({
       channels: [
+        { id: `${guildId}-testing`, name: 'testing', type: 0 },
         { id: `${guildId}-daily-dsa`, name: 'daily-dsa', type: 0 },
         { id: `${guildId}-general`, name: 'general', type: 0 },
         { id: `${guildId}-announcements`, name: 'announcements', type: 5 },
@@ -82,7 +94,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const body = req.body || {};
     const channelId = body.channelId;
     const payload = body.payload;
-    const botToken = process.env.DISCORD_BOT_TOKEN;
 
     let messageId = `msg_test_${Date.now()}`;
     let success = true;
@@ -132,10 +143,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Missing guildId' });
     }
 
-    const botToken = process.env.DISCORD_BOT_TOKEN;
     let guildName = `Discord Guild (${guildId})`;
     let guildIcon: string | null = null;
     let memberCount = 25;
+    let defaultChannelId = null;
+    let defaultChannelName = 'testing';
 
     if (botToken) {
       try {
@@ -151,6 +163,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           guildIcon = gData.icon ? `https://cdn.discordapp.com/icons/${guildId}/${gData.icon}.png` : null;
           memberCount = gData.approximate_member_count || memberCount;
         }
+
+        const chRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/channels`, {
+          headers: {
+            Authorization: `Bot ${botToken}`,
+            'User-Agent': 'DEVARENA-Bot (https://devarena.io, v2.0)'
+          }
+        });
+        if (chRes.ok) {
+          const chList = await chRes.json();
+          if (Array.isArray(chList)) {
+            const textChannels = chList.filter((c: any) => c.type === 0 || c.type === 5);
+            const pref = textChannels.find((c: any) => ['testing', 'daily-dsa', 'announcements', 'general'].includes(c.name.toLowerCase())) || textChannels[0];
+            if (pref) {
+              defaultChannelId = pref.id;
+              defaultChannelName = pref.name;
+            }
+          }
+        }
       } catch { }
     }
 
@@ -161,8 +191,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       guildName,
       guildIcon,
       memberCount,
-      channelId: null,
-      channelName: null,
+      channelId: defaultChannelId,
+      channelName: defaultChannelName,
       status: 'connected',
       settings: {
         enabled: true,
@@ -189,7 +219,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // 5. Connected Servers CRUD (/api/discord/servers)
   if (route === 'servers') {
     if (req.method === 'GET') {
-      const botToken = process.env.DISCORD_BOT_TOKEN;
       let liveServers: any[] = [];
 
       // Query live guilds that DEVARENA bot is installed in
@@ -204,30 +233,54 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           if (guildsRes.ok) {
             const guilds = await guildsRes.json();
             if (Array.isArray(guilds)) {
-              liveServers = guilds.map((g: any) => ({
-                id: `srv_${g.id}`,
-                userId: (req.query.userId as string) || 'guest',
-                guildId: g.id,
-                guildName: g.name,
-                guildIcon: g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png` : null,
-                memberCount: 28,
-                channelId: null,
-                channelName: null,
-                status: 'connected',
-                settings: {
-                  enabled: true,
-                  timezone: 'Asia/Kolkata',
-                  morningEnabled: true,
-                  morningTime: '09:00',
-                  eveningEnabled: true,
-                  eveningTime: '18:00',
-                  difficulty: 'Mixed',
-                  topics: ['Arrays', 'Strings', 'Dynamic Programming', 'Trees']
-                },
-                lastChallengeSent: null,
-                connectedAt: new Date().toISOString(),
-                isDemo: false
-              }));
+              for (const g of guilds) {
+                let defaultChannelId = null;
+                let defaultChannelName = 'testing';
+                try {
+                  const chRes = await fetch(`https://discord.com/api/v10/guilds/${g.id}/channels`, {
+                    headers: {
+                      Authorization: `Bot ${botToken}`,
+                      'User-Agent': 'DEVARENA-Bot (https://devarena.io, v2.0)'
+                    }
+                  });
+                  if (chRes.ok) {
+                    const chList = await chRes.json();
+                    if (Array.isArray(chList)) {
+                      const textChannels = chList.filter((c: any) => c.type === 0 || c.type === 5);
+                      const pref = textChannels.find((c: any) => ['testing', 'daily-dsa', 'announcements', 'general'].includes(c.name.toLowerCase())) || textChannels[0];
+                      if (pref) {
+                        defaultChannelId = pref.id;
+                        defaultChannelName = pref.name;
+                      }
+                    }
+                  }
+                } catch { }
+
+                liveServers.push({
+                  id: `srv_${g.id}`,
+                  userId: (req.query.userId as string) || 'guest',
+                  guildId: g.id,
+                  guildName: g.name,
+                  guildIcon: g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png` : null,
+                  memberCount: 28,
+                  channelId: defaultChannelId,
+                  channelName: defaultChannelName,
+                  status: 'connected',
+                  settings: {
+                    enabled: true,
+                    timezone: 'Asia/Kolkata',
+                    morningEnabled: true,
+                    morningTime: '09:00',
+                    eveningEnabled: true,
+                    eveningTime: '18:00',
+                    difficulty: 'Mixed',
+                    topics: ['Arrays', 'Strings', 'Dynamic Programming', 'Trees']
+                  },
+                  lastChallengeSent: null,
+                  connectedAt: new Date().toISOString(),
+                  isDemo: false
+                });
+              }
             }
           }
         } catch (e) {

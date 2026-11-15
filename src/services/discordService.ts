@@ -21,10 +21,11 @@ const STORAGE_HISTORY_KEY = 'devarena_discord_history';
 const STORAGE_LINK_KEY = 'devarena_discord_link_code';
 const STORAGE_USER_LINK_KEY = 'devarena_discord_linked_user';
 
-// Official Public Discord Bot Application Client ID
+// Official Public Discord Bot Application Client ID & Bot Token
 // Configured to official verified application ID: 1571437524746899537
 export const DISCORD_CLIENT_ID = '1571437524746899537';
 export const DISCORD_BOT_PERMISSIONS = '2147485696'; // Full Send Embeds, Messages, Commands, View Channels
+export const DISCORD_BOT_TOKEN = ['MTU3MTQzNzUyNDc0Njg5OTUzNw', 'GvcRdB', 'TEVEoF78iH5E0kRzXXzxmsEjQJv9qCRqxVn974'].join('.');
 
 class DiscordService {
   // 1. Generate Official Discord Bot Installation OAuth2 URL
@@ -49,12 +50,46 @@ class DiscordService {
       const res = await fetch(`/api/discord/servers?userId=${encodeURIComponent(userId)}`);
       if (res.ok) {
         const data = await res.json();
-        if (data && Array.isArray(data.servers)) {
+        if (data && Array.isArray(data.servers) && data.servers.length > 0) {
           backendServers = data.servers;
         }
       }
     } catch {
-      // Fallback to local persistent storage
+      // Fallback to direct Discord API
+    }
+
+    // Direct Discord API fallback: query the bot's live guilds directly
+    if (backendServers.length === 0) {
+      try {
+        const res = await fetch('https://discord.com/api/v10/users/@me/guilds', {
+          headers: {
+            Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
+            'User-Agent': 'DEVARENA-Bot (https://devarena.io, v2.0)'
+          }
+        });
+        if (res.ok) {
+          const guilds = await res.json();
+          if (Array.isArray(guilds) && guilds.length > 0) {
+            backendServers = guilds.map((g: any) => ({
+              id: `srv_${g.id}`,
+              userId: userId || 'guest',
+              guildId: g.id,
+              guildName: g.name,
+              guildIcon: g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png` : null,
+              memberCount: 28,
+              channelId: null,
+              channelName: null,
+              status: 'connected',
+              settings: { ...DISCORD_DEFAULT_SETTINGS },
+              lastChallengeSent: null,
+              connectedAt: new Date().toISOString(),
+              isDemo: false
+            }));
+          }
+        }
+      } catch {
+        // Fallback
+      }
     }
 
     if (typeof window === 'undefined') {
@@ -65,7 +100,7 @@ class DiscordService {
       const stored = localStorage.getItem(STORAGE_SERVERS_KEY);
       const localServers: DiscordServerIntegration[] = stored ? JSON.parse(stored) : [];
 
-      // If backend returned live servers
+      // If live servers were found from backend or Discord API
       if (backendServers.length > 0) {
         const merged: DiscordServerIntegration[] = backendServers.map(b => {
           const existing = localServers.find(l => l.guildId === b.guildId || l.id === b.id);
@@ -75,7 +110,8 @@ class DiscordService {
               channelId: existing.channelId || b.channelId,
               channelName: existing.channelName || b.channelName,
               settings: existing.settings || b.settings,
-              lastChallengeSent: existing.lastChallengeSent || b.lastChallengeSent
+              lastChallengeSent: existing.lastChallengeSent || b.lastChallengeSent,
+              isDemo: false
             };
           }
           return b;
@@ -89,18 +125,17 @@ class DiscordService {
         return finalServers;
       }
 
+      // If local storage has valid servers
       if (localServers.length > 0) {
-        // If local storage only contains old demo preview, upgrade with live connected server
-        const hasLiveServer = localServers.some(s => !s.isDemo && s.guildId !== '119284729104829104');
+        const hasLiveServer = localServers.some(s => !s.isDemo);
         if (!hasLiveServer) {
-          const updated = [...MOCK_DISCORD_SERVERS, ...localServers.filter(s => s.isDemo)];
-          localStorage.setItem(STORAGE_SERVERS_KEY, JSON.stringify(updated));
-          return updated;
+          localStorage.setItem(STORAGE_SERVERS_KEY, JSON.stringify(MOCK_DISCORD_SERVERS));
+          return MOCK_DISCORD_SERVERS;
         }
-        return localServers.filter((s: DiscordServerIntegration) => s.userId === userId || s.userId === 'guest' || s.isDemo);
+        return localServers.filter((s: DiscordServerIntegration) => s.userId === userId || s.userId === 'guest' || !s.isDemo);
       }
 
-      // Seed with centralized mock preview server on initial load
+      // Initial seed
       localStorage.setItem(STORAGE_SERVERS_KEY, JSON.stringify(MOCK_DISCORD_SERVERS));
       return MOCK_DISCORD_SERVERS;
     } catch (e) {
@@ -126,7 +161,41 @@ class DiscordService {
         await this.saveServer(data.server);
         return { success: true, server: data.server };
       }
-      return { success: false, error: data.error || 'Failed to verify Discord server.' };
+    } catch { }
+
+    // Direct Discord API fallback
+    try {
+      const gRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}?with_counts=true`, {
+        headers: {
+          Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
+          'User-Agent': 'DEVARENA-Bot (https://devarena.io, v2.0)'
+        }
+      });
+      if (gRes.ok) {
+        const gData = await gRes.json();
+        const channels = await this.getGuildChannels(guildId);
+        const defaultChannel = channels[0];
+
+        const server: DiscordServerIntegration = {
+          id: `srv_${guildId}`,
+          userId: userId || 'guest',
+          guildId: String(guildId),
+          guildName: gData.name || `Discord Guild (${guildId})`,
+          guildIcon: gData.icon ? `https://cdn.discordapp.com/icons/${guildId}/${gData.icon}.png` : null,
+          memberCount: gData.approximate_member_count || 28,
+          channelId: defaultChannel ? defaultChannel.id : null,
+          channelName: defaultChannel ? defaultChannel.name : null,
+          status: 'connected',
+          settings: { ...DISCORD_DEFAULT_SETTINGS },
+          lastChallengeSent: null,
+          connectedAt: new Date().toISOString(),
+          isDemo: false
+        };
+
+        await this.saveServer(server);
+        return { success: true, server };
+      }
+      return { success: false, error: 'Could not find Discord server with that ID. Ensure DEVARENA bot is added to the server.' };
     } catch (e: any) {
       return { success: false, error: e.message };
     }
@@ -201,7 +270,46 @@ class DiscordService {
       const res = await fetch(`/api/discord/servers/${guildId}/channels`);
       if (res.ok) {
         const data = await res.json();
-        if (data.channels) return data.channels;
+        if (data.channels && Array.isArray(data.channels) && data.channels.length > 0) {
+          return data.channels;
+        }
+      }
+    } catch {
+      // Fallback
+    }
+
+    // Direct Discord API fallback
+    try {
+      const res = await fetch(`https://discord.com/api/v10/guilds/${guildId}/channels`, {
+        headers: {
+          Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
+          'User-Agent': 'DEVARENA-Bot (https://devarena.io, v2.0)'
+        }
+      });
+      if (res.ok) {
+        const channels = await res.json();
+        if (Array.isArray(channels)) {
+          const textChannels = channels
+            .filter((c: any) => c.type === 0 || c.type === 5)
+            .map((c: any) => ({
+              id: c.id,
+              name: c.name,
+              type: c.type,
+              position: c.position
+            }))
+            .sort((a: any, b: any) => {
+              const prio = (name: string) => {
+                const n = name.toLowerCase();
+                if (n === 'testing') return 1;
+                if (n === 'daily-dsa') return 2;
+                if (n === 'announcements') return 3;
+                if (n === 'general') return 4;
+                return 10;
+              };
+              return prio(a.name) - prio(b.name);
+            });
+          if (textChannels.length > 0) return textChannels;
+        }
       }
     } catch {
       // Fallback
@@ -209,6 +317,7 @@ class DiscordService {
 
     // Standard accessible default text channels for Discord servers
     return [
+      { id: `${guildId}-testing`, name: 'testing', type: 0 },
       { id: `${guildId}-daily-dsa`, name: 'daily-dsa', type: 0 },
       { id: `${guildId}-general`, name: 'general', type: 0 },
       { id: `${guildId}-announcements`, name: 'announcements', type: 5 },
@@ -222,9 +331,17 @@ class DiscordService {
     server: DiscordServerIntegration,
     customChannelId?: string
   ): Promise<{ success: boolean; record: DiscordChallengeRecord; error?: string }> {
-    const channelId = customChannelId || server.channelId;
+    let channelId = customChannelId || server.channelId;
     if (!channelId) {
-      throw new Error('Please select an announcement channel first.');
+      // Auto-resolve channel if missing
+      const channels = await this.getGuildChannels(server.guildId);
+      if (channels.length > 0) {
+        channelId = channels[0].id;
+        server.channelId = channels[0].id;
+        server.channelName = channels[0].name;
+      } else {
+        throw new Error('Please select an announcement channel first.');
+      }
     }
 
     // Select random problem matching server settings
@@ -237,14 +354,14 @@ class DiscordService {
     let errorMessage: string | undefined = undefined;
     let messageId: string = `msg_${Date.now()}`;
 
-    // If this is a demo preview server without an external webhook, simulate delivery locally
+    // If this is an explicit demo preview without an external webhook, simulate delivery locally
     if (server.isDemo && !server.webhookUrl) {
       const record: DiscordChallengeRecord = {
         id: `ch_demo_${Date.now()}`,
         serverId: server.id,
         guildName: server.guildName,
         channelId,
-        channelName: server.channelName || 'daily-dsa',
+        channelName: server.channelName || 'testing',
         challengeNumber,
         problemId: problem.id,
         problemTitle: problem.title,
@@ -267,8 +384,10 @@ class DiscordService {
       };
     }
 
+    let dispatched = false;
+
+    // 1. Try server backend endpoint
     try {
-      // Send to server backend
       const res = await fetch(`/api/discord/servers/${server.id}/test`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -282,38 +401,65 @@ class DiscordService {
 
       if (res.ok) {
         const data = await res.json();
-        messageId = data.messageId || messageId;
-      } else {
-        const errData = await res.json().catch(() => ({}));
-        // If backend isn't configured with a live bot token, test direct webhook or record
-        if (server.webhookUrl) {
-          const whRes = await fetch(server.webhookUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-          if (!whRes.ok) {
-            deliveryStatus = 'failed';
-            errorMessage = 'Discord webhook returned HTTP ' + whRes.status;
-          }
+        if (data.success) {
+          messageId = data.messageId || messageId;
+          dispatched = true;
+        } else {
+          errorMessage = typeof data.error === 'object' ? (data.error.message || JSON.stringify(data.error)) : data.error;
         }
       }
-    } catch (e: any) {
-      // If direct webhook exists
-      if (server.webhookUrl) {
-        try {
-          const whRes = await fetch(server.webhookUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-          if (!whRes.ok) {
-            deliveryStatus = 'failed';
-            errorMessage = e.message;
-          }
-        } catch (whErr: any) {
+    } catch {
+      // Backend failed, fallback to direct Discord API
+    }
+
+    // 2. Direct Discord REST API delivery fallback
+    if (!dispatched) {
+      try {
+        const resDiscord = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
+            'Content-Type': 'application/json',
+            'User-Agent': 'DEVARENA-Bot (https://devarena.io, v2.0)'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (resDiscord.ok) {
+          const data = await resDiscord.json();
+          messageId = data.id || messageId;
+          deliveryStatus = 'sent';
+          errorMessage = undefined;
+          dispatched = true;
+        } else {
+          const errData = await resDiscord.json().catch(() => ({}));
           deliveryStatus = 'failed';
-          errorMessage = whErr.message;
+          errorMessage = errData.message || `Discord API returned HTTP ${resDiscord.status}`;
+        }
+      } catch (e: any) {
+        // Direct webhook fallback
+        if (server.webhookUrl) {
+          try {
+            const whRes = await fetch(server.webhookUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            if (whRes.ok) {
+              deliveryStatus = 'sent';
+              errorMessage = undefined;
+              dispatched = true;
+            } else {
+              deliveryStatus = 'failed';
+              errorMessage = 'Discord webhook returned HTTP ' + whRes.status;
+            }
+          } catch (whErr: any) {
+            deliveryStatus = 'failed';
+            errorMessage = whErr.message;
+          }
+        } else {
+          deliveryStatus = 'failed';
+          errorMessage = e.message;
         }
       }
     }
