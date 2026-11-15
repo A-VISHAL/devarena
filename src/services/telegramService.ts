@@ -51,7 +51,7 @@ class TelegramService {
         if (Array.isArray(parsed) && parsed.length > 0) {
           // Purge invalid mock chat -1002498192014 and tg_lukizerk
           const cleaned = parsed.filter((c: TelegramChatIntegration) => 
-            c.chatId !== '-1002498192014' && c.id !== 'tg_lukizerk'
+            c.chatId !== '-1002498192014' && c.id !== 'tg_lukizerk' && !c.chatId?.includes('1002498192014')
           );
           if (cleaned.length !== parsed.length) {
             localStorage.setItem(STORAGE_CHATS_KEY, JSON.stringify(cleaned));

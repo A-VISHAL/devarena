@@ -1,7 +1,64 @@
 // Vercel Serverless Function: Consolidated Telegram API Router & Verification
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as crypto from 'crypto';
-import { getRecentTelegramUpdates, getDetectedTelegramGroups } from '../_lib/telegramState';
+import * as fs from 'fs';
+
+const TMP_FILE = '/tmp/devarena_telegram_recent_updates.json';
+
+interface DetectedChatInfo {
+  chatId: string;
+  title: string;
+  type: string;
+  lastSeenAt: string;
+  lastMessage?: string;
+  sender?: string;
+}
+
+interface StoredTelegramUpdate {
+  updateId: number;
+  receivedAt: string;
+  chatId: string;
+  chatTitle: string;
+  chatType: string;
+  senderUsername?: string;
+  senderId?: number;
+  text?: string;
+  isGroup: boolean;
+  action?: string;
+}
+
+function loadPersistedUpdates(): StoredTelegramUpdate[] {
+  try {
+    if (fs.existsSync(TMP_FILE)) {
+      const data = fs.readFileSync(TMP_FILE, 'utf8');
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    }
+  } catch {}
+  return [];
+}
+
+function getDetectedTelegramGroups(): DetectedChatInfo[] {
+  const all = loadPersistedUpdates();
+  const map = new Map<string, DetectedChatInfo>();
+
+  for (const u of all) {
+    if (!map.has(u.chatId)) {
+      map.set(u.chatId, {
+        chatId: u.chatId,
+        title: u.chatTitle,
+        type: u.chatType,
+        lastSeenAt: u.receivedAt,
+        lastMessage: u.text,
+        sender: u.senderUsername
+      });
+    }
+  }
+
+  return Array.from(map.values());
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -74,11 +131,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ]);
         if (meRes.ok) botIdentity = meRes.result;
         if (whRes.ok) webhookInfo = whRes.result;
-      } catch { }
+      } catch {}
     }
 
     const detectedGroups = getDetectedTelegramGroups();
-    const recentUpdates = getRecentTelegramUpdates();
+    const recentUpdates = loadPersistedUpdates();
 
     return res.status(200).json({
       success: true,
@@ -162,7 +219,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (countData.ok && typeof countData.result === 'number') {
           memberCount = countData.result;
         }
-      } catch { }
+      } catch {}
 
       // Step C: Verify Bot Membership and Permissions via getChatMember
       let canSendMessages = true;
@@ -188,7 +245,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             canSendMessages = memberStatus !== 'restricted' || memberData.result.can_send_messages !== false;
           }
         }
-      } catch { }
+      } catch {}
 
       const srvId = `tg_${cleanChatId.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
       const newChat = {
@@ -312,7 +369,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         body: JSON.stringify({
           url: targetUrl,
           secret_token: secretToken,
-          allowed_updates: ['message', 'my_chat_member', 'callback_query']
+          allowed_updates: ['message', 'edited_message', 'channel_post', 'my_chat_member']
         })
       });
       const data = await tgRes.json();

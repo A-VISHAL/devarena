@@ -1,6 +1,116 @@
-// Vercel Serverless Function: Telegram Bot Incoming Webhook & Diagnostic
+// Vercel Serverless Function: Telegram Bot Incoming Webhook & Diagnostics
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { recordTelegramUpdate, getRecentTelegramUpdates, getDetectedTelegramGroups } from '../_lib/telegramState';
+import * as fs from 'fs';
+
+const TMP_FILE = '/tmp/devarena_telegram_recent_updates.json';
+const MAX_UPDATES = 50;
+
+interface DetectedChatInfo {
+  chatId: string;
+  title: string;
+  type: string;
+  lastSeenAt: string;
+  lastMessage?: string;
+  sender?: string;
+}
+
+interface StoredTelegramUpdate {
+  updateId: number;
+  receivedAt: string;
+  chatId: string;
+  chatTitle: string;
+  chatType: string;
+  senderUsername?: string;
+  senderId?: number;
+  text?: string;
+  isGroup: boolean;
+  action?: string;
+}
+
+// In-memory buffer surviving warm lambda invocations
+let memoryUpdates: StoredTelegramUpdate[] = [];
+
+function loadPersistedUpdates(): StoredTelegramUpdate[] {
+  try {
+    if (fs.existsSync(TMP_FILE)) {
+      const data = fs.readFileSync(TMP_FILE, 'utf8');
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    }
+  } catch {}
+  return [];
+}
+
+function persistUpdates(updates: StoredTelegramUpdate[]) {
+  try {
+    fs.writeFileSync(TMP_FILE, JSON.stringify(updates.slice(0, MAX_UPDATES)), 'utf8');
+  } catch {}
+}
+
+function recordTelegramUpdate(update: any): StoredTelegramUpdate | null {
+  if (!update) return null;
+
+  const msg = update.message || update.edited_message || update.channel_post;
+  const mcm = update.my_chat_member;
+  const chat = msg?.chat || mcm?.chat;
+
+  if (!chat || !chat.id) return null;
+
+  const from = msg?.from || mcm?.from || {};
+  const isGroup = chat.type === 'group' || chat.type === 'supergroup';
+  const chatTitle = chat.title || chat.first_name || (chat.username ? `@${chat.username}` : `Chat ${chat.id}`);
+
+  const entry: StoredTelegramUpdate = {
+    updateId: update.update_id || Date.now(),
+    receivedAt: new Date().toISOString(),
+    chatId: String(chat.id),
+    chatTitle,
+    chatType: chat.type || 'group',
+    senderUsername: from.username ? `@${from.username}` : from.first_name,
+    senderId: from.id,
+    text: msg?.text || (mcm ? `Bot status changed: ${mcm.new_chat_member?.status}` : undefined),
+    isGroup,
+    action: mcm ? `my_chat_member:${mcm.new_chat_member?.status}` : 'message'
+  };
+
+  if (memoryUpdates.length === 0) {
+    memoryUpdates = loadPersistedUpdates();
+  }
+
+  memoryUpdates = [entry, ...memoryUpdates.filter(u => u.updateId !== entry.updateId)].slice(0, MAX_UPDATES);
+  persistUpdates(memoryUpdates);
+
+  return entry;
+}
+
+function getRecentTelegramUpdates(): StoredTelegramUpdate[] {
+  if (memoryUpdates.length === 0) {
+    memoryUpdates = loadPersistedUpdates();
+  }
+  return memoryUpdates;
+}
+
+function getDetectedTelegramGroups(): DetectedChatInfo[] {
+  const all = getRecentTelegramUpdates();
+  const map = new Map<string, DetectedChatInfo>();
+
+  for (const u of all) {
+    if (!map.has(u.chatId)) {
+      map.set(u.chatId, {
+        chatId: u.chatId,
+        title: u.chatTitle,
+        type: u.chatType,
+        lastSeenAt: u.receivedAt,
+        lastMessage: u.text,
+        sender: u.senderUsername
+      });
+    }
+  }
+
+  return Array.from(map.values());
+}
 
 function escapeHtml(str: string): string {
   if (!str) return '';
@@ -36,7 +146,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (botToken) {
       try {
-        // Query getMe to verify bot identity
         const meRes = await fetch(`https://api.telegram.org/bot${botToken}/getMe`);
         const meData = await meRes.json();
         if (meData.ok) {
@@ -50,7 +159,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       try {
-        // Query getWebhookInfo to check webhook delivery status
         const whRes = await fetch(`https://api.telegram.org/bot${botToken}/getWebhookInfo`);
         const whData = await whRes.json();
         if (whData.ok) {
@@ -104,7 +212,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Record incoming update in shared memory / tmp store
-    const stored = recordTelegramUpdate(update);
+    recordTelegramUpdate(update);
 
     // Helper to send messages back to Telegram
     const sendTelegramMessage = async (chatId: number | string, text: string, replyMarkup?: any) => {
@@ -167,8 +275,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const cmd = parts[0].toLowerCase();
       const arg = parts.slice(1).join(' ').trim();
 
-      // /id, /chatid, /groupid, /info command
-      if (cmd === '/id' || cmd === '/chatid' || cmd === '/groupid' || cmd === '/info') {
+      // /id, /chatid, /groupid, /whoami, /info command
+      if (cmd === '/id' || cmd === '/chatid' || cmd === '/groupid' || cmd === '/whoami' || cmd === '/info') {
         await sendTelegramMessage(
           chat.id,
           `📍 <b>DEVARENA Chat Identification</b>\n` +
@@ -303,7 +411,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ ok: true });
   } catch (err: any) {
     console.error('[Telegram Webhook] Handler error:', err);
-    // Return 200 so Telegram acknowledges and clears the queue
     return res.status(200).json({ ok: false, error: err.message });
   }
 }

@@ -2233,7 +2233,7 @@ export const ConnectPage: React.FC = () => {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. -1002498192014 or -100..."
+                  placeholder="e.g. -1001987654321 or send /id in group"
                   value={telegramVerifyChatId}
                   onChange={e => setTelegramVerifyChatId(e.target.value)}
                   className="w-full bg-[#101314] text-xs font-mono text-white px-3 py-2.5 rounded-lg border border-[#252D30] focus:outline-none focus:border-[#24A1DE]"
