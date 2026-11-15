@@ -115,3 +115,4 @@ export function getDetectedTelegramGroups(): DetectedChatInfo[] {
 
   return Array.from(map.values());
 }
+

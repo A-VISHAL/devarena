@@ -29,7 +29,10 @@ import {
   Bell,
   MessageCircle,
   Smartphone,
-  Bot
+  Bot,
+  Slack,
+  Instagram,
+  Youtube
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sound } from '../utils/sound';
@@ -73,8 +76,32 @@ import {
 export const ConnectPage: React.FC = () => {
   const { user } = useApp();
 
-  // Active Platform View: 'discord' | 'telegram'
-  const [activePlatform, setActivePlatform] = useState<'discord' | 'telegram'>('discord');
+  // Active Platform View: 'discord' | 'telegram' | 'slack' | 'instagram' | 'youtube'
+  const [activePlatform, setActivePlatform] = useState<'discord' | 'telegram' | 'slack' | 'instagram' | 'youtube'>('discord');
+
+  // Early Access / Coming Soon Waitlist State
+  const [waitlistEmail, setWaitlistEmail] = useState('');
+  const [waitlistSuccessPlatform, setWaitlistSuccessPlatform] = useState<string | null>(null);
+  const [waitlistJoined, setWaitlistJoined] = useState<{ [key: string]: boolean }>(() => {
+    if (typeof window === 'undefined') return {};
+    try {
+      const stored = localStorage.getItem('devarena_waitlist_platforms');
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const handleJoinWaitlist = (platform: string) => {
+    sound.success();
+    const updated = { ...waitlistJoined, [platform]: true };
+    setWaitlistJoined(updated);
+    setWaitlistSuccessPlatform(platform);
+    try {
+      localStorage.setItem('devarena_waitlist_platforms', JSON.stringify(updated));
+    } catch {}
+    setTimeout(() => setWaitlistSuccessPlatform(null), 4000);
+  };
 
   // ==========================================
   // DISCORD STATE
@@ -151,6 +178,12 @@ export const ConnectPage: React.FC = () => {
 
       if (platformParam === 'telegram') {
         setActivePlatform('telegram');
+      } else if (platformParam === 'slack') {
+        setActivePlatform('slack');
+      } else if (platformParam === 'instagram') {
+        setActivePlatform('instagram');
+      } else if (platformParam === 'youtube') {
+        setActivePlatform('youtube');
       }
 
       if (guildId) {
@@ -632,7 +665,7 @@ export const ConnectPage: React.FC = () => {
                   {discordOverview.status === 'connected' ? '● ACTIVE' : '○ DISCORD READY'}
                 </span>
 
-                <span className="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-[#24A1DE]/20 text-[#24A1DE] border border-[#24A1DE]/30 flex items-center gap-1.5 ml-2">
+                <span className="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-[#24A1DE]/20 text-[#24A1DE] border border-[#24A1DE]/30 flex items-center gap-1.5 ml-1">
                   <Bot className="w-3.5 h-3.5" /> TELEGRAM BOT
                 </span>
                 <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${telegramOverview.status === 'connected'
@@ -640,6 +673,27 @@ export const ConnectPage: React.FC = () => {
                   : 'bg-neutral-800 text-neutral-400 border-neutral-700'
                   }`}>
                   {telegramOverview.status === 'connected' ? '● ACTIVE' : '○ TELEGRAM READY'}
+                </span>
+
+                <span className="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-[#ECB22E]/20 text-[#ECB22E] border border-[#ECB22E]/30 flex items-center gap-1.5 ml-1">
+                  <Slack className="w-3.5 h-3.5" /> SLACK
+                </span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold border bg-neutral-900 text-neutral-400 border-neutral-800">
+                  ○ COMING SOON
+                </span>
+
+                <span className="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-[#E1306C]/20 text-[#E1306C] border border-[#E1306C]/30 flex items-center gap-1.5 ml-1">
+                  <Instagram className="w-3.5 h-3.5" /> INSTAGRAM
+                </span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold border bg-neutral-900 text-neutral-400 border-neutral-800">
+                  ○ COMING SOON
+                </span>
+
+                <span className="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-[#FF0000]/20 text-[#FF0000] border border-[#FF0000]/30 flex items-center gap-1.5 ml-1">
+                  <Youtube className="w-3.5 h-3.5" /> YOUTUBE
+                </span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold border bg-neutral-900 text-neutral-400 border-neutral-800">
+                  ○ COMING SOON
                 </span>
               </div>
 
@@ -673,7 +727,7 @@ export const ConnectPage: React.FC = () => {
                     Connect Telegram Account
                   </button>
                 </>
-              ) : (
+              ) : activePlatform === 'discord' ? (
                 <>
                   <button
                     onClick={handleConnectDiscord}
@@ -702,21 +756,36 @@ export const ConnectPage: React.FC = () => {
                     Webhook / Custom
                   </button>
                 </>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => handleJoinWaitlist(activePlatform)}
+                    className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-bold text-xs font-mono transition-all shadow-lg shadow-amber-500/20 hover:scale-[1.02]"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>{waitlistJoined[activePlatform] ? '✓ Waitlist Joined' : 'Join Priority Beta'}</span>
+                  </button>
+                  <div className="hidden sm:flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-[#252D30] border border-neutral-700 text-neutral-300 text-xs font-mono">
+                    <Clock className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Q1 2027 Pipeline</span>
+                  </div>
+                </div>
               )}
             </div>
           </div>
         </div>
 
         {/* ========================================================= */}
-        {/* PLATFORM SWITCH TABS: DISCORD vs TELEGRAM                 */}
+        {/* PLATFORM SWITCH TABS: DISCORD, TELEGRAM, SLACK, IG, YT    */}
         {/* ========================================================= */}
-        <div className="flex items-center gap-3 border-b border-[#252D30] pb-2">
+        <div className="flex items-center gap-3 border-b border-[#252D30] pb-2 overflow-x-auto no-scrollbar">
+          {/* Discord Tab */}
           <button
             onClick={() => {
               sound.click();
               setActivePlatform('discord');
             }}
-            className={`flex items-center gap-2.5 px-5 py-3 rounded-xl font-mono text-xs font-bold transition-all ${activePlatform === 'discord'
+            className={`flex items-center gap-2.5 px-5 py-3 rounded-xl font-mono text-xs font-bold transition-all whitespace-nowrap shrink-0 ${activePlatform === 'discord'
               ? 'bg-[#5865F2]/20 text-white border border-[#5865F2]/50 shadow-md shadow-[#5865F2]/10'
               : 'text-neutral-400 hover:text-white bg-[#1C2426] border border-transparent'
               }`}
@@ -728,12 +797,13 @@ export const ConnectPage: React.FC = () => {
             </span>
           </button>
 
+          {/* Telegram Tab */}
           <button
             onClick={() => {
               sound.click();
               setActivePlatform('telegram');
             }}
-            className={`flex items-center gap-2.5 px-5 py-3 rounded-xl font-mono text-xs font-bold transition-all ${activePlatform === 'telegram'
+            className={`flex items-center gap-2.5 px-5 py-3 rounded-xl font-mono text-xs font-bold transition-all whitespace-nowrap shrink-0 ${activePlatform === 'telegram'
               ? 'bg-[#24A1DE]/20 text-white border border-[#24A1DE]/50 shadow-md shadow-[#24A1DE]/10'
               : 'text-neutral-400 hover:text-white bg-[#1C2426] border border-transparent'
               }`}
@@ -742,6 +812,60 @@ export const ConnectPage: React.FC = () => {
             <span>Telegram Integration</span>
             <span className="px-2 py-0.5 rounded-full text-[10px] bg-[#101314] text-neutral-300 border border-neutral-700">
               {telegramGroups.length}
+            </span>
+          </button>
+
+          {/* Slack Tab */}
+          <button
+            onClick={() => {
+              sound.click();
+              setActivePlatform('slack');
+            }}
+            className={`flex items-center gap-2.5 px-5 py-3 rounded-xl font-mono text-xs font-bold transition-all whitespace-nowrap shrink-0 ${activePlatform === 'slack'
+              ? 'bg-[#ECB22E]/20 text-white border border-[#ECB22E]/50 shadow-md shadow-[#ECB22E]/10'
+              : 'text-neutral-400 hover:text-white bg-[#1C2426] border border-transparent'
+              }`}
+          >
+            <Slack className={`w-4 h-4 ${activePlatform === 'slack' ? 'text-[#ECB22E]' : 'text-neutral-500'}`} />
+            <span>Slack Integration</span>
+            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#ECB22E]/15 text-[#ECB22E] border border-[#ECB22E]/30 tracking-wider">
+              COMING SOON
+            </span>
+          </button>
+
+          {/* Instagram Tab */}
+          <button
+            onClick={() => {
+              sound.click();
+              setActivePlatform('instagram');
+            }}
+            className={`flex items-center gap-2.5 px-5 py-3 rounded-xl font-mono text-xs font-bold transition-all whitespace-nowrap shrink-0 ${activePlatform === 'instagram'
+              ? 'bg-[#E1306C]/20 text-white border border-[#E1306C]/50 shadow-md shadow-[#E1306C]/10'
+              : 'text-neutral-400 hover:text-white bg-[#1C2426] border border-transparent'
+              }`}
+          >
+            <Instagram className={`w-4 h-4 ${activePlatform === 'instagram' ? 'text-[#E1306C]' : 'text-neutral-500'}`} />
+            <span>Instagram Integration</span>
+            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#E1306C]/15 text-[#E1306C] border border-[#E1306C]/30 tracking-wider">
+              COMING SOON
+            </span>
+          </button>
+
+          {/* YouTube Tab */}
+          <button
+            onClick={() => {
+              sound.click();
+              setActivePlatform('youtube');
+            }}
+            className={`flex items-center gap-2.5 px-5 py-3 rounded-xl font-mono text-xs font-bold transition-all whitespace-nowrap shrink-0 ${activePlatform === 'youtube'
+              ? 'bg-[#FF0000]/20 text-white border border-[#FF0000]/50 shadow-md shadow-[#FF0000]/10'
+              : 'text-neutral-400 hover:text-white bg-[#1C2426] border border-transparent'
+              }`}
+          >
+            <Youtube className={`w-4 h-4 ${activePlatform === 'youtube' ? 'text-[#FF0000]' : 'text-neutral-500'}`} />
+            <span>YouTube Integration</span>
+            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#FF0000]/15 text-[#FF0000] border border-[#FF0000]/30 tracking-wider">
+              COMING SOON
             </span>
           </button>
         </div>
@@ -1997,6 +2121,551 @@ export const ConnectPage: React.FC = () => {
                   </table>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* SLACK INTEGRATION VIEW (COMING SOON)                      */}
+        {/* ========================================================= */}
+        {activePlatform === 'slack' && (
+          <div className="space-y-8 animate-fadeIn">
+            {/* Hero Card */}
+            <div className="bg-[#1C2426] border border-[#ECB22E]/30 rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-[#ECB22E]/10 via-[#4A154B]/10 to-transparent rounded-full blur-3xl pointer-events-none" />
+
+              <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-[#252D30]">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-[#4A154B]/30 border border-[#ECB22E]/40 flex items-center justify-center text-[#ECB22E] shadow-lg shadow-[#ECB22E]/10">
+                    <Slack className="w-7 h-7" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-xl font-bold text-white font-mono">DEVARENA for Slack</h3>
+                      <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold bg-[#ECB22E]/20 text-[#ECB22E] border border-[#ECB22E]/40 tracking-wider">
+                        COMING SOON • Q1 2027
+                      </span>
+                    </div>
+                    <p className="text-xs text-neutral-400 font-mono mt-1">
+                      Enterprise algorithmic duels, Block Kit daily challenges, and team leaderboards for engineering workspaces.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Priority Waitlist Action */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                  <input
+                    type="email"
+                    placeholder="Enter engineering email..."
+                    value={waitlistEmail}
+                    onChange={e => setWaitlistEmail(e.target.value)}
+                    className="bg-[#101314] text-xs font-mono text-white px-3.5 py-2.5 rounded-xl border border-[#252D30] focus:outline-none focus:border-[#ECB22E] placeholder:text-neutral-600 min-w-[220px]"
+                  />
+                  <button
+                    onClick={() => handleJoinWaitlist('slack')}
+                    className="px-5 py-2.5 rounded-xl bg-[#ECB22E] hover:bg-[#D49E25] text-black font-bold text-xs font-mono transition-all shadow-md shadow-[#ECB22E]/20 flex items-center justify-center gap-2 shrink-0"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>{waitlistJoined['slack'] ? '✓ Waitlist Joined' : 'Join Priority Beta'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {waitlistSuccessPlatform === 'slack' && (
+                <div className="mt-4 p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-xs font-mono text-emerald-300 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>Success! You are on the priority beta invite list for the Slack Enterprise integration.</span>
+                </div>
+              )}
+
+              {/* Quick Specs Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6">
+                <div className="bg-[#101314] p-3.5 rounded-xl border border-[#252D30]">
+                  <span className="text-[10px] font-mono text-neutral-500 block uppercase">Target Latency</span>
+                  <span className="text-base font-bold font-mono text-[#ECB22E]">&lt; 150ms</span>
+                  <span className="text-[10px] font-mono text-neutral-400 block mt-0.5">Vercel Edge Handler</span>
+                </div>
+                <div className="bg-[#101314] p-3.5 rounded-xl border border-[#252D30]">
+                  <span className="text-[10px] font-mono text-neutral-500 block uppercase">Format Standard</span>
+                  <span className="text-base font-bold font-mono text-white">Block Kit 2.0</span>
+                  <span className="text-[10px] font-mono text-neutral-400 block mt-0.5">Syntax Highlighted</span>
+                </div>
+                <div className="bg-[#101314] p-3.5 rounded-xl border border-[#252D30]">
+                  <span className="text-[10px] font-mono text-neutral-500 block uppercase">Command System</span>
+                  <span className="text-base font-bold font-mono text-white">/devarena</span>
+                  <span className="text-[10px] font-mono text-neutral-400 block mt-0.5">6 Interactive Subcommands</span>
+                </div>
+                <div className="bg-[#101314] p-3.5 rounded-xl border border-[#252D30]">
+                  <span className="text-[10px] font-mono text-neutral-500 block uppercase">Security Scope</span>
+                  <span className="text-base font-bold font-mono text-[#B5FF4A]">Granular OAuth</span>
+                  <span className="text-[10px] font-mono text-neutral-400 block mt-0.5">Zero Workspace Read</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Architecture Capabilities */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-[#1C2426] border border-[#252D30] rounded-2xl p-6 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#ECB22E]/10 border border-[#ECB22E]/30 flex items-center justify-center text-[#ECB22E]">
+                    <Send className="w-4 h-4" />
+                  </div>
+                  <h4 className="text-sm font-bold text-white font-mono">Scheduled Engineering Dispatches</h4>
+                </div>
+                <p className="text-xs text-neutral-400 font-mono leading-relaxed">
+                  Automate daily morning (09:00 IST) and evening (18:00 IST) algorithm problems to your designated engineering channels (e.g. <code>#leetcode-daily</code>, <code>#engineering-duels</code>).
+                </p>
+              </div>
+
+              <div className="bg-[#1C2426] border border-[#252D30] rounded-2xl p-6 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#36C5F0]/10 border border-[#36C5F0]/30 flex items-center justify-center text-[#36C5F0]">
+                    <Code2 className="w-4 h-4" />
+                  </div>
+                  <h4 className="text-sm font-bold text-white font-mono">Interactive Slack Slash Commands</h4>
+                </div>
+                <p className="text-xs text-neutral-400 font-mono leading-relaxed">
+                  Instant slash commands for team workflows: <code>/devarena daily</code>, <code>/devarena duel @teammate</code>, <code>/devarena leaderboard</code>, and <code>/devarena hint</code>.
+                </p>
+              </div>
+
+              <div className="bg-[#1C2426] border border-[#252D30] rounded-2xl p-6 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#B5FF4A]/10 border border-[#B5FF4A]/30 flex items-center justify-center text-[#B5FF4A]">
+                    <Users className="w-4 h-4" />
+                  </div>
+                  <h4 className="text-sm font-bold text-white font-mono">Workspace Team Leaderboards</h4>
+                </div>
+                <p className="text-xs text-neutral-400 font-mono leading-relaxed">
+                  Rank engineers across your company workspace by algorithm solve speed, coding streak longevity, and 1v1 battle win rates.
+                </p>
+              </div>
+
+              <div className="bg-[#1C2426] border border-[#252D30] rounded-2xl p-6 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#E01E5A]/10 border border-[#E01E5A]/30 flex items-center justify-center text-[#E01E5A]">
+                    <ShieldCheck className="w-4 h-4" />
+                  </div>
+                  <h4 className="text-sm font-bold text-white font-mono">Enterprise Security & Permissions</h4>
+                </div>
+                <p className="text-xs text-neutral-400 font-mono leading-relaxed">
+                  Enterprise-grade Slack OAuth with zero channel read privileges. Encrypted stateless message dispatching with SOC-2 compliant webhooks.
+                </p>
+              </div>
+            </div>
+
+            {/* Live Interactive Mockup */}
+            <div className="bg-[#1C2426] border border-[#252D30] rounded-2xl p-6 shadow-xl space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                  <Hash className="w-4 h-4 text-[#ECB22E]" /> Slack Channel Preview (#engineering-challenges)
+                </h3>
+                <span className="text-[10px] font-mono text-neutral-500">Block Kit 2.0 Interactive Rendering</span>
+              </div>
+
+              <div className="bg-[#101314] rounded-xl border border-[#252D30] p-4 font-mono space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-[#ECB22E] flex items-center justify-center text-black font-bold text-xs shrink-0">
+                    DA
+                  </div>
+                  <div className="space-y-2 flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-white text-xs">DEVARENA</span>
+                      <span className="bg-[#252D30] text-neutral-400 text-[10px] px-1.5 py-0.2 rounded">APP</span>
+                      <span className="text-neutral-500 text-[10px]">9:00 AM</span>
+                    </div>
+
+                    <div className="border-l-4 border-[#00E5FF] pl-3 py-1 space-y-2 bg-[#1C2426]/50 rounded-r-lg p-3">
+                      <div className="font-bold text-white text-xs">
+                        ⚔️ DEVARENA DAILY CHALLENGE #142: Two Sum
+                      </div>
+                      <div className="text-[11px] text-neutral-300">
+                        Given an array of integers <code>nums</code> and an integer <code>target</code>, return indices of the two numbers such that they add up to target.
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 text-[10px]">
+                        <span className="bg-emerald-950/60 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded">🟢 Easy</span>
+                        <span className="bg-neutral-800 text-neutral-300 px-2 py-0.5 rounded">Arrays & Hashing</span>
+                        <span className="bg-neutral-800 text-neutral-300 px-2 py-0.5 rounded">O(N) Optimal</span>
+                      </div>
+                      <div className="flex items-center gap-2 pt-2">
+                        <button
+                          onClick={() => window.open('/app/arena?problem=two-sum', '_blank')}
+                          className="px-3 py-1.5 bg-[#00E5FF] hover:bg-[#00B4D8] text-black text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5"
+                        >
+                          ⚡ Solve on Code Arena
+                        </button>
+                        <button
+                          onClick={() => window.open('/app/leaderboard', '_blank')}
+                          className="px-3 py-1.5 bg-[#252D30] hover:bg-[#2F383C] text-neutral-300 text-xs rounded-lg transition-colors"
+                        >
+                          🏆 Workspace Rank
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1 text-[11px] text-neutral-500">
+                      <span className="px-2 py-0.5 rounded-full bg-[#252D30] text-neutral-300 border border-neutral-700">🔥 24</span>
+                      <span className="px-2 py-0.5 rounded-full bg-[#252D30] text-neutral-300 border border-neutral-700">🚀 18</span>
+                      <span className="px-2 py-0.5 rounded-full bg-[#252D30] text-neutral-300 border border-neutral-700">💡 11</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* INSTAGRAM INTEGRATION VIEW (COMING SOON)                  */}
+        {/* ========================================================= */}
+        {activePlatform === 'instagram' && (
+          <div className="space-y-8 animate-fadeIn">
+            {/* Hero Card */}
+            <div className="bg-[#1C2426] border border-[#E1306C]/30 rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-[#E1306C]/10 via-[#833AB4]/10 to-transparent rounded-full blur-3xl pointer-events-none" />
+
+              <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-[#252D30]">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#F56040] via-[#E1306C] to-[#833AB4] flex items-center justify-center text-white shadow-lg shadow-[#E1306C]/20">
+                    <Instagram className="w-7 h-7" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-xl font-bold text-white font-mono">DEVARENA for Instagram</h3>
+                      <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold bg-[#E1306C]/20 text-[#E1306C] border border-[#E1306C]/40 tracking-wider">
+                        COMING SOON • IN DEVELOPMENT
+                      </span>
+                    </div>
+                    <p className="text-xs text-neutral-400 font-mono mt-1">
+                      Automated algorithmic puzzle stories, developer streak milestone badges, and interactive DM challenge quizzes.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Priority Waitlist Action */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                  <input
+                    type="email"
+                    placeholder="Enter creator email or @handle..."
+                    value={waitlistEmail}
+                    onChange={e => setWaitlistEmail(e.target.value)}
+                    className="bg-[#101314] text-xs font-mono text-white px-3.5 py-2.5 rounded-xl border border-[#252D30] focus:outline-none focus:border-[#E1306C] placeholder:text-neutral-600 min-w-[220px]"
+                  />
+                  <button
+                    onClick={() => handleJoinWaitlist('instagram')}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#F56040] to-[#E1306C] hover:opacity-90 text-white font-bold text-xs font-mono transition-all shadow-md shadow-[#E1306C]/20 flex items-center justify-center gap-2 shrink-0"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>{waitlistJoined['instagram'] ? '✓ Waitlist Joined' : 'Request Early Access'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {waitlistSuccessPlatform === 'instagram' && (
+                <div className="mt-4 p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-xs font-mono text-emerald-300 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>Success! You have been registered for early access to the Instagram Creator & DM Bot suite.</span>
+                </div>
+              )}
+
+              {/* Quick Specs Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6">
+                <div className="bg-[#101314] p-3.5 rounded-xl border border-[#252D30]">
+                  <span className="text-[10px] font-mono text-neutral-500 block uppercase">Story Resolution</span>
+                  <span className="text-base font-bold font-mono text-[#E1306C]">1080 × 1920</span>
+                  <span className="text-[10px] font-mono text-neutral-400 block mt-0.5">Automated SVG Cards</span>
+                </div>
+                <div className="bg-[#101314] p-3.5 rounded-xl border border-[#252D30]">
+                  <span className="text-[10px] font-mono text-neutral-500 block uppercase">DM Bot Flow</span>
+                  <span className="text-base font-bold font-mono text-white">Graph API v20</span>
+                  <span className="text-[10px] font-mono text-neutral-400 block mt-0.5">Interactive Quizzes</span>
+                </div>
+                <div className="bg-[#101314] p-3.5 rounded-xl border border-[#252D30]">
+                  <span className="text-[10px] font-mono text-neutral-500 block uppercase">Carousel Format</span>
+                  <span className="text-base font-bold font-mono text-white">Multi-Slide</span>
+                  <span className="text-[10px] font-mono text-neutral-400 block mt-0.5">Problem & Solution</span>
+                </div>
+                <div className="bg-[#101314] p-3.5 rounded-xl border border-[#252D30]">
+                  <span className="text-[10px] font-mono text-neutral-500 block uppercase">Badge Sharing</span>
+                  <span className="text-base font-bold font-mono text-[#B5FF4A]">1-Tap Stories</span>
+                  <span className="text-[10px] font-mono text-neutral-400 block mt-0.5">Elo Rank Stickers</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Architecture Capabilities */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-[#1C2426] border border-[#252D30] rounded-2xl p-6 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#E1306C]/10 border border-[#E1306C]/30 flex items-center justify-center text-[#E1306C]">
+                    <Smartphone className="w-4 h-4" />
+                  </div>
+                  <h4 className="text-sm font-bold text-white font-mono">Automated 1080x1920 Story Cards</h4>
+                </div>
+                <p className="text-xs text-neutral-400 font-mono leading-relaxed">
+                  Dynamically render code syntax snippets and algorithm puzzles in vibrant vertical story cards with interactive sticker links.
+                </p>
+              </div>
+
+              <div className="bg-[#1C2426] border border-[#252D30] rounded-2xl p-6 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#833AB4]/10 border border-[#833AB4]/30 flex items-center justify-center text-[#833AB4]">
+                    <MessageSquare className="w-4 h-4" />
+                  </div>
+                  <h4 className="text-sm font-bold text-white font-mono">Direct Message Challenge Quizzes</h4>
+                </div>
+                <p className="text-xs text-neutral-400 font-mono leading-relaxed">
+                  Developers can DM <code>/challenge</code> or <code>/streak</code> to receive instant algorithm questions and track active solve streaks.
+                </p>
+              </div>
+
+              <div className="bg-[#1C2426] border border-[#252D30] rounded-2xl p-6 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#B5FF4A]/10 border border-[#B5FF4A]/30 flex items-center justify-center text-[#B5FF4A]">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <h4 className="text-sm font-bold text-white font-mono">Grandmaster Streak & Elo Badges</h4>
+                </div>
+                <p className="text-xs text-neutral-400 font-mono leading-relaxed">
+                  Share milestone badges (100-day streaks, Grandmaster rank tier, 1v1 tournament trophies) formatted as high-contrast story templates.
+                </p>
+              </div>
+
+              <div className="bg-[#1C2426] border border-[#252D30] rounded-2xl p-6 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#F56040]/10 border border-[#F56040]/30 flex items-center justify-center text-[#F56040]">
+                    <Users className="w-4 h-4" />
+                  </div>
+                  <h4 className="text-sm font-bold text-white font-mono">Weekly Community Highlights</h4>
+                </div>
+                <p className="text-xs text-neutral-400 font-mono leading-relaxed">
+                  Automatically publish weekly spotlight reels celebrating top duelists, fastest solvers, and top-rated engineering communities.
+                </p>
+              </div>
+            </div>
+
+            {/* Visual Instagram Story Mockup */}
+            <div className="bg-[#1C2426] border border-[#252D30] rounded-2xl p-6 shadow-xl space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                  <Instagram className="w-4 h-4 text-[#E1306C]" /> Story Card Preview (1080 × 1920 Frame)
+                </h3>
+                <span className="text-[10px] font-mono text-neutral-500">Instagram Graph API Format</span>
+              </div>
+
+              <div className="flex justify-center py-4">
+                <div className="w-72 bg-[#101314] rounded-3xl border-2 border-[#252D30] p-4 shadow-2xl space-y-3 relative overflow-hidden">
+                  <div className="flex items-center justify-between text-[10px] font-mono text-neutral-400 pb-2 border-b border-neutral-800">
+                    <span className="flex items-center gap-1.5 font-bold text-white">
+                      <div className="w-4 h-4 rounded-full bg-gradient-to-tr from-[#F56040] to-[#E1306C]" />
+                      devarena.official
+                    </span>
+                    <span>2h ago</span>
+                  </div>
+
+                  <div className="bg-[#1C2426] rounded-xl p-3 border border-[#252D30] space-y-2">
+                    <span className="text-[9px] font-mono uppercase text-[#00E5FF] font-bold">Daily DSA Duel #142</span>
+                    <h5 className="text-xs font-bold font-mono text-white">Two Sum (O(N) Optimal)</h5>
+                    <div className="bg-[#101314] p-2 rounded text-[10px] font-mono text-neutral-300">
+                      <code>nums = [2, 7, 11, 15]</code><br/>
+                      <code>target = 9</code>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-r from-[#F56040]/20 to-[#E1306C]/20 border border-[#E1306C]/40 rounded-xl p-2.5 text-center space-y-1">
+                    <span className="text-[10px] font-mono text-[#E1306C] font-bold block">🔥 Swipe Up / Tap Link to Solve</span>
+                    <span className="text-[9px] font-mono text-neutral-400">devarena-ten.vercel.app/app/arena</span>
+                  </div>
+
+                  <div className="bg-[#252D30] rounded-xl p-2.5 text-center text-[10px] font-mono text-neutral-300">
+                    Poll: What data structure gives O(1)?<br/>
+                    <span className="text-[#B5FF4A] font-bold">Hash Map (88%)</span> vs Array (12%)
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* YOUTUBE INTEGRATION VIEW (COMING SOON)                    */}
+        {/* ========================================================= */}
+        {activePlatform === 'youtube' && (
+          <div className="space-y-8 animate-fadeIn">
+            {/* Hero Card */}
+            <div className="bg-[#1C2426] border border-[#FF0000]/30 rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-[#FF0000]/10 via-[#282828]/10 to-transparent rounded-full blur-3xl pointer-events-none" />
+
+              <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-[#252D30]">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-[#FF0000]/20 border border-[#FF0000]/40 flex items-center justify-center text-[#FF0000] shadow-lg shadow-[#FF0000]/20">
+                    <Youtube className="w-7 h-7" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-xl font-bold text-white font-mono">DEVARENA for YouTube</h3>
+                      <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold bg-[#FF0000]/20 text-[#FF0000] border border-[#FF0000]/40 tracking-wider">
+                        COMING SOON • IN DEVELOPMENT
+                      </span>
+                    </div>
+                    <p className="text-xs text-neutral-400 font-mono mt-1">
+                      Live coding duel stream HUD overlays, automated Community Tab challenge polls, and video editorial synchronization.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Priority Waitlist Action */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                  <input
+                    type="email"
+                    placeholder="Enter creator channel or email..."
+                    value={waitlistEmail}
+                    onChange={e => setWaitlistEmail(e.target.value)}
+                    className="bg-[#101314] text-xs font-mono text-white px-3.5 py-2.5 rounded-xl border border-[#252D30] focus:outline-none focus:border-[#FF0000] placeholder:text-neutral-600 min-w-[220px]"
+                  />
+                  <button
+                    onClick={() => handleJoinWaitlist('youtube')}
+                    className="px-5 py-2.5 rounded-xl bg-[#FF0000] hover:bg-[#CC0000] text-white font-bold text-xs font-mono transition-all shadow-md shadow-[#FF0000]/20 flex items-center justify-center gap-2 shrink-0"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>{waitlistJoined['youtube'] ? '✓ Waitlist Joined' : 'Notify on Launch'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {waitlistSuccessPlatform === 'youtube' && (
+                <div className="mt-4 p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-xs font-mono text-emerald-300 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>Success! You have been added to the YouTube creator beta list for live stream HUDs & community automation.</span>
+                </div>
+              )}
+
+              {/* Quick Specs Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6">
+                <div className="bg-[#101314] p-3.5 rounded-xl border border-[#252D30]">
+                  <span className="text-[10px] font-mono text-neutral-500 block uppercase">Stream Overlay</span>
+                  <span className="text-base font-bold font-mono text-[#FF0000]">OBS Browser HUD</span>
+                  <span className="text-[10px] font-mono text-neutral-400 block mt-0.5">Real-time Elo Delta</span>
+                </div>
+                <div className="bg-[#101314] p-3.5 rounded-xl border border-[#252D30]">
+                  <span className="text-[10px] font-mono text-neutral-500 block uppercase">Community Posts</span>
+                  <span className="text-base font-bold font-mono text-white">Daily Polls</span>
+                  <span className="text-[10px] font-mono text-neutral-400 block mt-0.5">Automated Scheduling</span>
+                </div>
+                <div className="bg-[#101314] p-3.5 rounded-xl border border-[#252D30]">
+                  <span className="text-[10px] font-mono text-neutral-500 block uppercase">Live Chat Bot</span>
+                  <span className="text-base font-bold font-mono text-white">!duel / !rank</span>
+                  <span className="text-[10px] font-mono text-neutral-400 block mt-0.5">Viewer Predictions</span>
+                </div>
+                <div className="bg-[#101314] p-3.5 rounded-xl border border-[#252D30]">
+                  <span className="text-[10px] font-mono text-neutral-500 block uppercase">Editorial Sync</span>
+                  <span className="text-base font-bold font-mono text-[#B5FF4A]">Video Modals</span>
+                  <span className="text-[10px] font-mono text-neutral-400 block mt-0.5">Code Arena Integration</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Architecture Capabilities */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-[#1C2426] border border-[#252D30] rounded-2xl p-6 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#FF0000]/10 border border-[#FF0000]/30 flex items-center justify-center text-[#FF0000]">
+                    <Radio className="w-4 h-4" />
+                  </div>
+                  <h4 className="text-sm font-bold text-white font-mono">Live Coding Duel Stream HUD</h4>
+                </div>
+                <p className="text-xs text-neutral-400 font-mono leading-relaxed">
+                  Transparent 60fps OBS browser source displaying live keystrokes, compiler test cases passed, remaining timer, and dynamic Elo deltas.
+                </p>
+              </div>
+
+              <div className="bg-[#1C2426] border border-[#252D30] rounded-2xl p-6 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#00E5FF]/10 border border-[#00E5FF]/30 flex items-center justify-center text-[#00E5FF]">
+                    <Calendar className="w-4 h-4" />
+                  </div>
+                  <h4 className="text-sm font-bold text-white font-mono">Community Tab Daily Problem Polls</h4>
+                </div>
+                <p className="text-xs text-neutral-400 font-mono leading-relaxed">
+                  Keep subscribers engaged daily by broadcasting algorithm challenges, conceptual multiple-choice questions, and problem links to your channel's Community Tab.
+                </p>
+              </div>
+
+              <div className="bg-[#1C2426] border border-[#252D30] rounded-2xl p-6 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#B5FF4A]/10 border border-[#B5FF4A]/30 flex items-center justify-center text-[#B5FF4A]">
+                    <Code2 className="w-4 h-4" />
+                  </div>
+                  <h4 className="text-sm font-bold text-white font-mono">Editorial Solution Video Embeds</h4>
+                </div>
+                <p className="text-xs text-neutral-400 font-mono leading-relaxed">
+                  Creators can link their YouTube video walkthroughs directly into the DEVARENA problem solution tab, gaining high-intent developer views.
+                </p>
+              </div>
+
+              <div className="bg-[#1C2426] border border-[#252D30] rounded-2xl p-6 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                    <MessageSquare className="w-4 h-4" />
+                  </div>
+                  <h4 className="text-sm font-bold text-white font-mono">Live Chat Prediction Bot</h4>
+                </div>
+                <p className="text-xs text-neutral-400 font-mono leading-relaxed">
+                  Viewers can vote on who will win the duel, wager channel points, and initiate viewer-vs-creator battles directly through live chat.
+                </p>
+              </div>
+            </div>
+
+            {/* YouTube Community Post Mockup */}
+            <div className="bg-[#1C2426] border border-[#252D30] rounded-2xl p-6 shadow-xl space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                  <Youtube className="w-4 h-4 text-[#FF0000]" /> Community Post & Poll Preview
+                </h3>
+                <span className="text-[10px] font-mono text-neutral-500">YouTube Data API v3 Format</span>
+              </div>
+
+              <div className="bg-[#101314] rounded-xl border border-[#252D30] p-4 font-mono space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#FF0000] flex items-center justify-center text-white font-bold text-sm shrink-0">
+                    DA
+                  </div>
+                  <div className="space-y-2 flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-white text-xs">DEVARENA Official</span>
+                      <CheckCircle2 className="w-3.5 h-3.5 text-neutral-400" />
+                      <span className="text-neutral-500 text-[10px]">4 hours ago</span>
+                    </div>
+
+                    <p className="text-xs text-neutral-200 font-sans leading-relaxed">
+                      ⚔️ <b>Daily Algorithm Challenge #142:</b> Given an array of integers <code>nums</code> and a target value, which data structure achieves the most optimal <b>O(N)</b> solution for Two Sum?
+                    </p>
+
+                    <div className="space-y-1.5 pt-1">
+                      <div className="p-2.5 rounded-lg bg-[#252D30] border border-[#00E5FF]/50 flex items-center justify-between text-xs text-white">
+                        <span className="font-bold">A) Hash Map (Lookup O(1))</span>
+                        <span className="text-[#00E5FF] font-bold">82%</span>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-[#1C2426] border border-neutral-800 flex items-center justify-between text-xs text-neutral-400">
+                        <span>B) Two Pointers with Sort</span>
+                        <span>14%</span>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-[#1C2426] border border-neutral-800 flex items-center justify-between text-xs text-neutral-400">
+                        <span>C) Brute-Force Nested Loops</span>
+                        <span>4%</span>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 flex items-center gap-3 text-xs text-neutral-400">
+                      <span>1,429 votes</span>
+                      <span>•</span>
+                      <a href="/app/arena?problem=two-sum" className="text-[#00E5FF] hover:underline">
+                        Solve on Code Arena →
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
