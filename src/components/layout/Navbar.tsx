@@ -15,7 +15,8 @@ import {
   Compass,
   Layers,
   FileSpreadsheet,
-  Wrench
+  Wrench,
+  Plug
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { NavigationTab } from '../../types';
@@ -45,6 +46,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAccountModal }) => {
     { id: 'cards', label: 'Cards', icon: <Layers className="w-3.5 h-3.5" /> },
     { id: 'learn', label: 'Learn', icon: <BookOpen className="w-3.5 h-3.5" /> },
     { id: 'community', label: 'Community', icon: <Users className="w-3.5 h-3.5" /> },
+    { id: 'connect', label: 'Connect', icon: <Plug className="w-3.5 h-3.5" /> },
     { id: 'leaderboard', label: 'Leaderboard', icon: <Trophy className="w-3.5 h-3.5" /> },
     { id: 'profile', label: 'Profile', icon: <User className="w-3.5 h-3.5" /> },
   ];

@@ -1,6 +1,8 @@
-export type NavigationTab = 'home' | 'play' | 'arena' | 'dsa-sheets' | 'cards' | 'learn' | 'community' | 'leaderboard' | 'profile' | 'settings' | 'tools';
+export type NavigationTab = 'home' | 'play' | 'arena' | 'dsa-sheets' | 'cards' | 'learn' | 'community' | 'connect' | 'leaderboard' | 'profile' | 'settings' | 'tools';
 
 export * from './cards';
+import { DiscordLinkedUser } from './discord';
+export * from './discord';
 
 export type AppView = 'landing' | 'app' | 'result';
 
@@ -88,6 +90,7 @@ export interface UserProfile {
   achievements: string[]; // Achievement IDs
   unlockedCards?: string[]; // Collectible Card IDs
   pinnedCardIds?: string[]; // Showcase Card IDs pinned to profile
+  discordUser?: DiscordLinkedUser;
   followersCount?: number;
   followingCount?: number;
   following?: string[]; // followed usernames

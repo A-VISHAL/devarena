@@ -440,7 +440,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (pathname.startsWith('/app')) {
         setCurrentView('app');
         const parts = pathname.split('/').filter(Boolean);
-        if (parts[1] && ['home', 'play', 'arena', 'dsa-sheets', 'cards', 'learn', 'community', 'leaderboard', 'profile', 'settings', 'tools'].includes(parts[1])) {
+        if (parts[1] && ['home', 'play', 'arena', 'dsa-sheets', 'cards', 'learn', 'community', 'connect', 'leaderboard', 'profile', 'settings', 'tools'].includes(parts[1])) {
           setActiveTabState(parts[1] as NavigationTab);
         }
       }
@@ -493,7 +493,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ) {
           setCurrentView('app');
           const parts = pathname.split('/').filter(Boolean);
-          if (parts[1] && ['home', 'play', 'arena', 'dsa-sheets', 'cards', 'learn', 'community', 'leaderboard', 'profile', 'settings', 'tools'].includes(parts[1])) {
+          if (parts[1] && ['home', 'play', 'arena', 'dsa-sheets', 'cards', 'learn', 'community', 'connect', 'leaderboard', 'profile', 'settings', 'tools'].includes(parts[1])) {
             setActiveTabState(parts[1] as NavigationTab);
           }
         } else {

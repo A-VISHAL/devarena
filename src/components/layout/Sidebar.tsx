@@ -18,7 +18,8 @@ import {
   Flame,
   ShieldCheck,
   FileSpreadsheet,
-  Wrench
+  Wrench,
+  Plug
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { NavigationTab } from '../../types';
@@ -90,7 +91,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       title: 'Social',
       items: [
-        { id: 'community', label: 'Community', icon: Users, badge: 'Feed' }
+        { id: 'community', label: 'Community', icon: Users, badge: 'Feed' },
+        { id: 'connect', label: 'Connect', icon: Plug, badge: 'Discord' }
       ]
     },
     {

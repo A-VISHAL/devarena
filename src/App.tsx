@@ -17,6 +17,7 @@ import { Profile } from './pages/Profile';
 import { Settings } from './pages/Settings';
 import { CardsCollection } from './pages/CardsCollection';
 import { FreeToolsPage } from './pages/FreeToolsPage';
+import { ConnectPage } from './pages/ConnectPage';
 import { PublicResultPage } from './pages/PublicResultPage';
 import { VictoryCardUnlockModal } from './components/cards/VictoryCardUnlockModal';
 import { CardDetailModal } from './components/cards/CardDetailModal';
@@ -55,6 +56,7 @@ const AppContent: React.FC = () => {
       {activeTab === 'cards' && <CardsCollection />}
       {activeTab === 'learn' && <Learn />}
       {activeTab === 'community' && <Community />}
+      {activeTab === 'connect' && <ConnectPage />}
       {activeTab === 'leaderboard' && <Leaderboard />}
       {activeTab === 'profile' && <Profile />}
       {activeTab === 'tools' && <FreeToolsPage />}
