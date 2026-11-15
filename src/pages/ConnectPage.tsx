@@ -239,12 +239,17 @@ export const ConnectPage: React.FC = () => {
       const channels = await discordService.getGuildChannels(s.guildId);
       setServerChannels(prev => ({ ...prev, [s.guildId]: channels }));
 
-      // Automatically default channel if not set
-      if (!s.channelId && channels.length > 0) {
-        const defaultChannel = channels.find(c => ['testing', 'general', 'daily-dsa', 'announcements'].includes(c.name.toLowerCase())) || channels[0];
-        s.channelId = defaultChannel.id;
-        s.channelName = defaultChannel.name;
-        await discordService.saveServer(s);
+      if (channels.length > 0) {
+        const channelExists = channels.some(c => c.id === s.channelId);
+        if (!channelExists || !s.channelId) {
+          const matchedByName = channels.find(c => c.name.toLowerCase() === (s.channelName || '').toLowerCase());
+          const preferred = matchedByName || channels.find(c => ['testing', 'daily-dsa', 'announcements', 'general'].includes(c.name.toLowerCase())) || channels[0];
+          if (preferred) {
+            s.channelId = preferred.id;
+            s.channelName = preferred.name;
+            await discordService.saveServer(s);
+          }
+        }
       }
     }
 

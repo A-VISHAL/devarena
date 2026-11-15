@@ -70,10 +70,11 @@ class DiscordService {
         const merged: DiscordServerIntegration[] = backendServers.map(b => {
           const existing = localServers.find(l => l.guildId === b.guildId || l.id === b.id);
           if (existing) {
+            const hasValidExistingChannel = existing.channelId && /^\d{17,20}$/.test(existing.channelId);
             return {
               ...b,
-              channelId: existing.channelId || b.channelId,
-              channelName: existing.channelName || b.channelName,
+              channelId: hasValidExistingChannel ? existing.channelId : b.channelId,
+              channelName: hasValidExistingChannel ? existing.channelName : b.channelName,
               settings: existing.settings || b.settings,
               lastChallengeSent: existing.lastChallengeSent || b.lastChallengeSent
             };
@@ -268,8 +269,9 @@ class DiscordService {
     }
 
     try {
-      // Send to server backend
-      const res = await fetch(`/api/discord/servers/${server.id}/test`, {
+      // Send to server backend with clean guild identifier
+      const targetGuildId = server.guildId || server.id.replace(/^srv_/, '');
+      const res = await fetch(`/api/discord/servers/${targetGuildId}/test`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -280,11 +282,21 @@ class DiscordService {
         })
       });
 
-      if (res.ok) {
-        const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.success) {
+        deliveryStatus = 'sent';
         messageId = data.messageId || messageId;
+        if (data.channelId) {
+          server.channelId = data.channelId;
+        }
+        if (data.channelName) {
+          server.channelName = data.channelName;
+        }
       } else {
-        const errData = await res.json().catch(() => ({}));
+        deliveryStatus = 'failed';
+        errorMessage = data.error || (data.discordError?.message ? data.discordError.message : `Discord delivery failed with HTTP ${res.status}`);
+        
         // If backend isn't configured with a live bot token, test direct webhook or record
         if (server.webhookUrl) {
           const whRes = await fetch(server.webhookUrl, {
@@ -292,13 +304,18 @@ class DiscordService {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
-          if (!whRes.ok) {
+          if (whRes.ok) {
+            deliveryStatus = 'sent';
+            errorMessage = undefined;
+          } else {
             deliveryStatus = 'failed';
             errorMessage = 'Discord webhook returned HTTP ' + whRes.status;
           }
         }
       }
     } catch (e: any) {
+      deliveryStatus = 'failed';
+      errorMessage = e.message;
       // If direct webhook exists
       if (server.webhookUrl) {
         try {
@@ -307,7 +324,10 @@ class DiscordService {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
-          if (!whRes.ok) {
+          if (whRes.ok) {
+            deliveryStatus = 'sent';
+            errorMessage = undefined;
+          } else {
             deliveryStatus = 'failed';
             errorMessage = e.message;
           }
