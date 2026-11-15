@@ -92,7 +92,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       title: 'Social',
       items: [
         { id: 'community', label: 'Community', icon: Users, badge: 'Feed' },
-        { id: 'connect', label: 'Connect', icon: Plug, badge: 'Discord' }
+        { id: 'connect', label: 'Connect', icon: Plug, badge: 'Bots' }
       ]
     },
     {

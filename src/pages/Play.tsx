@@ -1,15 +1,15 @@
 import React, { useState, useRef } from 'react';
-import { 
-  Gamepad2, 
-  Sparkles, 
-  Brain, 
-  Users, 
-  Play as PlayIcon, 
-  Flame, 
-  Trophy, 
-  ArrowRight, 
-  Zap, 
-  CheckCircle2, 
+import {
+  Gamepad2,
+  Sparkles,
+  Brain,
+  Users,
+  Play as PlayIcon,
+  Flame,
+  Trophy,
+  ArrowRight,
+  Zap,
+  CheckCircle2,
   Search,
   Eye,
   Activity,
@@ -46,10 +46,10 @@ import { CASUAL_LEADERBOARD } from '../data/mockData';
 import { sound } from '../utils/sound';
 
 export const Play: React.FC = () => {
-  const { 
+  const {
     user,
-    activeGame, 
-    setActiveGame, 
+    activeGame,
+    setActiveGame,
     activeMultiplayerCode,
     setActiveMultiplayerCode,
     completedDailyChallenge,
@@ -124,19 +124,19 @@ export const Play: React.FC = () => {
   // If a game is active, render the dedicated focused gameplay interface
   if (activeGame === 'zip') {
     return (
-      <ZipGame 
-        onBack={() => setActiveGame(null)} 
+      <ZipGame
+        onBack={() => setActiveGame(null)}
         onComplete={(res) => {
           setGameResultData(res);
           setActiveGame(null);
-        }} 
+        }}
       />
     );
   }
   if (activeGame === 'word-puzzle') {
     return (
-      <WordPuzzle 
-        onBack={() => setActiveGame(null)} 
+      <WordPuzzle
+        onBack={() => setActiveGame(null)}
         onComplete={(res) => {
           setGameResultData(res);
           setActiveGame(null);
@@ -150,8 +150,8 @@ export const Play: React.FC = () => {
   if (activeGame === 'reaction-challenge') return <ReactionChallenge onBack={() => setActiveGame(null)} />;
   if (activeGame === 'quick-math') {
     return (
-      <QuickMath 
-        onBack={() => setActiveGame(null)} 
+      <QuickMath
+        onBack={() => setActiveGame(null)}
         onComplete={(res) => {
           setGameResultData(res);
           setActiveGame(null);
@@ -162,9 +162,9 @@ export const Play: React.FC = () => {
   if (activeGame === 'logic-sprint') return <LogicSprint onBack={() => setActiveGame(null)} />;
   if (activeGame === 'multiplayer-math') {
     return (
-      <CasualMultiplayerRoom 
-        initialRoomCode={activeMultiplayerCode} 
-        onBack={() => setActiveGame(null)} 
+      <CasualMultiplayerRoom
+        initialRoomCode={activeMultiplayerCode}
+        onBack={() => setActiveGame(null)}
       />
     );
   }
@@ -361,20 +361,20 @@ export const Play: React.FC = () => {
 
   return (
     <div className="w-full h-full lg:h-[calc(100vh-3.5rem)] lg:overflow-hidden animate-in fade-in">
-      
+
       {/* 3-COLUMN DESKTOP COMPOSITION: Left & Right static, Middle independently scrollable */}
       <div className="page-container h-full grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 lg:overflow-hidden">
-        
+
         {/* ========================================================= */}
         {/* A. LEFT SIDEBAR — STATIC GAME NAVIGATION (3 COLS)         */}
         {/* ========================================================= */}
-        <aside 
+        <aside
           onWheel={handleLeftWheel}
           className="lg:col-span-3 lg:h-full lg:overflow-y-auto py-6 sm:py-8 space-y-6 shrink-0 custom-scrollbar select-none"
         >
-          
+
           <div className="arena-card p-4 space-y-5">
-            
+
             {/* Section: Discover */}
             <div>
               <span className="text-[10px] font-bold text-arena-textSubtle uppercase tracking-wider block mb-2 px-2">
@@ -396,11 +396,10 @@ export const Play: React.FC = () => {
                         sound.playClick();
                         setNavTab(item.id as any);
                       }}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                        isActive
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${isActive
                           ? 'bg-arena-elevated text-arena-textPrimary border border-arena-border shadow-subtle'
                           : 'text-arena-textSecondary hover:text-arena-textPrimary hover:bg-arena-elevated/40'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-2.5">
                         {item.icon}
@@ -442,11 +441,10 @@ export const Play: React.FC = () => {
                         sound.playClick();
                         setNavTab(item.id as any);
                       }}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                        isActive
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${isActive
                           ? 'bg-arena-elevated text-arena-textPrimary border border-arena-border shadow-subtle'
                           : 'text-arena-textSecondary hover:text-arena-textPrimary hover:bg-arena-elevated/40'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-2.5">
                         {item.icon}
@@ -474,11 +472,10 @@ export const Play: React.FC = () => {
                     sound.playClick();
                     setNavTab('challenges');
                   }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                    navTab === 'challenges'
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${navTab === 'challenges'
                       ? 'bg-arena-elevated text-arena-textPrimary border border-arena-border shadow-subtle'
                       : 'text-arena-textSecondary hover:text-arena-textPrimary hover:bg-arena-elevated/40'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-2.5">
                     <Zap className="w-4 h-4 text-arena-amber" />
@@ -517,11 +514,11 @@ export const Play: React.FC = () => {
         {/* ========================================================= */}
         {/* B. CENTER CONTENT — SCROLLABLE MIDDLE PART (6 COLS)       */}
         {/* ========================================================= */}
-        <div 
+        <div
           ref={centerScrollRef}
           className="lg:col-span-6 lg:h-full lg:overflow-y-auto py-6 sm:py-8 pb-20 space-y-7 custom-scrollbar pr-1"
         >
-          
+
           {/* Header Bar */}
           <div className="space-y-3 pb-2 border-b border-arena-border">
             <div>
@@ -564,7 +561,7 @@ export const Play: React.FC = () => {
           {/* SECTION 1 — FEATURED DAILY CHALLENGE (Distinct Hero)    */}
           {/* ======================================================= */}
           <section className="rounded-2xl bg-arena-surface border border-arena-border p-6 relative overflow-hidden group">
-            
+
             <div className="flex items-start justify-between gap-4 mb-3">
               <div>
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-arena-elevated border border-arena-border text-arena-amber text-[10px] font-bold font-mono tracking-wider mb-2">
@@ -644,7 +641,7 @@ export const Play: React.FC = () => {
             </div>
 
             {/* Horizontal Scrollable Carousel Container */}
-            <div 
+            <div
               ref={carouselRef}
               className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-arena-border scroll-smooth select-none"
             >
@@ -808,16 +805,16 @@ export const Play: React.FC = () => {
                   actionLabel: 'Challenge Score'
                 }
               ].map((act, idx) => (
-                <div 
+                <div
                   key={idx}
                   onClick={() => handleLaunchGame(act.gameId)}
                   className="p-3 rounded-xl bg-arena-surface border border-arena-border flex items-center justify-between text-xs hover:border-arena-borderHover transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
-                    <img 
-                      src={act.avatar} 
-                      alt="" 
-                      className="w-8 h-8 rounded-lg object-cover border border-arena-border" 
+                    <img
+                      src={act.avatar}
+                      alt=""
+                      className="w-8 h-8 rounded-lg object-cover border border-arena-border"
                     />
                     <div>
                       <div className="font-semibold text-arena-textPrimary flex items-center gap-1.5">
@@ -897,11 +894,10 @@ export const Play: React.FC = () => {
                             e.stopPropagation();
                             toggleSaveGame(game.id);
                           }}
-                          className={`p-1.5 rounded-lg border transition-colors ${
-                            isSaved 
-                              ? 'bg-arena-amber/15 text-arena-amber border-arena-amber/30' 
+                          className={`p-1.5 rounded-lg border transition-colors ${isSaved
+                              ? 'bg-arena-amber/15 text-arena-amber border-arena-amber/30'
                               : 'bg-arena-elevated text-arena-textSubtle border-arena-border hover:text-arena-textPrimary'
-                          }`}
+                            }`}
                           title={isSaved ? "Saved" : "Save for later"}
                         >
                           <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-current' : ''}`} />
@@ -940,11 +936,11 @@ export const Play: React.FC = () => {
         {/* ========================================================= */}
         {/* C. RIGHT SIDEBAR — STATIC STATS & LEADERBOARD (3 COLS)    */}
         {/* ========================================================= */}
-        <aside 
+        <aside
           onWheel={handleRightWheel}
           className="lg:col-span-3 lg:h-full lg:overflow-y-auto py-6 sm:py-8 pb-16 space-y-6 shrink-0 custom-scrollbar select-none"
         >
-          
+
           {/* Your Gaming Stats Card */}
           <div className="arena-card p-5 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-arena-border">
@@ -1006,17 +1002,15 @@ export const Play: React.FC = () => {
               <div className="flex items-center gap-1 text-[10px] p-0.5 rounded bg-arena-elevated border border-arena-border">
                 <button
                   onClick={() => setLeaderboardTab('global')}
-                  className={`px-2 py-0.5 rounded font-medium ${
-                    leaderboardTab === 'global' ? 'bg-arena-surface text-arena-textPrimary shadow-sm' : 'text-arena-textSubtle'
-                  }`}
+                  className={`px-2 py-0.5 rounded font-medium ${leaderboardTab === 'global' ? 'bg-arena-surface text-arena-textPrimary shadow-sm' : 'text-arena-textSubtle'
+                    }`}
                 >
                   Global
                 </button>
                 <button
                   onClick={() => setLeaderboardTab('friends')}
-                  className={`px-2 py-0.5 rounded font-medium ${
-                    leaderboardTab === 'friends' ? 'bg-arena-surface text-arena-textPrimary shadow-sm' : 'text-arena-textSubtle'
-                  }`}
+                  className={`px-2 py-0.5 rounded font-medium ${leaderboardTab === 'friends' ? 'bg-arena-surface text-arena-textPrimary shadow-sm' : 'text-arena-textSubtle'
+                    }`}
                 >
                   Friends
                 </button>

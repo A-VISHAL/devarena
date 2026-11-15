@@ -4,6 +4,10 @@
     {
       "path": "/api/discord/cron",
       "schedule": "0 3,12 * * *"
+    },
+    {
+      "path": "/api/telegram/cron",
+      "schedule": "0 3,12 * * *"
     }
   ],
   "rewrites": [

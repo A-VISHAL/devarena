@@ -1,8 +1,8 @@
 // DEVARENA CONNECT – Discord Client Service
-import { 
-  DiscordServerIntegration, 
-  DiscordChallengeRecord, 
-  DiscordOverviewStats, 
+import {
+  DiscordServerIntegration,
+  DiscordChallengeRecord,
+  DiscordOverviewStats,
   DiscordServerSettings,
   DiscordChannel,
   DiscordLinkCode
@@ -358,7 +358,7 @@ class DiscordService {
       const now = new Date();
       const currentHour = now.getHours();
       const morningHour = parseInt(server.settings.morningTime.split(':')[0], 10) || 9;
-      
+
       const isMorningNext = currentHour < morningHour;
       nextDelivery = {
         time: isMorningNext ? server.settings.morningTime : server.settings.eveningTime,
