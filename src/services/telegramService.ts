@@ -304,6 +304,27 @@ class TelegramService {
     return { configured: false, ok: false };
   }
 
+  // 6e. Get Real-time Telegram Diagnostic Info & Incoming Updates
+  public async getDiagnosticInfo(): Promise<{
+    success: boolean;
+    botConfigured: boolean;
+    botIdentity?: any;
+    webhookInfo?: any;
+    detectedChats?: any[];
+    recentUpdates?: any[];
+    error?: string;
+  }> {
+    try {
+      const res = await fetch('/api/telegram/diagnostic');
+      if (res.ok) {
+        return await res.json();
+      }
+      return { success: false, botConfigured: false, error: `Diagnostic HTTP ${res.status}` };
+    } catch (e: any) {
+      return { success: false, botConfigured: false, error: e.message };
+    }
+  }
+
   // 7. Get Challenge Delivery History
   public async getChallengeHistory(userId: string): Promise<TelegramChallengeRecord[]> {
     try {

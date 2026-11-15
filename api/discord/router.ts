@@ -28,11 +28,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // 1. OAuth installation URL generator (/api/discord/oauth or /api/discord/oauth/url)
   if (route === 'oauth') {
     const clientId = process.env.DISCORD_CLIENT_ID || '1571437524746899537';
-    const redirectUri = (req.query.redirectUri as string) || 'https://devarena-ten.vercel.app/app/home';
+    const redirectUri = req.query.redirectUri as string;
     const baseUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=2147485696&scope=bot%20applications.commands`;
 
-    const state = Math.random().toString(36).substring(2, 15);
-    const authUrl = `${baseUrl}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}`;
+    let authUrl = baseUrl;
+    let state = '';
+    if (redirectUri) {
+      state = Math.random().toString(36).substring(2, 15);
+      authUrl = `${baseUrl}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}`;
+    }
 
     return res.status(200).json({ url: authUrl, state, clientId });
   }
@@ -40,6 +44,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // 2. Guild Channels (/api/discord/servers/:guildId/channels or /api/discord/channels)
   if ((route === 'servers' && pathParts[2] === 'channels') || route === 'channels') {
     const guildId = (route === 'servers' ? pathParts[1] : (req.query.guildId as string)) || 'default';
+    const botToken = process.env.DISCORD_BOT_TOKEN;
 
     // Check cache
     const existingCache = cachedChannels.get(guildId);
@@ -64,18 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               name: c.name,
               type: c.type,
               position: c.position
-            }))
-            .sort((a: any, b: any) => {
-              const prio = (name: string) => {
-                const n = name.toLowerCase();
-                if (n === 'testing') return 1;
-                if (n === 'daily-dsa') return 2;
-                if (n === 'announcements') return 3;
-                if (n === 'general') return 4;
-                return 10;
-              };
-              return prio(a.name) - prio(b.name);
-            });
+            }));
 
           cachedChannels.set(guildId, { channels: textChannels, timestamp: Date.now() });
           return res.status(200).json({ channels: textChannels });
@@ -89,7 +83,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({
       channels: [
-        { id: `${guildId}-testing`, name: 'testing', type: 0 },
         { id: `${guildId}-daily-dsa`, name: 'daily-dsa', type: 0 },
         { id: `${guildId}-general`, name: 'general', type: 0 },
         { id: `${guildId}-announcements`, name: 'announcements', type: 5 },
@@ -108,6 +101,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const body = req.body || {};
     const channelId = body.channelId;
     const payload = body.payload;
+    const botToken = process.env.DISCORD_BOT_TOKEN;
 
     let messageId = `msg_test_${Date.now()}`;
     let success = true;
@@ -163,6 +157,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Missing guildId' });
     }
 
+    const botToken = process.env.DISCORD_BOT_TOKEN;
     let guildName = `Discord Guild #${String(guildId).slice(-4)}`;
     let guildIcon = null;
     let memberCount = 28;
@@ -211,8 +206,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       guildName,
       guildIcon,
       memberCount,
-      channelId: defaultChannelId,
-      channelName: defaultChannelName,
+      channelId: null,
+      channelName: null,
       status: 'connected',
       settings: {
         enabled: true,
@@ -248,6 +243,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ servers: cachedGuilds });
       }
 
+      const botToken = process.env.DISCORD_BOT_TOKEN;
       let liveServers: any[] = [];
 
       // Query live guilds that DEVARENA bot is installed in

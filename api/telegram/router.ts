@@ -1,37 +1,7 @@
-// Vercel Serverless Function: Consolidated Telegram API Router
+// Vercel Serverless Function: Consolidated Telegram API Router & Verification
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as crypto from 'crypto';
-
-// In-memory ring buffer for recently detected group interactions
-const MAX_DETECTED = 20;
-const detectedChats: Array<{
-  chatId: string;
-  title: string;
-  type: string;
-  detectedAt: string;
-  lastMessage?: string;
-}> = [];
-
-export function recordDetectedChat(chat: { id: number | string; title?: string; type?: string; text?: string }) {
-  const strId = String(chat.id);
-  const existingIdx = detectedChats.findIndex(c => c.chatId === strId);
-  const entry = {
-    chatId: strId,
-    title: chat.title || `Chat ${strId}`,
-    type: chat.type || 'group',
-    detectedAt: new Date().toISOString(),
-    lastMessage: chat.text ? chat.text.slice(0, 60) : undefined
-  };
-
-  if (existingIdx >= 0) {
-    detectedChats[existingIdx] = entry;
-  } else {
-    detectedChats.unshift(entry);
-    if (detectedChats.length > MAX_DETECTED) {
-      detectedChats.pop();
-    }
-  }
-}
+import { getRecentTelegramUpdates, getDetectedTelegramGroups } from '../_lib/telegramState';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -50,26 +20,73 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const route = pathParts[0] || '';
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  const expectedBotUsername = process.env.TELEGRAM_BOT_USERNAME || 'DEVARENA_CommunityBot';
 
-  // 1. Bot Metadata & Installation URL (/api/telegram/info)
+  // 1. Bot Metadata & getMe Verification (/api/telegram/info)
   if (route === 'info') {
-    const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'DEVARENA_CommunityBot';
-    const botConfigured = Boolean(botToken);
+    let botId: number | null = null;
+    let username = expectedBotUsername;
+    let botName = 'DEVARENA';
+    let canJoinGroups = true;
+    let canReadAllGroupMessages = false;
+    let verifiedBot = false;
+
+    if (botToken) {
+      try {
+        const meRes = await fetch(`https://api.telegram.org/bot${botToken}/getMe`);
+        const meData = await meRes.json();
+        if (meData.ok && meData.result) {
+          botId = meData.result.id;
+          username = meData.result.username || username;
+          botName = meData.result.first_name || botName;
+          canJoinGroups = meData.result.can_join_groups ?? true;
+          canReadAllGroupMessages = meData.result.can_read_all_group_messages ?? false;
+          verifiedBot = (meData.result.username?.toLowerCase() === expectedBotUsername.toLowerCase());
+        }
+      } catch (err: any) {
+        console.error('[Telegram Router] getMe error:', err.message);
+      }
+    }
 
     return res.status(200).json({
-      botName: 'DEVARENA',
-      username: botUsername,
-      botLink: `https://t.me/${botUsername}`,
-      installUrl: `https://t.me/${botUsername}?startgroup=true`,
-      botConfigured
+      botName,
+      username,
+      botId,
+      canJoinGroups,
+      canReadAllGroupMessages,
+      verifiedBot,
+      botLink: `https://t.me/${username}`,
+      installUrl: `https://t.me/${username}?startgroup=true`,
+      botConfigured: Boolean(botToken)
     });
   }
 
-  // 1b. Recently Detected Groups (/api/telegram/chats/detected or /api/telegram/detected)
-  if ((route === 'chats' && pathParts[1] === 'detected') || route === 'detected') {
+  // 1b. Recently Detected Groups & Diagnostics (/api/telegram/chats/detected or /api/telegram/diagnostic)
+  if ((route === 'chats' && pathParts[1] === 'detected') || route === 'detected' || route === 'diagnostic') {
+    let botIdentity: any = null;
+    let webhookInfo: any = null;
+
+    if (botToken) {
+      try {
+        const [meRes, whRes] = await Promise.all([
+          fetch(`https://api.telegram.org/bot${botToken}/getMe`).then(r => r.json()).catch(e => ({ ok: false, description: e.message })),
+          fetch(`https://api.telegram.org/bot${botToken}/getWebhookInfo`).then(r => r.json()).catch(e => ({ ok: false, description: e.message }))
+        ]);
+        if (meRes.ok) botIdentity = meRes.result;
+        if (whRes.ok) webhookInfo = whRes.result;
+      } catch { }
+    }
+
+    const detectedGroups = getDetectedTelegramGroups();
+    const recentUpdates = getRecentTelegramUpdates();
+
     return res.status(200).json({
       success: true,
-      detectedChats
+      botConfigured: Boolean(botToken),
+      botIdentity,
+      webhookInfo,
+      detectedChats: detectedGroups,
+      recentUpdates: recentUpdates.slice(0, 20)
     });
   }
 
@@ -81,7 +98,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { chatId, userId } = req.body || {};
     if (!chatId) {
-      return res.status(400).json({ error: 'Missing chatId' });
+      return res.status(400).json({ error: 'Missing chatId in request body.' });
     }
 
     if (!botToken) {
@@ -90,19 +107,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    const cleanChatId = String(chatId).trim();
+    let cleanChatId = String(chatId).trim();
 
     try {
       // Step A: Call Telegram Bot API getChat
-      const chatRes = await fetch(`https://api.telegram.org/bot${botToken}/getChat`, {
+      let chatRes = await fetch(`https://api.telegram.org/bot${botToken}/getChat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ chat_id: cleanChatId })
       });
-      const data = await chatRes.json();
+      let data = await chatRes.json();
+
+      // Check if group was migrated to supergroup
+      if (!data.ok && data.parameters?.migrate_to_chat_id) {
+        cleanChatId = String(data.parameters.migrate_to_chat_id);
+        chatRes = await fetch(`https://api.telegram.org/bot${botToken}/getChat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: cleanChatId })
+        });
+        data = await chatRes.json();
+      }
+
       if (!data.ok) {
+        const desc = data.description || 'Chat not found';
+        let userFriendlyError = `Telegram API Error: ${desc}`;
+
+        if (desc.toLowerCase().includes('chat not found')) {
+          userFriendlyError = `Telegram API: Chat not found for ID "${cleanChatId}". Please verify: 1) @${expectedBotUsername} is added to the group as administrator, 2) Send /id in the group to get the exact numeric chat ID (including the minus sign, e.g. -100...), 3) Check the Webhook & Diagnostics panel for auto-detected IDs.`;
+        } else if (desc.toLowerCase().includes('kicked') || desc.toLowerCase().includes('left')) {
+          userFriendlyError = `Telegram API: The bot has left or was kicked from this chat. Please add @${expectedBotUsername} back to the group.`;
+        }
+
         return res.status(400).json({
-          error: `Telegram API: ${data.description || 'Chat not found'}. Make sure @DEVARENA_CommunityBot is added to the group as an administrator.`
+          error: userFriendlyError,
+          rawError: desc,
+          chatId: cleanChatId
         });
       }
 
@@ -141,7 +181,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const memberStatus = memberData.result.status;
             if (memberStatus === 'left' || memberStatus === 'kicked') {
               return res.status(400).json({
-                error: 'Telegram API: The bot has left or was removed from this chat. Add @DEVARENA_CommunityBot back to the group.'
+                error: `Telegram API: The bot has left or was removed from this chat. Add @${expectedBotUsername} back to the group.`
               });
             }
             isAdmin = memberStatus === 'administrator' || memberStatus === 'creator';
@@ -178,9 +218,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         connectedAt: new Date().toISOString(),
         isDemo: false
       };
-
-      // Record in detected chats cache
-      recordDetectedChat({ id: cleanChatId, title: chatTitle, type: chatType });
 
       return res.status(200).json({
         success: true,
@@ -352,7 +389,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const username = body.username || 'Coder';
     const code = `DEV-${Math.floor(1000 + Math.random() * 9000)}`;
     const codeHash = crypto.createHash('sha256').update(code).digest('hex');
-    const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'DEVARENA_CommunityBot';
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
     return res.status(200).json({
@@ -362,7 +398,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       username,
       expiresAt,
       used: false,
-      deepLink: `https://t.me/${botUsername}?start=link_${code}`
+      deepLink: `https://t.me/${expectedBotUsername}?start=link_${code}`
     });
   }
 

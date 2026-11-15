@@ -1,6 +1,6 @@
-// Vercel Serverless Function: Telegram Bot Incoming Webhook
+// Vercel Serverless Function: Telegram Bot Incoming Webhook & Diagnostic
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { recordDetectedChat } from './router';
+import { recordTelegramUpdate, getRecentTelegramUpdates, getDetectedTelegramGroups } from '../_lib/telegramState';
 
 function escapeHtml(str: string): string {
   if (!str) return '';
@@ -13,11 +13,82 @@ function escapeHtml(str: string): string {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-telegram-bot-api-secret-token');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  const expectedBotUsername = process.env.TELEGRAM_BOT_USERNAME || 'DEVARENA_CommunityBot';
+  const host = req.headers.host;
+  const BASE_URL = process.env.VITE_APP_URL || (host && !host.includes('localhost') ? `https://${host}` : 'https://devarena-ten.vercel.app');
+
+  // =========================================================================
+  // GET: Secure Backend Diagnostic for Incoming Webhook Updates & Bot Identity
+  // =========================================================================
+  if (req.method === 'GET') {
+    let botIdentity: any = null;
+    let webhookStatus: any = null;
+    let tokenBelongsToTargetBot = false;
+
+    if (botToken) {
+      try {
+        // Query getMe to verify bot identity
+        const meRes = await fetch(`https://api.telegram.org/bot${botToken}/getMe`);
+        const meData = await meRes.json();
+        if (meData.ok) {
+          botIdentity = meData.result;
+          tokenBelongsToTargetBot = meData.result.username?.toLowerCase() === expectedBotUsername.toLowerCase();
+        } else {
+          botIdentity = { error: meData.description };
+        }
+      } catch (e: any) {
+        botIdentity = { error: e.message };
+      }
+
+      try {
+        // Query getWebhookInfo to check webhook delivery status
+        const whRes = await fetch(`https://api.telegram.org/bot${botToken}/getWebhookInfo`);
+        const whData = await whRes.json();
+        if (whData.ok) {
+          webhookStatus = whData.result;
+        } else {
+          webhookStatus = { error: whData.description };
+        }
+      } catch (e: any) {
+        webhookStatus = { error: e.message };
+      }
+    }
+
+    const recentUpdates = getRecentTelegramUpdates();
+    const detectedGroups = getDetectedTelegramGroups();
+
+    return res.status(200).json({
+      status: 'diagnostic_ready',
+      configured: Boolean(botToken),
+      tokenBelongsToTargetBot,
+      expectedBotUsername,
+      botIdentity,
+      webhookStatus,
+      detectedGroupsCount: detectedGroups.length,
+      detectedGroups,
+      recentUpdatesCount: recentUpdates.length,
+      recentUpdates: recentUpdates.slice(0, 25),
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  // =========================================================================
+  // POST: Telegram Bot Incoming Webhook Handler
+  // =========================================================================
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // 1. Verify Secret Token Header if configured on the server
+  // Verify secret token header if configured
   const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET || process.env.TELEGRAM_SECRET_TOKEN;
   if (webhookSecret) {
     const incomingSecret = req.headers['x-telegram-bot-api-secret-token'];
@@ -28,19 +99,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const update = req.body;
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    const host = req.headers.host;
-    const BASE_URL = process.env.VITE_APP_URL || (host && !host.includes('localhost') ? `https://${host}` : 'https://devarena-ten.vercel.app');
-    const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'DEVARENA_CommunityBot';
+    if (!update) {
+      return res.status(200).json({ ok: true, notice: 'empty_update' });
+    }
+
+    // Record incoming update in shared memory / tmp store
+    const stored = recordTelegramUpdate(update);
 
     // Helper to send messages back to Telegram
     const sendTelegramMessage = async (chatId: number | string, text: string, replyMarkup?: any) => {
       if (!botToken) {
-        console.error('[Telegram Webhook] TELEGRAM_BOT_TOKEN not configured on backend.');
+        console.error('[Telegram Webhook] TELEGRAM_BOT_TOKEN not configured.');
         return;
       }
       try {
-        const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -50,34 +123,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             reply_markup: replyMarkup
           })
         });
-        const data = await res.json();
-        if (!data.ok) {
-          console.error('[Telegram Webhook] Telegram API rejected message:', data.description);
-        }
       } catch (err) {
-        console.error('[Telegram Webhook] Send message error:', err);
+        console.error('[Telegram Webhook] Error sending reply:', err);
       }
     };
 
-    // 2. Process my_chat_member updates (Bot added/removed in group)
-    if (update?.my_chat_member) {
+    // 1. Process my_chat_member updates (Bot added/removed in group)
+    if (update.my_chat_member) {
       const mcm = update.my_chat_member;
       const chat = mcm.chat;
       const newStatus = mcm.new_chat_member?.status;
-
-      // Track detected chat
-      if (chat?.id) {
-        recordDetectedChat({ id: chat.id, title: chat.title, type: chat.type });
-      }
 
       if (newStatus === 'member' || newStatus === 'administrator') {
         await sendTelegramMessage(
           chat.id,
           `👋 <b>DEVARENA Bot Connected to ${escapeHtml(chat.title || 'this group')}!</b>\n\n` +
           `📍 <b>Group Chat ID:</b> <code>${chat.id}</code>\n\n` +
-          `☀️ <b>Morning Dispatch:</b> 09:00 IST\n` +
-          `🌙 <b>Evening Dispatch:</b> 18:00 IST\n\n` +
-          `⚙️ <b>Next Step:</b> Copy this Group Chat ID (<code>${chat.id}</code>) and enter it in the DEVARENA Connect Dashboard to verify and activate automated challenge delivery!`,
+          `☀️ <b>Morning Challenge:</b> 09:00 IST\n` +
+          `🌙 <b>Evening Challenge:</b> 18:00 IST\n\n` +
+          `⚙️ <b>Activation:</b> Copy your Chat ID (<code>${chat.id}</code>) and verify it in the DEVARENA Connect Dashboard:`,
           {
             inline_keyboard: [
               [{ text: '⚡ Open DEVARENA Connect', url: `${BASE_URL}/app/connect` }]
@@ -88,27 +152,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ ok: true });
     }
 
-    // 3. Process incoming messages & commands
-    if (update?.message?.text) {
-      const msg = update.message;
+    // 2. Process incoming messages & commands
+    const msg = update.message || update.edited_message;
+    if (msg && msg.text) {
       const chat = msg.chat;
       const from = msg.from || { first_name: 'Developer' };
       let text = msg.text.trim();
+      const isGroup = chat.type === 'group' || chat.type === 'supergroup';
 
-      // Track detected chat
-      if (chat?.id) {
-        recordDetectedChat({ id: chat.id, title: chat.title, type: chat.type, text });
-      }
-
-      text = text.replace(new RegExp(`@${botUsername}`, 'i'), '');
+      // Clean command: strip @username
+      text = text.replace(new RegExp(`@${expectedBotUsername}`, 'i'), '');
 
       const parts = text.split(/\s+/);
       const cmd = parts[0].toLowerCase();
       const arg = parts.slice(1).join(' ').trim();
-      const isGroup = chat.type === 'group' || chat.type === 'supergroup';
 
-      // Group ID query command (/id or /chatid or /info)
-      if (cmd === '/id' || cmd === '/chatid' || cmd === '/info') {
+      // /id, /chatid, /groupid, /info command
+      if (cmd === '/id' || cmd === '/chatid' || cmd === '/groupid' || cmd === '/info') {
         await sendTelegramMessage(
           chat.id,
           `📍 <b>DEVARENA Chat Identification</b>\n` +
@@ -116,53 +176,53 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           `• <b>Chat ID:</b> <code>${chat.id}</code>\n` +
           `• <b>Title:</b> <b>${escapeHtml(chat.title || chat.first_name || 'Chat')}</b>\n` +
           `• <b>Type:</b> <code>${chat.type}</code>\n\n` +
-          `📋 <b>How to Connect:</b>\n` +
-          `Copy your Chat ID (<code>${chat.id}</code>) and click below to verify it in the DEVARENA Connect Dashboard.`,
+          `📋 <b>Connect Group:</b>\n` +
+          `Copy your Chat ID: <code>${chat.id}</code>\n` +
+          `and paste it in DEVARENA Connect to activate daily challenge delivery!`,
           {
             inline_keyboard: [
-              [{ text: '⚡ Verify in DEVARENA Connect', url: `${BASE_URL}/app/connect` }]
+              [{ text: '⚡ Open DEVARENA Connect', url: `${BASE_URL}/app/connect` }]
             ]
           }
         );
         return res.status(200).json({ ok: true });
       }
 
+      // /start command
       if (cmd === '/start') {
         if (arg.startsWith('link_')) {
           await sendTelegramMessage(
             chat.id,
             `✅ <b>Account Link Verification Initiated!</b>\n\n` +
             `Code <code>${escapeHtml(arg.replace('link_', ''))}</code> received for user <b>@${escapeHtml(from.username || from.first_name)}</b>.\n\n` +
-            `Head to <a href="${BASE_URL}/app/connect">DEVARENA Connect</a> to confirm status.`
+            `Return to <a href="${BASE_URL}/app/connect">DEVARENA Connect</a> to confirm.`
           );
           return res.status(200).json({ ok: true });
         }
 
         const groupNote = isGroup
-          ? `\n\n📍 <b>Group Chat ID:</b> <code>${chat.id}</code>\n<i>Enter this ID in DEVARENA Connect to link this group!</i>`
+          ? `\n\n📍 <b>Group Chat ID:</b> <code>${chat.id}</code>\n<i>Copy this ID and verify in DEVARENA Connect to activate daily algorithms!</i>`
           : '';
 
         await sendTelegramMessage(
           chat.id,
           `⚔️ <b>Welcome to DEVARENA!</b>\n\n` +
-          `The ultimate competitive DSA battleground & algorithmic community.\n\n` +
-          `🚀 <b>What DEVARENA Bot does:</b>\n` +
-          `• Delivers two curated daily DSA challenges (9:00 AM & 6:00 PM IST)\n` +
-          `• Instant problem practice with <code>/challenge</code>\n` +
-          `• Global Elo ratings with <code>/leaderboard</code>\n` +
-          `• Developer profile & streak synchronization${groupNote}\n\n` +
-          `<b>Quick Commands:</b>\n` +
-          `/id — Get this chat's ID\n` +
-          `/daily — View today's challenges\n` +
-          `/challenge — Request a DSA problem\n` +
-          `/leaderboard — View top coders\n` +
-          `/profile — Your developer stats\n` +
-          `/streak — Your coding streak\n` +
-          `/help — Full command guide`,
+          `The competitive algorithmic battleground & developer community platform.\n\n` +
+          `🚀 <b>Features:</b>\n` +
+          `• Automated morning (09:00 IST) & evening (18:00 IST) DSA problems\n` +
+          `• Instant problem challenges with <code>/challenge</code>\n` +
+          `• Global leaderboards with <code>/leaderboard</code>\n` +
+          `• Developer coding streak synchronization${groupNote}\n\n` +
+          `<b>Commands:</b>\n` +
+          `• <code>/id</code> — Get this chat's numeric ID\n` +
+          `• <code>/daily</code> — Today's DSA challenges\n` +
+          `• <code>/challenge</code> — Fetch an algorithm problem\n` +
+          `• <code>/leaderboard</code> — Top coders\n` +
+          `• <code>/help</code> — Full command reference`,
           {
             inline_keyboard: [
               [
-                { text: '➕ Add to Group', url: `https://t.me/${botUsername}?startgroup=true` },
+                { text: '➕ Add to Another Group', url: `https://t.me/${expectedBotUsername}?startgroup=true` },
                 { text: '🌐 Open DEVARENA', url: `${BASE_URL}/app/connect` }
               ]
             ]
@@ -171,19 +231,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ ok: true });
       }
 
+      // /help command
       if (cmd === '/help') {
         await sendTelegramMessage(
           chat.id,
-          `📖 <b>DEVARENA Bot Commands & Guide</b>\n\n` +
+          `📖 <b>DEVARENA Bot Commands & Reference</b>\n\n` +
           `• <code>/id</code> — Display this group/chat's numeric Chat ID\n` +
           `• <code>/daily</code> — Show today's morning (09:00) and evening (18:00) challenges\n` +
-          `• <code>/challenge</code> — Fetch a coding challenge to solve\n` +
-          `• <code>/leaderboard</code> — Display global Elo rankings and top coders\n` +
+          `• <code>/challenge</code> — Fetch an algorithm challenge to solve\n` +
+          `• <code>/leaderboard</code> — Display global Elo rankings\n` +
           `• <code>/profile</code> — View your connected developer profile\n` +
           `• <code>/streak</code> — Check your current daily coding streak\n` +
           `• <code>/stats</code> — View 1v1 battle win rate and category mastery\n` +
           `• <code>/link &lt;code&gt;</code> — Link Telegram identity to your DEVARENA account\n` +
-          `• <code>/settings</code> — Group configuration (Group Admins only)`,
+          `• <code>/settings</code> — Group configuration (Admins only)`,
           {
             inline_keyboard: [
               [{ text: '⚔️ Enter Code Arena', url: `${BASE_URL}/app/arena` }]
@@ -193,6 +254,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ ok: true });
       }
 
+      // /daily or /challenge command
       if (cmd === '/daily' || cmd === '/challenge') {
         await sendTelegramMessage(
           chat.id,
@@ -209,6 +271,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ ok: true });
       }
 
+      // /leaderboard command
       if (cmd === '/leaderboard') {
         await sendTelegramMessage(
           chat.id,
@@ -222,35 +285,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ ok: true });
       }
 
-      if (cmd === '/profile') {
-        await sendTelegramMessage(
-          chat.id,
-          `👤 <b>DEVARENA Developer Profile</b>\n━━━━━━━━━━━━━━━━━━━━\n• <b>Developer:</b> ${escapeHtml(from.username || from.first_name)}\n• <b>Rating:</b> 1980 Elo (Master)\n• <b>Problems Solved:</b> 142\n• <b>Active Streak:</b> 🔥 12 days\n\n━━━━━━━━━━━━━━━━━━━━`,
-          {
-            inline_keyboard: [
-              [{ text: '⚡ View On Platform', url: `${BASE_URL}/app/profile` }]
-            ]
-          }
-        );
-        return res.status(200).json({ ok: true });
-      }
-
-      if (cmd === '/streak') {
-        await sendTelegramMessage(
-          chat.id,
-          `🔥 <b>DEVARENA CODING STREAK</b>\n━━━━━━━━━━━━━━━━━━━━\nDeveloper: <b>${escapeHtml(from.username || from.first_name)}</b>\nStreak: <b>12 Consecutive Days!</b>\nMonthly Solved: <b>38 challenges</b>\nStatus: <b>Active & Protected</b>`
-        );
-        return res.status(200).json({ ok: true });
-      }
-
-      if (cmd === '/stats') {
-        await sendTelegramMessage(
-          chat.id,
-          `📊 <b>DEVARENA CODING STATISTICS</b>\n━━━━━━━━━━━━━━━━━━━━\n• <b>1v1 Arena Battles:</b> 48\n• <b>Wins:</b> 42 (87.5% Win Rate)\n• <b>Global Elo:</b> 2045 (Master Tier)\n• <b>Arrays & Hashing:</b> 94% Mastery\n• <b>Trees & Graphs:</b> 82% Mastery`
-        );
-        return res.status(200).json({ ok: true });
-      }
-
+      // /settings command
       if (cmd === '/settings') {
         await sendTelegramMessage(
           chat.id,
@@ -267,6 +302,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({ ok: true });
   } catch (err: any) {
-    return res.status(500).json({ error: err.message });
+    console.error('[Telegram Webhook] Handler error:', err);
+    // Return 200 so Telegram acknowledges and clears the queue
+    return res.status(200).json({ ok: false, error: err.message });
   }
 }

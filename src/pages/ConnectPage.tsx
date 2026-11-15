@@ -130,9 +130,11 @@ export const ConnectPage: React.FC = () => {
   const [isVerifyingTelegramChat, setIsVerifyingTelegramChat] = useState<boolean>(false);
   const [telegramVerifyError, setTelegramVerifyError] = useState<string | null>(null);
   const [telegramVerifySuccess, setTelegramVerifySuccess] = useState<string | null>(null);
-  const [detectedTelegramChats, setDetectedTelegramChats] = useState<Array<{ chatId: string; title: string; type: string; detectedAt: string }>>([]);
+  const [detectedTelegramChats, setDetectedTelegramChats] = useState<Array<{ chatId: string; title: string; type: string; lastSeenAt?: string; lastMessage?: string }>>([]);
   const [isSyncingWebhook, setIsSyncingWebhook] = useState<boolean>(false);
   const [webhookSyncMsg, setWebhookSyncMsg] = useState<{ text: string; ok: boolean } | null>(null);
+  const [diagnosticData, setDiagnosticData] = useState<any>(null);
+  const [isLoadingDiagnostic, setIsLoadingDiagnostic] = useState<boolean>(false);
 
   // Global loading
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -538,10 +540,16 @@ export const ConnectPage: React.FC = () => {
     setTelegramVerifyError(null);
     setTelegramVerifySuccess(null);
     setWebhookSyncMsg(null);
+    setIsLoadingDiagnostic(true);
     try {
-      const detected = await telegramService.getDetectedChats();
-      setDetectedTelegramChats(detected);
-    } catch { }
+      const diag = await telegramService.getDiagnosticInfo();
+      setDiagnosticData(diag);
+      if (diag && Array.isArray(diag.detectedChats)) {
+        setDetectedTelegramChats(diag.detectedChats);
+      }
+    } catch { } finally {
+      setIsLoadingDiagnostic(false);
+    }
   };
 
   const handleSyncWebhook = async () => {
@@ -553,8 +561,11 @@ export const ConnectPage: React.FC = () => {
       if (res.ok) {
         sound.success();
         setWebhookSyncMsg({ text: 'Webhook verified & connected to https://devarena-ten.vercel.app/api/telegram/webhook', ok: true });
-        const detected = await telegramService.getDetectedChats();
-        setDetectedTelegramChats(detected);
+        const diag = await telegramService.getDiagnosticInfo();
+        setDiagnosticData(diag);
+        if (diag && Array.isArray(diag.detectedChats)) {
+          setDetectedTelegramChats(diag.detectedChats);
+        }
       } else {
         sound.defeat();
         setWebhookSyncMsg({ text: res.description || res.error || 'Failed to sync webhook.', ok: false });
@@ -2112,6 +2123,64 @@ export const ConnectPage: React.FC = () => {
               </button>
             </div>
 
+            {/* Live Bot & Webhook Diagnostic Banner */}
+            {diagnosticData && (
+              <div className="bg-[#101314] rounded-xl p-3 border border-[#252D30] text-[11px] font-mono space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-neutral-400">Bot Identity (getMe):</span>
+                  <span className="text-[#24A1DE] font-bold">
+                    @{diagnosticData.botIdentity?.username || TELEGRAM_BOT_USERNAME}
+                    {diagnosticData.botIdentity?.id ? ` (ID: ${diagnosticData.botIdentity.id})` : ''}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-neutral-400">Webhook Status:</span>
+                  <span className={diagnosticData.webhookInfo?.url ? 'text-[#B5FF4A] flex items-center gap-1 font-bold' : 'text-amber-400'}>
+                    {diagnosticData.webhookInfo?.url ? '● Connected & Listening' : '○ Webhook not set'}
+                  </span>
+                </div>
+                {diagnosticData.webhookInfo?.last_error_message && (
+                  <div className="text-amber-400/90 text-[10px] pt-1 border-t border-neutral-800">
+                    Recent Webhook Notice: {diagnosticData.webhookInfo.last_error_message}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Detected Chats (if any active chats found from webhook) */}
+            {detectedTelegramChats.length > 0 && (
+              <div className="space-y-2 bg-[#101314] p-3 rounded-xl border border-[#24A1DE]/40">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-mono text-[#B5FF4A] font-bold flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#B5FF4A]" />
+                    Live Group Detected via Webhook:
+                  </span>
+                  <button
+                    type="button"
+                    onClick={openTelegramVerifyModal}
+                    className="text-[10px] font-mono text-neutral-400 hover:text-white flex items-center gap-1"
+                  >
+                    <RefreshCw className={`w-2.5 h-2.5 ${isLoadingDiagnostic ? 'animate-spin' : ''}`} /> Refresh
+                  </button>
+                </div>
+                <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                  {detectedTelegramChats.map(dc => (
+                    <div
+                      key={dc.chatId}
+                      onClick={() => setTelegramVerifyChatId(dc.chatId)}
+                      className="p-2 rounded-lg bg-[#252D30] hover:bg-[#2F383C] border border-[#252D30] hover:border-[#24A1DE] flex items-center justify-between cursor-pointer transition-colors text-xs font-mono"
+                    >
+                      <div>
+                        <span className="font-bold text-white">{dc.title}</span>
+                        <span className="text-[#24A1DE] ml-2 font-bold">{dc.chatId}</span>
+                      </div>
+                      <span className="text-[10px] bg-[#24A1DE] text-black font-bold px-2 py-0.5 rounded">Use ID →</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Step-by-Step Instructions */}
             <div className="space-y-3 bg-[#101314] rounded-xl p-4 border border-[#252D30]">
               <div className="flex items-start gap-2.5">
@@ -2139,7 +2208,7 @@ export const ConnectPage: React.FC = () => {
                 <div className="text-xs font-mono text-neutral-300 leading-relaxed">
                   <span>Get your group's numeric <b>Chat ID</b>:</span>
                   <ul className="list-disc list-inside mt-1 space-y-1 text-neutral-400 text-[11px]">
-                    <li>Type <code>/id</code> or <code>/start</code> in your group chat (the bot replies with your ID).</li>
+                    <li>In your group, send <code>/id</code> or <code>/start</code> (the bot replies with the exact ID).</li>
                     <li>Or open the group in <b>web.telegram.org</b>; copy the ID in the URL bar (e.g. <code>#-100...</code>).</li>
                   </ul>
                 </div>
@@ -2154,30 +2223,6 @@ export const ConnectPage: React.FC = () => {
                 </div>
               </div>
             </div>
-
-            {/* Detected Chats (if any active chats found) */}
-            {detectedTelegramChats.length > 0 && (
-              <div className="space-y-2">
-                <span className="text-[11px] font-mono text-neutral-400 block font-bold">
-                  Recently Active Chats Detected:
-                </span>
-                <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
-                  {detectedTelegramChats.map(dc => (
-                    <div
-                      key={dc.chatId}
-                      onClick={() => setTelegramVerifyChatId(dc.chatId)}
-                      className="p-2 rounded-lg bg-[#101314] hover:bg-[#252D30] border border-[#252D30] hover:border-[#24A1DE] flex items-center justify-between cursor-pointer transition-colors text-xs font-mono"
-                    >
-                      <div>
-                        <span className="font-bold text-white">{dc.title}</span>
-                        <span className="text-neutral-500 ml-2">ID: {dc.chatId}</span>
-                      </div>
-                      <span className="text-[10px] text-[#24A1DE] hover:underline">Use ID →</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Verification Form */}
             <form onSubmit={handleVerifyTelegramGroupSubmit} className="space-y-4">
