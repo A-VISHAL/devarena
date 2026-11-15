@@ -16,23 +16,23 @@ const STORAGE_LINK_KEY = 'devarena_discord_link_code';
 const STORAGE_USER_LINK_KEY = 'devarena_discord_linked_user';
 
 // Official Public Discord Bot Application Client ID
-// Configured to default application ID or overridable via env / setting
-export const DISCORD_CLIENT_ID = '1307289547842621450';
+// Configured to official verified application ID: 1571437524746899537
+export const DISCORD_CLIENT_ID = '1571437524746899537';
 export const DISCORD_BOT_PERMISSIONS = '2147485696'; // Full Send Embeds, Messages, Commands, View Channels
 
 class DiscordService {
-  // 1. Generate Public Bot Installation OAuth2 URL
+  // 1. Generate Official Discord Bot Installation OAuth2 URL
+  // Uses the official Discord Guild Install URL with bot and applications.commands scopes
   public getInstallationUrl(redirectUri?: string): string {
-    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://devarena.io';
-    const redirect = encodeURIComponent(redirectUri || `${currentOrigin}/app/connect`);
-    const state = Math.random().toString(36).substring(2, 15);
-    
-    // Save state in sessionStorage for CSRF validation
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('discord_oauth_state', state);
+    const baseUrl = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&permissions=${DISCORD_BOT_PERMISSIONS}&scope=bot%20applications.commands`;
+    if (redirectUri) {
+      const state = Math.random().toString(36).substring(2, 15);
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('discord_oauth_state', state);
+      }
+      return `${baseUrl}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}`;
     }
-
-    return `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&permissions=${DISCORD_BOT_PERMISSIONS}&scope=bot%20applications.commands&redirect_uri=${redirect}&response_type=code&state=${state}`;
+    return baseUrl;
   }
 
   // 2. Get All Connected Discord Servers
@@ -380,3 +380,4 @@ class DiscordService {
 }
 
 export const discordService = new DiscordService();
+

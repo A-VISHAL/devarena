@@ -133,3 +133,4 @@ CREATE POLICY "Users can view challenge history of their servers"
       AND s.user_id = auth.uid()::TEXT
     )
   );
+

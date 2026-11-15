@@ -107,3 +107,4 @@ export interface DiscordSlashCommandInfo {
   example: string;
   adminOnly?: boolean;
 }
+

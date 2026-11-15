@@ -1,6 +1,28 @@
 // DEVARENA Real-Time WebSocket & REST Relay Server with Discord Bot Integration
 import http from 'http';
 import https from 'https';
+import fs from 'fs';
+import path from 'path';
+
+// Load .env if present
+try {
+  const envPath = path.resolve(process.cwd(), '.env');
+  if (fs.existsSync(envPath)) {
+    const lines = fs.readFileSync(envPath, 'utf8').split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      const idx = trimmed.indexOf('=');
+      if (idx !== -1) {
+        const key = trimmed.slice(0, idx).trim();
+        const val = trimmed.slice(idx + 1).trim().replace(/^['"](.*)['"]$/, '$1');
+        if (!process.env[key]) {
+          process.env[key] = val;
+        }
+      }
+    }
+  }
+} catch {}
 
 const PORT = process.env.PORT || 3001;
 
@@ -14,11 +36,11 @@ const discordHistory = [];
 const discordLinkCodes = new Map();
 const discordAccounts = new Map();
 
-// Environment variables
-const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || '1307289547842621450';
+// Environment variables - Official DEVARENA Discord Application
+const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || '1571437524746899537';
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || '';
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN || '';
-const DISCORD_PUBLIC_KEY = process.env.DISCORD_PUBLIC_KEY || '';
+const DISCORD_PUBLIC_KEY = process.env.DISCORD_PUBLIC_KEY || '6603211a4512284a6d8332ee758411588d09307895836a6bdb2540239a9f162c';
 
 // Seed problems for server-side scheduler
 const SAMPLE_PROBLEMS = [
@@ -239,7 +261,7 @@ async function runScheduledChallengesCheck() {
 // Start scheduler interval (runs every 60s)
 setInterval(runScheduledChallengesCheck, 60000);
 
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -283,11 +305,16 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // 2. Discord OAuth URL
+  // 2. Discord Official Installation OAuth URL
   if (url.pathname === '/api/discord/oauth/url' && req.method === 'GET') {
-    const redirectUri = url.searchParams.get('redirectUri') || `http://${req.headers.host}/app/connect`;
-    const state = Math.random().toString(36).substring(2, 15);
-    const authUrl = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&permissions=2147485696&scope=bot%20applications.commands&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}`;
+    const redirectUri = url.searchParams.get('redirectUri');
+    const baseUrl = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&permissions=2147485696&scope=bot%20applications.commands`;
+    let authUrl = baseUrl;
+    let state = '';
+    if (redirectUri) {
+      state = Math.random().toString(36).substring(2, 15);
+      authUrl = `${baseUrl}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}`;
+    }
 
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ url: authUrl, state, clientId: DISCORD_CLIENT_ID }));
@@ -298,6 +325,62 @@ const server = http.createServer((req, res) => {
   if (url.pathname === '/api/discord/servers') {
     if (req.method === 'GET') {
       const userId = url.searchParams.get('userId') || 'guest';
+      
+      // Auto-sync guilds from official Discord Bot API if available and cache is empty
+      if (DISCORD_BOT_TOKEN && discordServers.size === 0) {
+        try {
+          const guildsRes = await discordApiRequest('/users/@me/guilds');
+          if (guildsRes.status === 200 && Array.isArray(guildsRes.data)) {
+            for (const g of guildsRes.data) {
+              const srvId = `srv_${g.id}`;
+              if (!discordServers.has(srvId)) {
+                let defaultChannelId = null;
+                let defaultChannelName = 'general';
+                try {
+                  const chRes = await discordApiRequest(`/guilds/${g.id}/channels`);
+                  if (chRes.status === 200 && Array.isArray(chRes.data)) {
+                    const textChannels = chRes.data.filter(c => c.type === 0 || c.type === 5);
+                    if (textChannels.length > 0) {
+                      defaultChannelId = textChannels[0].id;
+                      defaultChannelName = textChannels[0].name;
+                    }
+                  }
+                } catch {}
+
+                discordServers.set(srvId, {
+                  id: srvId,
+                  userId,
+                  guildId: g.id,
+                  guildName: g.name,
+                  guildIcon: g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png` : null,
+                  memberCount: 25,
+                  channelId: defaultChannelId,
+                  channelName: defaultChannelName,
+                  status: defaultChannelId ? 'connected' : 'config_required',
+                  settings: {
+                    enabled: true,
+                    difficulty: 'Any',
+                    topics: ['Arrays & Hashing', 'Two Pointers', 'Binary Search', 'Dynamic Programming', 'Trees'],
+                    morningEnabled: true,
+                    morningTime: '09:00',
+                    eveningEnabled: true,
+                    eveningTime: '18:00',
+                    timezone: 'Asia/Kolkata',
+                    autoThread: true,
+                    mentionRole: null,
+                    weeklyContestAlert: true
+                  },
+                  lastChallengeSent: null,
+                  connectedAt: new Date().toISOString()
+                });
+              }
+            }
+          }
+        } catch (e) {
+          console.error('[Discord] Guild auto-sync error:', e);
+        }
+      }
+
       const userServers = Array.from(discordServers.values()).filter(
         s => s.userId === userId || s.userId === 'guest'
       );
