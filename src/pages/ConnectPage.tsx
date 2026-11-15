@@ -880,9 +880,15 @@ export const ConnectPage: React.FC = () => {
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <span className={`w-2 h-2 rounded-full ${
-                              grp.status === 'connected' ? 'bg-[#B5FF4A]' : 'bg-rose-500'
-                            }`} />
+                            {grp.isDemo ? (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-amber-500/15 border border-amber-500/30 text-amber-400">
+                                DEMO PREVIEW
+                              </span>
+                            ) : (
+                              <span className={`w-2 h-2 rounded-full ${
+                                grp.status === 'connected' ? 'bg-[#B5FF4A]' : 'bg-rose-500'
+                              }`} />
+                            )}
                             <ChevronRight className={`w-4 h-4 ${isSelected ? 'text-[#24A1DE]' : 'text-neutral-600'}`} />
                           </div>
                         </div>
@@ -939,6 +945,16 @@ export const ConnectPage: React.FC = () => {
                           </button>
                         </div>
                       </div>
+
+                      {/* Demo Preview Notice */}
+                      {selectedTelegramGroup.isDemo && (
+                        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-start gap-2.5 text-xs font-mono text-amber-300">
+                          <Sparkles className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
+                          <div>
+                            <span className="font-bold text-amber-200">Demo Sandbox Preview:</span> This group preview demonstrates automated daily challenge scheduling and Telegram bot commands (@DEVARENA_CommunityBot) in stateless mock mode. To broadcast challenges to your live Telegram group, click <strong>"Add Another Telegram Group"</strong> or verify your Chat ID.
+                          </div>
+                        </div>
+                      )}
 
                       {/* Feedback Alerts */}
                       {telegramTestSuccess && (
@@ -1433,9 +1449,15 @@ export const ConnectPage: React.FC = () => {
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <span className={`w-2 h-2 rounded-full ${
-                              srv.channelId ? 'bg-[#B5FF4A]' : 'bg-amber-400 animate-pulse'
-                            }`} />
+                            {srv.isDemo ? (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-amber-500/15 border border-amber-500/30 text-amber-400">
+                                DEMO PREVIEW
+                              </span>
+                            ) : (
+                              <span className={`w-2 h-2 rounded-full ${
+                                srv.channelId ? 'bg-[#B5FF4A]' : 'bg-amber-400 animate-pulse'
+                              }`} />
+                            )}
                             <ChevronRight className={`w-4 h-4 ${isSelected ? 'text-[#00E5FF]' : 'text-neutral-600'}`} />
                           </div>
                         </div>
@@ -1487,6 +1509,16 @@ export const ConnectPage: React.FC = () => {
                           </button>
                         </div>
                       </div>
+
+                      {/* Demo Preview Notice */}
+                      {selectedDiscordServer.isDemo && (
+                        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-start gap-2.5 text-xs font-mono text-amber-300">
+                          <Sparkles className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
+                          <div>
+                            <span className="font-bold text-amber-200">Demo Sandbox Preview:</span> This server preview demonstrates automated morning & evening challenge dispatch and slash commands in stateless mock mode. To broadcast challenges to your live Discord community, click <strong>"Add Another Server"</strong> or configure an incoming webhook.
+                          </div>
+                        </div>
+                      )}
 
                       {discordTestSuccess && (
                         <div className="bg-[#B5FF4A]/10 border border-[#B5FF4A]/30 rounded-xl p-3 flex items-center gap-2 text-xs font-mono text-[#B5FF4A] animate-fadeIn">

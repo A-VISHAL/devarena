@@ -7,7 +7,13 @@ import {
   DiscordChannel,
   DiscordLinkCode
 } from '../types/discord';
-import { DISCORD_DEFAULT_SETTINGS, formatDiscordChallengeEmbed, selectProblemForServer } from '../data/discordDefaults';
+import { 
+  DISCORD_DEFAULT_SETTINGS, 
+  formatDiscordChallengeEmbed, 
+  selectProblemForServer,
+  MOCK_DISCORD_SERVERS,
+  MOCK_DISCORD_HISTORY
+} from '../data/discordDefaults';
 import { CODING_PROBLEMS } from '../data/problems';
 
 const STORAGE_SERVERS_KEY = 'devarena_discord_servers';
@@ -42,7 +48,7 @@ class DiscordService {
       const res = await fetch(`/api/discord/servers?userId=${encodeURIComponent(userId)}`);
       if (res.ok) {
         const data = await res.json();
-        if (data && Array.isArray(data.servers)) {
+        if (data && Array.isArray(data.servers) && data.servers.length > 0) {
           return data.servers;
         }
       }
@@ -50,18 +56,23 @@ class DiscordService {
       // Fallback to local persistent storage
     }
 
-    if (typeof window === 'undefined') return [];
+    if (typeof window === 'undefined') return MOCK_DISCORD_SERVERS;
     try {
       const stored = localStorage.getItem(STORAGE_SERVERS_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        return parsed.filter((s: DiscordServerIntegration) => s.userId === userId || s.userId === 'guest');
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.filter((s: DiscordServerIntegration) => s.userId === userId || s.userId === 'guest' || s.isDemo);
+        }
       }
+      // Seed with centralized mock preview server on initial load
+      localStorage.setItem(STORAGE_SERVERS_KEY, JSON.stringify(MOCK_DISCORD_SERVERS));
+      return MOCK_DISCORD_SERVERS;
     } catch (e) {
       console.error('Error reading discord servers', e);
     }
 
-    return [];
+    return MOCK_DISCORD_SERVERS;
   }
 
   // 3. Save / Update Discord Server
@@ -169,6 +180,36 @@ class DiscordService {
     let errorMessage: string | undefined = undefined;
     let messageId: string = `msg_${Date.now()}`;
 
+    // If this is a demo preview server without an external webhook, simulate delivery locally
+    if (server.isDemo && !server.webhookUrl) {
+      const record: DiscordChallengeRecord = {
+        id: `ch_demo_${Date.now()}`,
+        serverId: server.id,
+        guildName: server.guildName,
+        channelId,
+        channelName: server.channelName || 'daily-dsa',
+        challengeNumber,
+        problemId: problem.id,
+        problemTitle: problem.title,
+        difficulty: problem.difficulty as any,
+        category: problem.category,
+        slot: 'manual_test',
+        scheduledAt: new Date().toISOString(),
+        deliveredAt: new Date().toISOString(),
+        status: 'sent',
+        messageId: `msg_demo_${Date.now()}`
+      };
+
+      await this.recordChallengeDelivery(record);
+      server.lastChallengeSent = record;
+      await this.saveServer(server);
+
+      return {
+        success: true,
+        record
+      };
+    }
+
     try {
       // Send to server backend
       const res = await fetch(`/api/discord/servers/${server.id}/test`, {
@@ -259,21 +300,26 @@ class DiscordService {
       const res = await fetch(`/api/discord/challenges?userId=${userId}`);
       if (res.ok) {
         const data = await res.json();
-        if (data.history) return data.history;
+        if (data.history && Array.isArray(data.history) && data.history.length > 0) return data.history;
       }
     } catch {
       // Fallback
     }
 
-    if (typeof window === 'undefined') return [];
+    if (typeof window === 'undefined') return MOCK_DISCORD_HISTORY;
     try {
       const stored = localStorage.getItem(STORAGE_HISTORY_KEY);
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+      localStorage.setItem(STORAGE_HISTORY_KEY, JSON.stringify(MOCK_DISCORD_HISTORY));
+      return MOCK_DISCORD_HISTORY;
     } catch (e) {
       console.error('Error reading challenge history', e);
     }
 
-    return [];
+    return MOCK_DISCORD_HISTORY;
   }
 
   // 8. Record Challenge Delivery Log

@@ -2,7 +2,8 @@
 import { 
   DiscordServerSettings, 
   DiscordSlashCommandInfo,
-  DiscordChallengeRecord
+  DiscordChallengeRecord,
+  DiscordServerIntegration
 } from '../types/discord';
 import { CODING_PROBLEMS } from './problems';
 import { CodingProblem } from '../types';
@@ -230,4 +231,76 @@ export const formatDiscordChallengeEmbed = (
     ]
   };
 };
+
+export const MOCK_DISCORD_SERVERS: DiscordServerIntegration[] = [
+  {
+    id: 'srv_demo_preview',
+    userId: 'guest',
+    guildId: '119284729104829104',
+    guildName: 'DEVARENA Devs (Demo Preview)',
+    guildIcon: null,
+    memberCount: 428,
+    channelId: 'channel_demo_daily_dsa',
+    channelName: 'daily-dsa',
+    status: 'connected',
+    settings: { ...DISCORD_DEFAULT_SETTINGS },
+    lastChallengeSent: {
+      id: 'ch_mock_prev_1',
+      serverId: 'srv_demo_preview',
+      guildName: 'DEVARENA Devs (Demo Preview)',
+      channelId: 'channel_demo_daily_dsa',
+      channelName: 'daily-dsa',
+      challengeNumber: 142,
+      problemId: 'two-sum',
+      problemTitle: 'Two Sum',
+      difficulty: 'Easy',
+      category: 'Arrays & Hashing',
+      slot: 'morning',
+      scheduledAt: new Date(Date.now() - 3600000 * 5).toISOString(),
+      deliveredAt: new Date(Date.now() - 3600000 * 5).toISOString(),
+      status: 'sent',
+      messageId: 'msg_demo_001'
+    },
+    connectedAt: new Date(Date.now() - 86400000 * 7).toISOString(),
+    isDemo: true
+  }
+];
+
+export const MOCK_DISCORD_HISTORY: DiscordChallengeRecord[] = [
+  {
+    id: 'ch_mock_prev_1',
+    serverId: 'srv_demo_preview',
+    guildName: 'DEVARENA Devs (Demo Preview)',
+    channelId: 'channel_demo_daily_dsa',
+    channelName: 'daily-dsa',
+    challengeNumber: 142,
+    problemId: 'two-sum',
+    problemTitle: 'Two Sum',
+    difficulty: 'Easy',
+    category: 'Arrays & Hashing',
+    slot: 'morning',
+    scheduledAt: new Date(Date.now() - 3600000 * 5).toISOString(),
+    deliveredAt: new Date(Date.now() - 3600000 * 5).toISOString(),
+    status: 'sent',
+    messageId: 'msg_demo_001'
+  },
+  {
+    id: 'ch_mock_prev_2',
+    serverId: 'srv_demo_preview',
+    guildName: 'DEVARENA Devs (Demo Preview)',
+    channelId: 'channel_demo_daily_dsa',
+    channelName: 'daily-dsa',
+    challengeNumber: 141,
+    problemId: 'maximum-subarray',
+    problemTitle: 'Maximum Subarray (Kadane)',
+    difficulty: 'Medium',
+    category: 'Dynamic Programming',
+    slot: 'evening',
+    scheduledAt: new Date(Date.now() - 86400000).toISOString(),
+    deliveredAt: new Date(Date.now() - 86400000).toISOString(),
+    status: 'sent',
+    messageId: 'msg_demo_002'
+  }
+];
+
 

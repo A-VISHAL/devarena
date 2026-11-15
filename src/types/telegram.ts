@@ -55,6 +55,7 @@ export interface TelegramChatIntegration {
   connectedAt: string;
   addedByUserId?: string;
   addedByUsername?: string;
+  isDemo?: boolean; // Mock demo preview flag
 }
 
 export interface TelegramLinkCode {

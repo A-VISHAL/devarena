@@ -12,6 +12,26 @@
   ],
   "rewrites": [
     {
+      "source": "/api/discord/oauth/url",
+      "destination": "/api/discord/oauth"
+    },
+    {
+      "source": "/api/discord/servers/:guildId/channels",
+      "destination": "/api/discord/channels?guildId=:guildId"
+    },
+    {
+      "source": "/api/discord/servers/:serverId/test",
+      "destination": "/api/discord/test?serverId=:serverId"
+    },
+    {
+      "source": "/api/telegram/chats/:chatId/test",
+      "destination": "/api/telegram/test?chatId=:chatId"
+    },
+    {
+      "source": "/api/telegram/chats/verify",
+      "destination": "/api/telegram/verify"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },

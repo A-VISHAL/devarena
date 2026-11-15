@@ -13,7 +13,9 @@ import {
   TELEGRAM_INSTALL_LINK,
   TELEGRAM_DEFAULT_SETTINGS,
   formatTelegramChallengePayload,
-  selectProblemForTelegramGroup
+  selectProblemForTelegramGroup,
+  MOCK_TELEGRAM_GROUPS,
+  MOCK_TELEGRAM_HISTORY
 } from '../data/telegramDefaults';
 
 const STORAGE_CHATS_KEY = 'devarena_telegram_chats';
@@ -33,7 +35,7 @@ class TelegramService {
       const res = await fetch(`/api/telegram/chats?userId=${encodeURIComponent(userId)}`);
       if (res.ok) {
         const data = await res.json();
-        if (data && Array.isArray(data.chats)) {
+        if (data && Array.isArray(data.chats) && data.chats.length > 0) {
           return data.chats;
         }
       }
@@ -41,18 +43,23 @@ class TelegramService {
       // Fallback to local storage
     }
 
-    if (typeof window === 'undefined') return [];
+    if (typeof window === 'undefined') return MOCK_TELEGRAM_GROUPS;
     try {
       const stored = localStorage.getItem(STORAGE_CHATS_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        return parsed.filter((c: TelegramChatIntegration) => c.userId === userId || c.userId === 'guest');
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.filter((c: TelegramChatIntegration) => c.userId === userId || c.userId === 'guest' || c.isDemo);
+        }
       }
+      // Seed with centralized mock preview groups on initial load
+      localStorage.setItem(STORAGE_CHATS_KEY, JSON.stringify(MOCK_TELEGRAM_GROUPS));
+      return MOCK_TELEGRAM_GROUPS;
     } catch (e) {
       console.error('Error reading telegram chats', e);
     }
 
-    return [];
+    return MOCK_TELEGRAM_GROUPS;
   }
 
   // 3. Save / Update Telegram Group Integration
@@ -162,6 +169,34 @@ class TelegramService {
     let errorMessage: string | undefined = undefined;
     let messageId: string = `tg_msg_${Date.now()}`;
 
+    // If this is a demo preview group, simulate test delivery cleanly
+    if (group.isDemo) {
+      const record: TelegramChallengeRecord = {
+        id: `tg_ch_demo_${Date.now()}`,
+        chatId: group.chatId,
+        chatTitle: group.chatTitle,
+        challengeNumber,
+        problemId: problem.id,
+        problemTitle: problem.title,
+        difficulty: problem.difficulty as any,
+        category: problem.category,
+        slot: 'manual_test',
+        scheduledAt: new Date().toISOString(),
+        deliveredAt: new Date().toISOString(),
+        status: 'sent',
+        telegramMessageId: `tg_msg_demo_${Date.now()}`
+      };
+
+      await this.recordChallengeDelivery(record);
+      group.lastChallengeSent = record;
+      await this.saveGroup(group);
+
+      return {
+        success: true,
+        record
+      };
+    }
+
     try {
       const res = await fetch(`/api/telegram/chats/${encodeURIComponent(group.chatId)}/test`, {
         method: 'POST',
@@ -227,21 +262,26 @@ class TelegramService {
       const res = await fetch(`/api/telegram/challenges?userId=${encodeURIComponent(userId)}`);
       if (res.ok) {
         const data = await res.json();
-        if (data.history) return data.history;
+        if (data.history && Array.isArray(data.history) && data.history.length > 0) return data.history;
       }
     } catch {
       // Fallback
     }
 
-    if (typeof window === 'undefined') return [];
+    if (typeof window === 'undefined') return MOCK_TELEGRAM_HISTORY;
     try {
       const stored = localStorage.getItem(STORAGE_HISTORY_KEY);
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+      localStorage.setItem(STORAGE_HISTORY_KEY, JSON.stringify(MOCK_TELEGRAM_HISTORY));
+      return MOCK_TELEGRAM_HISTORY;
     } catch (e) {
       console.error('Error reading telegram challenge history', e);
     }
 
-    return [];
+    return MOCK_TELEGRAM_HISTORY;
   }
 
   // 8. Record Challenge Delivery Log

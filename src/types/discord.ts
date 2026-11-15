@@ -68,6 +68,7 @@ export interface DiscordServerIntegration {
   lastChallengeSent: DiscordChallengeRecord | null;
   connectedAt: string;
   webhookUrl?: string; // Optional direct incoming webhook for instant deliveries
+  isDemo?: boolean; // Mock demo preview flag
 }
 
 export interface DiscordLinkCode {

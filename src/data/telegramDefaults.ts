@@ -2,7 +2,8 @@
 import { 
   TelegramChatSettings, 
   TelegramCommandInfo,
-  TelegramChallengeRecord 
+  TelegramChallengeRecord,
+  TelegramChatIntegration
 } from '../types/telegram';
 import { CODING_PROBLEMS } from './problems';
 import { CodingProblem } from '../types';
@@ -219,4 +220,74 @@ function escapeHtml(str: string): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+export const MOCK_TELEGRAM_GROUPS: TelegramChatIntegration[] = [
+  {
+    id: 'tg_demo_preview',
+    userId: 'guest',
+    chatId: '-1001928374829',
+    chatTitle: 'DEVARENA Community (Demo Preview)',
+    chatType: 'supergroup',
+    memberCount: 312,
+    status: 'connected',
+    botPermissions: {
+      canSendMessages: true,
+      isAdmin: true,
+      canInviteUsers: true
+    },
+    settings: { ...TELEGRAM_DEFAULT_SETTINGS },
+    lastChallengeSent: {
+      id: 'tg_ch_mock_prev_1',
+      chatId: '-1001928374829',
+      chatTitle: 'DEVARENA Community (Demo Preview)',
+      challengeNumber: 142,
+      problemId: 'two-sum',
+      problemTitle: 'Two Sum',
+      difficulty: 'Easy',
+      category: 'Arrays & Hashing',
+      slot: 'morning',
+      scheduledAt: new Date(Date.now() - 3600000 * 5).toISOString(),
+      deliveredAt: new Date(Date.now() - 3600000 * 5).toISOString(),
+      status: 'sent',
+      telegramMessageId: 'tg_msg_demo_001'
+    },
+    connectedAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+    addedByUsername: 'devarena_admin',
+    isDemo: true
+  }
+];
+
+export const MOCK_TELEGRAM_HISTORY: TelegramChallengeRecord[] = [
+  {
+    id: 'tg_ch_mock_prev_1',
+    chatId: '-1001928374829',
+    chatTitle: 'DEVARENA Community (Demo Preview)',
+    challengeNumber: 142,
+    problemId: 'two-sum',
+    problemTitle: 'Two Sum',
+    difficulty: 'Easy',
+    category: 'Arrays & Hashing',
+    slot: 'morning',
+    scheduledAt: new Date(Date.now() - 3600000 * 5).toISOString(),
+    deliveredAt: new Date(Date.now() - 3600000 * 5).toISOString(),
+    status: 'sent',
+    telegramMessageId: 'tg_msg_demo_001'
+  },
+  {
+    id: 'tg_ch_mock_prev_2',
+    chatId: '-1001928374829',
+    chatTitle: 'DEVARENA Community (Demo Preview)',
+    challengeNumber: 141,
+    problemId: 'maximum-subarray',
+    problemTitle: 'Maximum Subarray (Kadane)',
+    difficulty: 'Medium',
+    category: 'Dynamic Programming',
+    slot: 'evening',
+    scheduledAt: new Date(Date.now() - 86400000).toISOString(),
+    deliveredAt: new Date(Date.now() - 86400000).toISOString(),
+    status: 'sent',
+    telegramMessageId: 'tg_msg_demo_002'
+  }
+];
+
 
