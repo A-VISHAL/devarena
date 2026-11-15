@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, RefreshCw, Share2, Calculator, Trophy, Timer, Flame, ArrowRight } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Share2, Calculator, Trophy, Timer, Flame, ArrowRight, Sparkles } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { CasualGameId, GameResultData } from '../../types';
 import { sound } from '../../utils/sound';
@@ -11,9 +11,9 @@ interface MathQuestion {
   options: number[];
 }
 
-function generateMathQuestion(streak: number): MathQuestion {
-  const operations = ['+', '-', '*'];
-  if (streak >= 5) operations.push('/');
+function generateMathQuestion(streak: number, difficulty: 'easy' | 'normal' = 'easy'): MathQuestion {
+  const operations = difficulty === 'easy' ? ['+', '-'] : ['+', '-', '*'];
+  if (difficulty === 'normal' && streak >= 5) operations.push('/');
 
   const op = operations[Math.floor(Math.random() * operations.length)];
   let num1 = 0;
@@ -21,26 +21,26 @@ function generateMathQuestion(streak: number): MathQuestion {
   let answer = 0;
 
   if (op === '+') {
-    num1 = Math.floor(10 + Math.random() * (20 + streak * 5));
-    num2 = Math.floor(5 + Math.random() * (15 + streak * 5));
+    num1 = Math.floor(difficulty === 'easy' ? (2 + Math.random() * 12) : (10 + Math.random() * (20 + streak * 5)));
+    num2 = Math.floor(difficulty === 'easy' ? (1 + Math.random() * 10) : (5 + Math.random() * (15 + streak * 5)));
     answer = num1 + num2;
   } else if (op === '-') {
-    num1 = Math.floor(20 + Math.random() * (30 + streak * 5));
-    num2 = Math.floor(5 + Math.random() * num1);
+    num1 = Math.floor(difficulty === 'easy' ? (10 + Math.random() * 15) : (20 + Math.random() * (30 + streak * 5)));
+    num2 = Math.floor(difficulty === 'easy' ? (1 + Math.random() * (num1 - 1)) : (5 + Math.random() * num1));
     answer = num1 - num2;
   } else if (op === '*') {
-    num1 = Math.floor(3 + Math.random() * (7 + Math.min(5, streak)));
-    num2 = Math.floor(2 + Math.random() * (9 + Math.min(5, streak)));
+    num1 = Math.floor(2 + Math.random() * 6);
+    num2 = Math.floor(2 + Math.random() * 5);
     answer = num1 * num2;
   } else {
-    answer = Math.floor(2 + Math.random() * 12);
-    num2 = Math.floor(2 + Math.random() * 10);
+    answer = Math.floor(2 + Math.random() * 8);
+    num2 = Math.floor(2 + Math.random() * 6);
     num1 = answer * num2;
   }
 
   const optionsSet = new Set<number>([answer]);
   while (optionsSet.size < 4) {
-    const delta = Math.floor(1 + Math.random() * 8) * (Math.random() > 0.5 ? 1 : -1);
+    const delta = Math.floor(1 + Math.random() * 6) * (Math.random() > 0.5 ? 1 : -1);
     const fake = answer + delta;
     if (fake >= 0) optionsSet.add(fake);
   }
@@ -60,13 +60,16 @@ export const QuickMath: React.FC<{
 }> = ({ onBack, onComplete }) => {
   const { recordCasualGameCompletion, openShareModal } = useApp();
 
-  const [timeLeft, setTimeLeft] = useState<number>(60);
+  const [difficulty, setDifficulty] = useState<'easy' | 'normal'>('easy');
+  const sprintDuration = difficulty === 'easy' ? 90 : 60;
+  const [timeLeft, setTimeLeft] = useState<number>(sprintDuration);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [score, setScore] = useState<number>(0);
   const [streak, setStreak] = useState<number>(0);
   const [correctCount, setCorrectCount] = useState<number>(0);
   const [totalAttempts, setTotalAttempts] = useState<number>(0);
-  const [currentQ, setCurrentQ] = useState<MathQuestion>(() => generateMathQuestion(0));
+  const [currentQ, setCurrentQ] = useState<MathQuestion>(() => generateMathQuestion(0, 'easy'));
+  const [hintActive, setHintActive] = useState<boolean>(false);
   const [gameOver, setGameOver] = useState<boolean>(false);
 
   useEffect(() => {
@@ -95,7 +98,7 @@ export const QuickMath: React.FC<{
       gameId: 'quick-math',
       gameTitle: 'Quick Math Sprint',
       score,
-      timeTakenSec: 60,
+      timeTakenSec: sprintDuration,
       moves: totalAttempts,
       accuracy,
       won: true,
@@ -103,10 +106,10 @@ export const QuickMath: React.FC<{
       headline: `Scored ${score} Points!`,
       customStats: [
         { label: 'Score', value: String(score) },
-        { label: 'Solved in 60s', value: `${correctCount}/${totalAttempts}` },
+        { label: `Solved in ${sprintDuration}s`, value: `${correctCount}/${totalAttempts}` },
         { label: 'Accuracy', value: `${accuracy}%` }
       ],
-      shareSummary: `DEVARENA Quick Math Sprint: ${score} points! Solved ${correctCount}/${totalAttempts} (${accuracy}% accuracy) in 60s!\nplay.devarena.com`
+      shareSummary: `DEVARENA Quick Math Sprint: ${score} points! Solved ${correctCount}/${totalAttempts} (${accuracy}% accuracy) in ${sprintDuration}s!\nplay.devarena.com`
     };
     recordCasualGameCompletion(res);
   };
@@ -117,7 +120,7 @@ export const QuickMath: React.FC<{
         gameId: 'quick-math',
         gameTitle: 'Quick Math Sprint',
         score,
-        timeTakenSec: 60,
+        timeTakenSec: sprintDuration,
         moves: totalAttempts,
         accuracy,
         won: true,
@@ -125,15 +128,15 @@ export const QuickMath: React.FC<{
         headline: `Scored ${score} Points!`,
         customStats: [
           { label: 'Score', value: String(score) },
-          { label: 'Solved in 60s', value: `${correctCount}/${totalAttempts}` },
+          { label: `Solved in ${sprintDuration}s`, value: `${correctCount}/${totalAttempts}` },
           { label: 'Accuracy', value: `${accuracy}%` }
         ],
-        shareSummary: `DEVARENA Quick Math Sprint: ${score} points! Solved ${correctCount}/${totalAttempts} (${accuracy}% accuracy) in 60s!\nplay.devarena.com`
+        shareSummary: `DEVARENA Quick Math Sprint: ${score} points! Solved ${correctCount}/${totalAttempts} (${accuracy}% accuracy) in ${sprintDuration}s!\nplay.devarena.com`
       });
     }
   };
 
-  const handleStart = () => {
+  const handleStart = (diff = difficulty) => {
     sound.playGo();
     setIsPlaying(true);
     setGameOver(false);
@@ -141,9 +144,36 @@ export const QuickMath: React.FC<{
     setStreak(0);
     setCorrectCount(0);
     setTotalAttempts(0);
-    setTimeLeft(60);
-    setCurrentQ(generateMathQuestion(0));
+    setHintActive(false);
+    const duration = diff === 'easy' ? 90 : 60;
+    setTimeLeft(duration);
+    setCurrentQ(generateMathQuestion(0, diff));
   };
+
+  const toggleDifficulty = () => {
+    sound.playClick();
+    const nextDiff = difficulty === 'easy' ? 'normal' : 'easy';
+    setDifficulty(nextDiff);
+    setIsPlaying(false);
+    setGameOver(false);
+    setTimeLeft(nextDiff === 'easy' ? 90 : 60);
+    setCurrentQ(generateMathQuestion(0, nextDiff));
+  };
+
+  const handleHint = () => {
+    if (!isPlaying || gameOver) return;
+    sound.playClick();
+    setHintActive(true);
+  };
+
+  // Two wrong options eliminated when hint or easy mode is active
+  const eliminatedOpts = React.useMemo(() => {
+    if (hintActive) {
+      const wrong = currentQ.options.filter(o => o !== currentQ.answer);
+      return wrong.slice(0, 2);
+    }
+    return [];
+  }, [hintActive, currentQ]);
 
   const handleSelectOption = (opt: number) => {
     if (!isPlaying || gameOver) return;
@@ -153,15 +183,17 @@ export const QuickMath: React.FC<{
     if (opt === currentQ.answer) {
       sound.playCorrect();
       const newStreak = streak + 1;
-      const pts = 100 + newStreak * 20;
+      const pts = (difficulty === 'easy' ? 80 : 100) + newStreak * 20;
       setScore(prev => prev + pts);
       setStreak(newStreak);
       setCorrectCount(prev => prev + 1);
-      setCurrentQ(generateMathQuestion(newStreak));
+      setHintActive(false);
+      setCurrentQ(generateMathQuestion(newStreak, difficulty));
     } else {
       sound.playWrong();
       setStreak(0);
-      setCurrentQ(generateMathQuestion(0));
+      setHintActive(false);
+      setCurrentQ(generateMathQuestion(0, difficulty));
     }
   };
 
@@ -170,12 +202,12 @@ export const QuickMath: React.FC<{
   const handleShare = () => {
     openShareModal({
       title: 'Quick Math',
-      gameOrBattle: 'Quick Math 60s Sprint',
+      gameOrBattle: `Quick Math ${sprintDuration}s Sprint`,
       scoreOrResult: `${score} Points`,
       subtitle: `${correctCount} Correct • ${accuracy}% Accuracy • Streak: ${streak}`,
       customStats: [
         { label: 'Score', value: String(score) },
-        { label: 'Solved in 60s', value: String(correctCount) },
+        { label: `Solved in ${sprintDuration}s`, value: String(correctCount) },
         { label: 'Accuracy', value: `${accuracy}%` }
       ]
     });
@@ -194,11 +226,33 @@ export const QuickMath: React.FC<{
         </button>
         <div className="text-center">
           <h2 className="text-sm font-bold text-arena-textPrimary">Quick Math</h2>
-          <span className="text-[11px] text-arena-textSubtle">60-Second Calculation Sprint</span>
+          <span className="text-[11px] text-arena-textSubtle">{sprintDuration}-Second Calculation Sprint</span>
         </div>
-        <button onClick={handleStart} className="p-1.5 text-arena-textSecondary hover:text-arena-textPrimary">
-          <RefreshCw className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={toggleDifficulty}
+            className={`px-2 py-1 rounded text-[11px] font-medium border transition-colors ${
+              difficulty === 'easy'
+                ? 'bg-arena-success/15 border-arena-success/30 text-arena-success'
+                : 'bg-arena-elevated border-arena-border text-arena-textSecondary'
+            }`}
+            title="Toggle difficulty (Easy gives 90 seconds and friendly numbers)"
+          >
+            {difficulty === 'easy' ? '🟢 Easy' : '🟡 Normal'}
+          </button>
+          <button
+            onClick={handleHint}
+            disabled={!isPlaying || gameOver}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-arena-amber/15 hover:bg-arena-amber/25 border border-arena-amber/30 text-arena-amber text-xs font-semibold shadow-sm transition-all disabled:opacity-40"
+            title="Corner Hint: Eliminates 2 wrong numbers (50/50)"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-arena-amber animate-pulse" />
+            <span>💡 Hint</span>
+          </button>
+          <button onClick={() => handleStart(difficulty)} className="p-1.5 text-arena-textSecondary hover:text-arena-textPrimary">
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Stats Bar */}
@@ -223,6 +277,24 @@ export const QuickMath: React.FC<{
         </div>
       </div>
 
+      {/* Floating Corner Hint Banner */}
+      {hintActive && isPlaying && !gameOver && (
+        <div className="w-full mb-3 p-3 rounded-lg bg-arena-amber/10 border border-arena-amber/30 text-arena-textPrimary text-xs flex items-center justify-between gap-2 animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <span className="text-base leading-none">💡</span>
+            <div>
+              <span className="font-semibold text-arena-amber block">Corner Hint: 50/50 Active!</span>
+              <span className="text-arena-textSecondary text-[11px] block">
+                Two incorrect answers were removed. Pick between the remaining two!
+              </span>
+            </div>
+          </div>
+          <button onClick={() => setHintActive(false)} className="text-arena-textSubtle hover:text-arena-textPrimary p-0.5">
+            ✕
+          </button>
+        </div>
+      )}
+
       {!isPlaying && !gameOver ? (
         <div className="w-full p-8 rounded-xl bg-arena-surface border border-arena-border text-center space-y-4">
           <div className="w-12 h-12 rounded-lg bg-arena-elevated border border-arena-border text-arena-teal flex items-center justify-center mx-auto">
@@ -231,11 +303,11 @@ export const QuickMath: React.FC<{
           <div>
             <h3 className="text-lg font-bold text-arena-textPrimary">Mental Arithmetic Sprint</h3>
             <p className="text-xs text-arena-textSecondary mt-1 max-w-xs mx-auto leading-relaxed">
-              Solve as many equations as you can in 60 seconds. Consecutive correct answers increase streak bonus.
+              Solve equations rapidly in {sprintDuration} seconds. {difficulty === 'easy' ? '🟢 Easy mode active (simple additions and subtractions).' : ''}
             </p>
           </div>
-          <button onClick={handleStart} className="btn-primary w-full py-2.5 text-xs font-semibold">
-            Start 60s Sprint
+          <button onClick={() => handleStart(difficulty)} className="btn-primary w-full py-2.5 text-xs font-semibold">
+            Start {sprintDuration}s Sprint
           </button>
         </div>
       ) : !gameOver ? (
@@ -250,15 +322,23 @@ export const QuickMath: React.FC<{
 
           {/* 4 Options Grid */}
           <div className="grid grid-cols-2 gap-2.5">
-            {currentQ.options.map((opt, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleSelectOption(opt)}
-                className="p-4 rounded-lg bg-arena-surface hover:bg-arena-elevated border border-arena-border text-xl font-bold text-arena-textPrimary font-mono transition-all active:scale-98"
-              >
-                {opt}
-              </button>
-            ))}
+            {currentQ.options.map((opt, idx) => {
+              const isEliminated = eliminatedOpts.includes(opt);
+              return (
+                <button
+                  key={idx}
+                  disabled={isEliminated}
+                  onClick={() => handleSelectOption(opt)}
+                  className={`p-4 rounded-lg border text-xl font-bold font-mono transition-all active:scale-98 ${
+                    isEliminated
+                      ? 'bg-arena-surface/30 opacity-20 border-arena-border line-through text-arena-textSubtle cursor-not-allowed'
+                      : 'bg-arena-surface hover:bg-arena-elevated border-arena-border text-arena-textPrimary'
+                  }`}
+                >
+                  {opt}
+                </button>
+              );
+            })}
           </div>
         </div>
       ) : (
@@ -277,7 +357,7 @@ export const QuickMath: React.FC<{
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2 pt-2">
-            <button onClick={handleStart} className="btn-secondary flex-1 py-2 text-xs">
+            <button onClick={() => handleStart(difficulty)} className="btn-secondary flex-1 py-2 text-xs">
               Play Again
             </button>
             {onComplete && (

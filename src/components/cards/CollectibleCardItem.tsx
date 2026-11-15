@@ -134,7 +134,11 @@ export const CollectibleCardItem: React.FC<CollectibleCardItemProps> = ({
       )}
 
       {/* Main Card Body */}
-      <div className={`relative rounded-2xl border ${config.borderClass} ${config.surfaceClass} p-4 sm:p-5 flex flex-col justify-between overflow-hidden ${compact ? 'h-[360px]' : 'h-[430px]'}`}>
+      <div className={`relative rounded-2xl border ${
+        isPinned 
+          ? 'border-arena-amber/60 shadow-[0_0_20px_rgba(255,173,66,0.18)] ring-1 ring-arena-amber/40' 
+          : config.borderClass
+      } ${config.surfaceClass} p-4 sm:p-5 flex flex-col justify-between overflow-hidden ${compact ? 'h-[360px]' : 'h-[430px]'}`}>
         
         {/* Subtle Tech Watermark Background Text */}
         <div className="absolute right-2 top-10 text-[64px] font-mono font-black text-white/[0.015] pointer-events-none select-none uppercase">
@@ -161,27 +165,46 @@ export const CollectibleCardItem: React.FC<CollectibleCardItemProps> = ({
                 {config.label}
               </span>
 
-              {unlocked && onTogglePin && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    sound.playClick();
-                    onTogglePin(card);
-                  }}
-                  className={`p-1 rounded hover:bg-[#202D30] transition-colors ${
-                    isPinned ? 'text-arena-amber' : 'text-arena-textSubtle hover:text-arena-textSecondary'
-                  }`}
-                  title={isPinned ? 'Pinned on Profile' : 'Pin to Profile Showcase'}
-                >
-                  <Pin className="w-3.5 h-3.5 fill-current" />
-                </button>
+              {unlocked && (
+                onTogglePin ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      sound.playClick();
+                      onTogglePin(card);
+                    }}
+                    className={`p-1 rounded transition-colors ${
+                      isPinned 
+                        ? 'text-arena-amber bg-arena-amber/15 hover:bg-arena-amber/25' 
+                        : 'text-arena-textSubtle hover:text-arena-textSecondary hover:bg-[#202D30]'
+                    }`}
+                    title={isPinned ? 'Pinned on Profile (Click to unpin)' : 'Pin to Profile Showcase'}
+                  >
+                    <Pin className={`w-3.5 h-3.5 ${isPinned ? 'fill-current' : ''}`} />
+                  </button>
+                ) : isPinned ? (
+                  <span 
+                    className="p-1 rounded text-arena-amber bg-arena-amber/15 inline-flex items-center" 
+                    title="Pinned on Profile Showcase"
+                  >
+                    <Pin className="w-3.5 h-3.5 fill-current" />
+                  </span>
+                ) : null
               )}
             </div>
           </div>
 
           {/* Central Unique Artwork Frame */}
           <div className="relative w-full h-36 sm:h-40 rounded-xl overflow-hidden border border-[#273539] bg-[#12181A] shadow-inner mb-3">
+            {/* Pinned Showcase Badge on Artwork */}
+            {isPinned && (
+              <div className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-full bg-[#12181A]/95 border border-arena-amber/70 backdrop-blur-md flex items-center gap-1 text-[10px] font-mono font-bold text-arena-amber shadow-md animate-in fade-in">
+                <Pin className="w-2.5 h-2.5 fill-current" />
+                <span>PINNED</span>
+              </div>
+            )}
+
             <CardArtwork
               artworkType={card.artworkType}
               rarity={card.rarity}

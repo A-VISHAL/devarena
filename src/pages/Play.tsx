@@ -51,10 +51,13 @@ export const Play: React.FC = () => {
     activeGame, 
     setActiveGame, 
     activeMultiplayerCode,
+    setActiveMultiplayerCode,
     completedDailyChallenge,
     gameResultData,
     setGameResultData,
-    toggleSaveGame
+    toggleSaveGame,
+    settings,
+    setActiveTab
   } = useApp();
 
   // Navigation & Filtering State
@@ -65,8 +68,9 @@ export const Play: React.FC = () => {
   const [leaderboardTab, setLeaderboardTab] = useState<'global' | 'friends'>('global');
   const [quickRoomCode, setQuickRoomCode] = useState('');
 
-  // Carousel ref for horizontal puzzle strip
+  // Carousel ref for horizontal puzzle strip & Center scroll ref
   const carouselRef = useRef<HTMLDivElement>(null);
+  const centerScrollRef = useRef<HTMLDivElement>(null);
 
   const scrollCarousel = (direction: 'left' | 'right') => {
     sound.playClick();
@@ -76,6 +80,44 @@ export const Play: React.FC = () => {
         left: direction === 'left' ? -scrollAmount : scrollAmount,
         behavior: 'smooth'
       });
+    }
+  };
+
+  // When scrolling on left sidebar, delegate wheel delta to center column
+  const handleLeftWheel = (e: React.WheelEvent<HTMLElement>) => {
+    const el = e.currentTarget;
+    const hasOverflow = el.scrollHeight > el.clientHeight;
+    if (!hasOverflow) {
+      if (centerScrollRef.current) {
+        centerScrollRef.current.scrollTop += e.deltaY;
+      }
+    } else {
+      const isAtBottom = Math.abs(el.scrollHeight - el.clientHeight - el.scrollTop) < 2;
+      const isAtTop = el.scrollTop === 0;
+      if ((e.deltaY > 0 && isAtBottom) || (e.deltaY < 0 && isAtTop)) {
+        if (centerScrollRef.current) {
+          centerScrollRef.current.scrollTop += e.deltaY;
+        }
+      }
+    }
+  };
+
+  // When scrolling on right sidebar, delegate to center column once at boundary
+  const handleRightWheel = (e: React.WheelEvent<HTMLElement>) => {
+    const el = e.currentTarget;
+    const hasOverflow = el.scrollHeight > el.clientHeight;
+    if (!hasOverflow) {
+      if (centerScrollRef.current) {
+        centerScrollRef.current.scrollTop += e.deltaY;
+      }
+    } else {
+      const isAtBottom = Math.abs(el.scrollHeight - el.clientHeight - el.scrollTop) < 2;
+      const isAtTop = el.scrollTop === 0;
+      if ((e.deltaY > 0 && isAtBottom) || (e.deltaY < 0 && isAtTop)) {
+        if (centerScrollRef.current) {
+          centerScrollRef.current.scrollTop += e.deltaY;
+        }
+      }
     }
   };
 
@@ -304,26 +346,32 @@ export const Play: React.FC = () => {
 
   const handleLaunchGame = (gameId: CasualGameId) => {
     sound.playClick();
+    setGameResultData(null);
     setActiveGame(gameId);
   };
 
   const handleJoinQuickRoom = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!quickRoomCode.trim()) return;
     sound.playClick();
+    if (quickRoomCode.trim()) {
+      setActiveMultiplayerCode(quickRoomCode.trim().toUpperCase());
+    }
     setActiveGame('multiplayer-math');
   };
 
   return (
-    <div className="page-container py-8 space-y-8 animate-in fade-in">
+    <div className="w-full h-full lg:h-[calc(100vh-3.5rem)] lg:overflow-hidden animate-in fade-in">
       
-      {/* 3-COLUMN DESKTOP COMPOSITION */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      {/* 3-COLUMN DESKTOP COMPOSITION: Left & Right static, Middle independently scrollable */}
+      <div className="page-container h-full grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 lg:overflow-hidden">
         
         {/* ========================================================= */}
-        {/* A. LEFT SIDEBAR — GAME NAVIGATION (3 COLS)                */}
+        {/* A. LEFT SIDEBAR — STATIC GAME NAVIGATION (3 COLS)         */}
         {/* ========================================================= */}
-        <aside className="lg:col-span-3 space-y-6">
+        <aside 
+          onWheel={handleLeftWheel}
+          className="lg:col-span-3 lg:h-full lg:overflow-y-auto py-6 sm:py-8 space-y-6 shrink-0 custom-scrollbar select-none"
+        >
           
           <div className="arena-card p-4 space-y-5">
             
@@ -467,9 +515,12 @@ export const Play: React.FC = () => {
         </aside>
 
         {/* ========================================================= */}
-        {/* B. CENTER CONTENT — DISCOVERY & SOCIAL (6 COLS)           */}
+        {/* B. CENTER CONTENT — SCROLLABLE MIDDLE PART (6 COLS)       */}
         {/* ========================================================= */}
-        <div className="lg:col-span-6 space-y-7">
+        <div 
+          ref={centerScrollRef}
+          className="lg:col-span-6 lg:h-full lg:overflow-y-auto py-6 sm:py-8 pb-20 space-y-7 custom-scrollbar pr-1"
+        >
           
           {/* Header Bar */}
           <div className="space-y-3 pb-2 border-b border-arena-border">
@@ -545,8 +596,12 @@ export const Play: React.FC = () => {
               </div>
 
               <button
-                onClick={() => handleLaunchGame('zip')}
-                className="btn-primary py-2 px-5 text-xs font-semibold gap-1.5 shadow-sm"
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleLaunchGame('zip');
+                }}
+                className="btn-primary py-2 px-5 text-xs font-semibold gap-1.5 shadow-sm active:scale-98"
               >
                 <PlayIcon className="w-3.5 h-3.5 fill-current" />
                 <span>Play Today's Zip</span>
@@ -570,6 +625,7 @@ export const Play: React.FC = () => {
               {/* Carousel Scroll Arrows */}
               <div className="flex items-center gap-1">
                 <button
+                  type="button"
                   onClick={() => scrollCarousel('left')}
                   className="p-1 rounded-lg bg-arena-surface border border-arena-border text-arena-textSecondary hover:text-arena-textPrimary hover:bg-arena-elevated transition-colors"
                   title="Scroll left"
@@ -577,6 +633,7 @@ export const Play: React.FC = () => {
                   <ChevronLeft className="w-4 h-4" />
                 </button>
                 <button
+                  type="button"
                   onClick={() => scrollCarousel('right')}
                   className="p-1 rounded-lg bg-arena-surface border border-arena-border text-arena-textSecondary hover:text-arena-textPrimary hover:bg-arena-elevated transition-colors"
                   title="Scroll right"
@@ -627,7 +684,14 @@ export const Play: React.FC = () => {
                     <span className="text-[10px] text-arena-textSubtle">
                       {game.friendsPlayedCount} played
                     </span>
-                    <button className="text-xs font-semibold text-arena-amber group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleLaunchGame(game.id);
+                      }}
+                      className="text-xs font-semibold text-arena-amber group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5"
+                    >
                       <span>Play</span>
                       <ChevronRight className="w-3.5 h-3.5" />
                     </button>
@@ -683,7 +747,14 @@ export const Play: React.FC = () => {
                     <span className="text-[11px] text-arena-textSubtle font-mono">
                       {game.playTime} • {game.playerCount}
                     </span>
-                    <button className="text-xs font-semibold text-arena-amber flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleLaunchGame(game.id);
+                      }}
+                      className="text-xs font-semibold text-arena-amber flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
+                    >
                       <span>Play Now</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
@@ -739,7 +810,8 @@ export const Play: React.FC = () => {
               ].map((act, idx) => (
                 <div 
                   key={idx}
-                  className="p-3 rounded-xl bg-arena-surface border border-arena-border flex items-center justify-between text-xs hover:border-arena-borderHover transition-colors"
+                  onClick={() => handleLaunchGame(act.gameId)}
+                  className="p-3 rounded-xl bg-arena-surface border border-arena-border flex items-center justify-between text-xs hover:border-arena-borderHover transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
                     <img 
@@ -761,7 +833,11 @@ export const Play: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <span className="text-[10px] text-arena-textSubtle hidden sm:inline">{act.time}</span>
                     <button
-                      onClick={() => handleLaunchGame(act.gameId)}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleLaunchGame(act.gameId);
+                      }}
                       className="btn-secondary py-1 px-3 text-xs font-semibold gap-1"
                     >
                       <span>{act.actionLabel}</span>
@@ -796,7 +872,8 @@ export const Play: React.FC = () => {
                 return (
                   <div
                     key={game.id}
-                    className="arena-card p-4 flex flex-col justify-between group relative"
+                    onClick={() => handleLaunchGame(game.id)}
+                    className="arena-card p-4 flex flex-col justify-between group relative cursor-pointer hover:border-arena-borderHover transition-all"
                   >
                     <div>
                       <div className="flex items-center justify-between mb-2">
@@ -815,7 +892,11 @@ export const Play: React.FC = () => {
                         </div>
 
                         <button
-                          onClick={() => toggleSaveGame(game.id)}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleSaveGame(game.id);
+                          }}
                           className={`p-1.5 rounded-lg border transition-colors ${
                             isSaved 
                               ? 'bg-arena-amber/15 text-arena-amber border-arena-amber/30' 
@@ -837,7 +918,11 @@ export const Play: React.FC = () => {
                         {game.playTime} • {game.playerCount}
                       </span>
                       <button
-                        onClick={() => handleLaunchGame(game.id)}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLaunchGame(game.id);
+                        }}
                         className="btn-primary py-1 px-3 text-xs font-semibold gap-1"
                       >
                         <span>{game.isMultiplayer ? 'Enter Room' : 'Play'}</span>
@@ -853,9 +938,12 @@ export const Play: React.FC = () => {
         </div>
 
         {/* ========================================================= */}
-        {/* C. RIGHT SIDEBAR — STATS & LEADERBOARDS (3 COLS)          */}
+        {/* C. RIGHT SIDEBAR — STATIC STATS & LEADERBOARD (3 COLS)    */}
         {/* ========================================================= */}
-        <aside className="lg:col-span-3 space-y-6">
+        <aside 
+          onWheel={handleRightWheel}
+          className="lg:col-span-3 lg:h-full lg:overflow-y-auto py-6 sm:py-8 pb-16 space-y-6 shrink-0 custom-scrollbar select-none"
+        >
           
           {/* Your Gaming Stats Card */}
           <div className="arena-card p-5 space-y-4">
@@ -984,31 +1072,46 @@ export const Play: React.FC = () => {
                 <Zap className="w-4 h-4 text-arena-amber" />
                 <span>Pending Challenges</span>
               </div>
-              <span className="text-[10px] font-mono text-arena-amber font-bold">2 Active</span>
+              <span className="text-[10px] font-mono text-arena-amber font-bold">
+                {settings?.battleInvites !== false ? '2 Active' : 'Paused'}
+              </span>
             </div>
 
-            <div className="space-y-2">
-              {[
-                { from: 'kavya_codes', game: 'Math 1v1 Clash', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80', gameId: 'multiplayer-math' as CasualGameId },
-                { from: 'marcus_q', game: 'Zip #42 (72s)', avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80', gameId: 'zip' as CasualGameId }
-              ].map((c, i) => (
-                <div key={i} className="p-2.5 rounded-lg bg-arena-elevated border border-arena-border flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <img src={c.avatar} alt="" className="w-6 h-6 rounded-md object-cover" />
-                    <div>
-                      <div className="font-semibold text-arena-textPrimary truncate max-w-[120px]">@{c.from}</div>
-                      <div className="text-[10px] text-arena-textSubtle">{c.game}</div>
+            {settings?.battleInvites !== false ? (
+              <div className="space-y-2">
+                {[
+                  { from: 'kavya_codes', game: 'Math 1v1 Clash', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80', gameId: 'multiplayer-math' as CasualGameId },
+                  { from: 'marcus_q', game: 'Zip #42 (72s)', avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80', gameId: 'zip' as CasualGameId }
+                ].map((c, i) => (
+                  <div key={i} className="p-2.5 rounded-lg bg-arena-elevated border border-arena-border flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <img src={c.avatar} alt="" className="w-6 h-6 rounded-md object-cover" />
+                      <div>
+                        <div className="font-semibold text-arena-textPrimary truncate max-w-[120px]">@{c.from}</div>
+                        <div className="text-[10px] text-arena-textSubtle">{c.game}</div>
+                      </div>
                     </div>
+                    <button
+                      onClick={() => handleLaunchGame(c.gameId)}
+                      className="btn-primary py-1 px-2.5 text-[11px] font-semibold"
+                    >
+                      Accept
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleLaunchGame(c.gameId)}
-                    className="btn-primary py-1 px-2.5 text-[11px] font-semibold"
-                  >
-                    Accept
-                  </button>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-3 rounded-lg bg-arena-elevated/40 border border-dashed border-arena-border text-center space-y-1">
+                <p className="text-[11px] text-arena-textSubtle">1v1 battle invitations are paused in your Settings.</p>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('settings')}
+                  className="text-[10px] text-arena-cyan hover:underline font-mono"
+                >
+                  Enable in Settings ⚙
+                </button>
+              </div>
+            )}
 
             {/* Quick Room Code Join */}
             <form onSubmit={handleJoinQuickRoom} className="pt-2 border-t border-arena-border flex gap-2">

@@ -183,3 +183,232 @@
     animation: none !important;
   }
 }
+
+/* ========================================================================= */
+/* DYNAMIC THEMES (data-theme)                                               */
+/* ========================================================================= */
+
+/* Dim Charcoal Theme (#161C1E) */
+html[data-theme="dim"] body {
+  background-color: #161C1E !important;
+}
+html[data-theme="dim"] .bg-arena-bg,
+html[data-theme="dim"] .bg-\[\#101314\],
+html[data-theme="dim"] .bg-\[\#141A1C\],
+html[data-theme="dim"] .bg-\[\#141B1D\],
+html[data-theme="dim"] .bg-\[\#0A0D0E\],
+html[data-theme="dim"] .bg-\[\#0F1416\] {
+  background-color: #182023 !important;
+}
+html[data-theme="dim"] .bg-arena-surface,
+html[data-theme="dim"] .bg-\[\#161F22\],
+html[data-theme="dim"] .bg-\[\#182124\],
+html[data-theme="dim"] .bg-\[\#182225\],
+html[data-theme="dim"] .bg-\[\#1C2426\],
+html[data-theme="dim"] .bg-\[\#1C2528\],
+html[data-theme="dim"] .bg-\[\#1A2225\],
+html[data-theme="dim"] .bg-\[\#1A2528\],
+html[data-theme="dim"] .bg-\[\#1F2729\] {
+  background-color: #1F282B !important;
+}
+html[data-theme="dim"] .bg-arena-elevated,
+html[data-theme="dim"] .bg-\[\#222E31\],
+html[data-theme="dim"] .bg-\[\#252D30\],
+html[data-theme="dim"] .bg-\[\#253235\] {
+  background-color: #273438 !important;
+}
+html[data-theme="dim"] .border-arena-border,
+html[data-theme="dim"] .border-\[\#222E31\],
+html[data-theme="dim"] .border-\[\#253235\],
+html[data-theme="dim"] .border-\[\#28373B\],
+html[data-theme="dim"] .border-\[\#28383B\],
+html[data-theme="dim"] .border-\[\#2B3538\],
+html[data-theme="dim"] .border-\[\#2B393D\],
+html[data-theme="dim"] .border-\[\#2F3E42\] {
+  border-color: #313F44 !important;
+}
+
+/* Pure Midnight Theme (#050708 / Pure Black) */
+html[data-theme="midnight"] body {
+  background-color: #050708 !important;
+}
+html[data-theme="midnight"] .bg-arena-bg,
+html[data-theme="midnight"] .bg-\[\#101314\],
+html[data-theme="midnight"] .bg-\[\#141A1C\],
+html[data-theme="midnight"] .bg-\[\#141B1D\],
+html[data-theme="midnight"] .bg-\[\#0A0D0E\],
+html[data-theme="midnight"] .bg-\[\#0F1416\] {
+  background-color: #080A0B !important;
+}
+html[data-theme="midnight"] .bg-arena-surface,
+html[data-theme="midnight"] .bg-\[\#161F22\],
+html[data-theme="midnight"] .bg-\[\#182124\],
+html[data-theme="midnight"] .bg-\[\#182225\],
+html[data-theme="midnight"] .bg-\[\#1C2426\],
+html[data-theme="midnight"] .bg-\[\#1C2528\],
+html[data-theme="midnight"] .bg-\[\#1A2225\],
+html[data-theme="midnight"] .bg-\[\#1A2528\],
+html[data-theme="midnight"] .bg-\[\#1F2729\] {
+  background-color: #0D1113 !important;
+}
+html[data-theme="midnight"] .bg-arena-elevated,
+html[data-theme="midnight"] .bg-\[\#222E31\],
+html[data-theme="midnight"] .bg-\[\#252D30\],
+html[data-theme="midnight"] .bg-\[\#253235\] {
+  background-color: #14191C !important;
+}
+html[data-theme="midnight"] .border-arena-border,
+html[data-theme="midnight"] .border-\[\#222E31\],
+html[data-theme="midnight"] .border-\[\#253235\],
+html[data-theme="midnight"] .border-\[\#28373B\],
+html[data-theme="midnight"] .border-\[\#28383B\],
+html[data-theme="midnight"] .border-\[\#2B3538\],
+html[data-theme="midnight"] .border-\[\#2B393D\],
+html[data-theme="midnight"] .border-\[\#2F3E42\] {
+  border-color: #1A2226 !important;
+}
+
+/* ========================================================================= */
+/* DYNAMIC ACCENT COLORS (data-accent)                                       */
+/* ========================================================================= */
+
+/* Cyber Cyan Accent */
+html[data-accent="cyan"] .btn-primary,
+html[data-accent="cyan"] .bg-arena-amber,
+html[data-accent="cyan"] .bg-\[\#FFAD42\] {
+  background-color: #00E5FF !important;
+  color: #0A0D0E !important;
+}
+html[data-accent="cyan"] .btn-primary:hover,
+html[data-accent="cyan"] .hover\:bg-arena-amberHover:hover,
+html[data-accent="cyan"] .hover\:bg-\[\#F29F30\]:hover {
+  background-color: #00C8E0 !important;
+}
+html[data-accent="cyan"] .text-arena-amber,
+html[data-accent="cyan"] .text-\[\#FFAD42\] {
+  color: #00E5FF !important;
+}
+html[data-accent="cyan"] .border-arena-amber,
+html[data-accent="cyan"] .border-\[\#FFAD42\] {
+  border-color: #00E5FF !important;
+}
+html[data-accent="cyan"] .ring-\[\#FFAD42\] {
+  --tw-ring-color: #00E5FF !important;
+}
+
+/* Emerald Teal Accent */
+html[data-accent="emerald"] .btn-primary,
+html[data-accent="emerald"] .bg-arena-amber,
+html[data-accent="emerald"] .bg-\[\#FFAD42\] {
+  background-color: #10B981 !important;
+  color: #0A0D0E !important;
+}
+html[data-accent="emerald"] .btn-primary:hover,
+html[data-accent="emerald"] .hover\:bg-arena-amberHover:hover,
+html[data-accent="emerald"] .hover\:bg-\[\#F29F30\]:hover {
+  background-color: #059669 !important;
+}
+html[data-accent="emerald"] .text-arena-amber,
+html[data-accent="emerald"] .text-\[\#FFAD42\] {
+  color: #10B981 !important;
+}
+html[data-accent="emerald"] .border-arena-amber,
+html[data-accent="emerald"] .border-\[\#FFAD42\] {
+  border-color: #10B981 !important;
+}
+html[data-accent="emerald"] .ring-\[\#FFAD42\] {
+  --tw-ring-color: #10B981 !important;
+}
+
+/* Lime Green Accent */
+html[data-accent="lime"] .btn-primary,
+html[data-accent="lime"] .bg-arena-amber,
+html[data-accent="lime"] .bg-\[\#FFAD42\] {
+  background-color: #B5FF4A !important;
+  color: #0A0D0E !important;
+}
+html[data-accent="lime"] .btn-primary:hover,
+html[data-accent="lime"] .hover\:bg-arena-amberHover:hover,
+html[data-accent="lime"] .hover\:bg-\[\#F29F30\]:hover {
+  background-color: #9FE63B !important;
+}
+html[data-accent="lime"] .text-arena-amber,
+html[data-accent="lime"] .text-\[\#FFAD42\] {
+  color: #B5FF4A !important;
+}
+html[data-accent="lime"] .border-arena-amber,
+html[data-accent="lime"] .border-\[\#FFAD42\] {
+  border-color: #B5FF4A !important;
+}
+html[data-accent="lime"] .ring-\[\#FFAD42\] {
+  --tw-ring-color: #B5FF4A !important;
+}
+
+/* ========================================================================= */
+/* DYNAMIC LAYOUT DENSITY (data-density)                                     */
+/* ========================================================================= */
+html[data-density="compact"] .page-container {
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+  padding-top: 1rem !important;
+  padding-bottom: 1rem !important;
+}
+html[data-density="compact"] .py-8 {
+  padding-top: 1.25rem !important;
+  padding-bottom: 1.25rem !important;
+}
+html[data-density="compact"] .p-6,
+html[data-density="compact"] .p-7 {
+  padding: 1rem !important;
+}
+html[data-density="compact"] .p-4 {
+  padding: 0.65rem 0.85rem !important;
+}
+html[data-density="compact"] .space-y-6 > * + * {
+  margin-top: 0.95rem !important;
+}
+html[data-density="compact"] .space-y-4 > * + * {
+  margin-top: 0.65rem !important;
+}
+html[data-density="compact"] .gap-6 {
+  gap: 0.9rem !important;
+}
+html[data-density="compact"] .gap-4 {
+  gap: 0.65rem !important;
+}
+html[data-density="compact"] table th {
+  padding-top: 0.35rem !important;
+  padding-bottom: 0.35rem !important;
+  font-size: 0.7rem !important;
+}
+html[data-density="compact"] table td {
+  padding-top: 0.4rem !important;
+  padding-bottom: 0.4rem !important;
+  font-size: 0.75rem !important;
+}
+html[data-density="compact"] .arena-card,
+html[data-density="compact"] .arena-card-elevated {
+  border-radius: 0.75rem !important;
+}
+
+/* ========================================================================= */
+/* ACCESSIBILITY: REDUCED MOTION (.reduce-motion)                            */
+/* ========================================================================= */
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+html.reduce-motion .animate-pulse,
+html.reduce-motion .animate-bounce,
+html.reduce-motion .animate-spin,
+html.reduce-motion .animate-spin-slow,
+html.reduce-motion .animate-float-slow,
+html.reduce-motion .animate-float-alt,
+html.reduce-motion .animate-glow-pulse {
+  animation: none !important;
+}
+

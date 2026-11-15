@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, RefreshCw, Share2, Trophy, HelpCircle, Check, X, Flame } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Share2, Trophy, HelpCircle, Check, X, Flame, Sparkles } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { sound } from '../../utils/sound';
 import confetti from 'canvas-confetti';
@@ -71,8 +71,24 @@ export const PatternMaster: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [selectedOption, setSelectedOption] = useState<string | number | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [gameOver, setGameOver] = useState(false);
+  const [difficulty, setDifficulty] = useState<'easy' | 'normal'>('easy');
+  const [showHint, setShowHint] = useState<boolean>(false);
 
   const currentPattern = PATTERNS[currentIndex];
+
+  // In Easy mode or when hint is clicked, eliminate 2 wrong options for a 50/50 choice
+  const eliminatedOptions = React.useMemo(() => {
+    if (difficulty === 'easy' || showHint) {
+      const wrong = currentPattern.options.filter(opt => opt !== currentPattern.answer);
+      return wrong.slice(0, 2);
+    }
+    return [];
+  }, [difficulty, showHint, currentPattern]);
+
+  const handleHint = () => {
+    sound.playClick();
+    setShowHint(true);
+  };
 
   const handleSelectOption = (opt: string | number) => {
     if (isAnswered || gameOver) return;
@@ -85,7 +101,7 @@ export const PatternMaster: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     if (isCorrect) {
       sound.playCorrect();
       const newStreak = streak + 1;
-      const pts = 100 + newStreak * 25;
+      const pts = (difficulty === 'easy' ? 80 : 100) + newStreak * 25;
       setScore(prev => prev + pts);
       setStreak(newStreak);
     } else {
@@ -96,6 +112,7 @@ export const PatternMaster: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   const handleNext = () => {
     sound.playClick();
+    setShowHint(false);
     if (currentIndex + 1 >= PATTERNS.length) {
       sound.playVictory();
       setGameOver(true);
@@ -115,6 +132,7 @@ export const PatternMaster: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     setStreak(0);
     setSelectedOption(null);
     setIsAnswered(false);
+    setShowHint(false);
     setGameOver(false);
   };
 
@@ -151,10 +169,49 @@ export const PatternMaster: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           <h2 className="text-sm font-bold text-arena-textPrimary">Pattern Master</h2>
           <span className="text-[11px] text-arena-textSubtle">Round {currentIndex + 1} of {PATTERNS.length}</span>
         </div>
-        <button onClick={handleRestart} className="p-1.5 text-arena-textSecondary hover:text-arena-textPrimary">
-          <RefreshCw className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => { sound.playClick(); setDifficulty(d => d === 'easy' ? 'normal' : 'easy'); }}
+            className={`px-2 py-1 rounded text-[11px] font-medium border transition-colors ${
+              difficulty === 'easy'
+                ? 'bg-arena-success/15 border-arena-success/30 text-arena-success'
+                : 'bg-arena-elevated border-arena-border text-arena-textSecondary'
+            }`}
+            title="Toggle game difficulty"
+          >
+            {difficulty === 'easy' ? '🟢 Easy' : '🟡 Normal'}
+          </button>
+          <button
+            onClick={handleHint}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-arena-amber/15 hover:bg-arena-amber/25 border border-arena-amber/30 text-arena-amber text-xs font-semibold shadow-sm transition-all"
+            title="Corner Hint: Eliminates 2 wrong answers and reveals pattern rule"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-arena-amber animate-pulse" />
+            <span>💡 Hint</span>
+          </button>
+          <button onClick={handleRestart} className="p-1.5 text-arena-textSecondary hover:text-arena-textPrimary">
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        </div>
       </div>
+
+      {/* Floating Corner Hint Banner */}
+      {showHint && !isAnswered && (
+        <div className="w-full mb-3 p-3 rounded-lg bg-arena-amber/10 border border-arena-amber/30 text-arena-textPrimary text-xs flex items-start justify-between gap-2 animate-in fade-in">
+          <div className="flex items-start gap-2">
+            <span className="text-base leading-none">💡</span>
+            <div>
+              <span className="font-semibold text-arena-amber block">Corner Hint (50/50 Applied)</span>
+              <span className="text-arena-textSecondary text-[11px] leading-tight block mt-0.5">
+                {currentPattern.explanation.split('.')[0]}. Two wrong choices have been removed for you!
+              </span>
+            </div>
+          </div>
+          <button onClick={() => setShowHint(false)} className="text-arena-textSubtle hover:text-arena-textPrimary p-0.5">
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Stats Bar */}
       <div className="w-full grid grid-cols-2 gap-2 mb-4">
@@ -194,9 +251,12 @@ export const PatternMaster: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             {currentPattern.options.map((opt, idx) => {
               const isSelected = selectedOption === opt;
               const isCorrectOpt = opt === currentPattern.answer;
+              const isEliminated = eliminatedOptions.includes(opt);
               let btnClass = 'bg-arena-surface hover:bg-arena-elevated border-arena-border text-arena-textPrimary';
 
-              if (isAnswered) {
+              if (isEliminated && !isAnswered) {
+                btnClass = 'bg-arena-surface/30 opacity-30 border-arena-border line-through text-arena-textSubtle cursor-not-allowed';
+              } else if (isAnswered) {
                 if (isCorrectOpt) {
                   btnClass = 'bg-arena-success text-slate-950 font-bold border-arena-success';
                 } else if (isSelected && !isCorrectOpt) {
@@ -210,12 +270,13 @@ export const PatternMaster: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 <button
                   key={idx}
                   onClick={() => handleSelectOption(opt)}
-                  disabled={isAnswered}
+                  disabled={isAnswered || isEliminated}
                   className={`p-3.5 rounded-lg border font-semibold text-base transition-all active:scale-98 flex items-center justify-center gap-2 ${btnClass}`}
                 >
                   <span>{opt}</span>
                   {isAnswered && isCorrectOpt && <Check className="w-4 h-4 text-slate-950" />}
                   {isAnswered && isSelected && !isCorrectOpt && <X className="w-4 h-4 text-arena-error" />}
+                  {isEliminated && !isAnswered && <span className="text-[10px] text-arena-textSubtle no-underline font-mono ml-1">(50/50 out)</span>}
                 </button>
               );
             })}

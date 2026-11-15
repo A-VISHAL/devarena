@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, RefreshCw, Share2, Trophy, Timer, AlertCircle, Zap } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Share2, Trophy, Timer, AlertCircle, Zap, Sparkles } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { sound } from '../../utils/sound';
 import confetti from 'canvas-confetti';
@@ -10,8 +10,10 @@ interface LevelConfig {
   hint: string;
 }
 
-function generateLevel(level: number): LevelConfig {
-  const gridSize = level <= 3 ? 3 : level <= 7 ? 4 : 5;
+function generateLevel(level: number, difficulty: 'easy' | 'normal' = 'easy'): LevelConfig {
+  const gridSize = difficulty === 'easy'
+    ? (level <= 4 ? 3 : 4)
+    : (level <= 3 ? 3 : level <= 7 ? 4 : 5);
   const totalCells = gridSize * gridSize;
   const oddIndex = Math.floor(Math.random() * totalCells);
 
@@ -22,8 +24,8 @@ function generateLevel(level: number): LevelConfig {
 
   if (type === 'symbol') {
     const pairs = [
-      { normal: '▲', odd: '▼', hint: 'Inverted triangle' },
-      { normal: '◆', odd: '◇', hint: 'Hollow diamond' },
+      { normal: '▲', odd: '▼', hint: 'Inverted triangle (pointing down)' },
+      { normal: '◆', odd: '◇', hint: 'Hollow outline diamond' },
       { normal: '●', odd: '◐', hint: 'Half-filled circle' },
       { normal: '★', odd: '☆', hint: 'Outline star' },
       { normal: '⬟', odd: '⬢', hint: 'Hexagon vs Pentagon' }
@@ -38,9 +40,9 @@ function generateLevel(level: number): LevelConfig {
     return { gridSize, items, hint: pair.hint };
   } else if (type === 'color') {
     const baseLightness = 22;
-    const diffDelta = Math.max(5, 18 - level * 1.5);
+    const diffDelta = difficulty === 'easy' ? 22 : Math.max(7, 18 - level * 1.5);
     const normalBg = `hsl(215, 20%, ${baseLightness}%)`;
-    const oddBg = `hsl(215, 25%, ${baseLightness + diffDelta}%)`;
+    const oddBg = `hsl(215, 30%, ${baseLightness + diffDelta}%)`;
 
     for (let i = 0; i < totalCells; i++) {
       items.push({
@@ -49,7 +51,7 @@ function generateLevel(level: number): LevelConfig {
         isOdd: i === oddIndex
       });
     }
-    return { gridSize, items, hint: 'Identify the subtle shade variant' };
+    return { gridSize, items, hint: 'Identify the brighter shade variant' };
   } else if (type === 'rotation') {
     const icon = '➤';
     for (let i = 0; i < totalCells; i++) {
@@ -59,7 +61,7 @@ function generateLevel(level: number): LevelConfig {
         isOdd: i === oddIndex
       });
     }
-    return { gridSize, items, hint: 'Opposite pointing orientation' };
+    return { gridSize, items, hint: 'Opposite pointing arrow direction' };
   } else {
     const baseNum = 20 + level * 2;
     for (let i = 0; i < totalCells; i++) {
@@ -76,12 +78,14 @@ function generateLevel(level: number): LevelConfig {
 export const OddOneOut: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { recordCasualGameResult, openShareModal } = useApp();
 
+  const [difficulty, setDifficulty] = useState<'easy' | 'normal'>('easy');
   const [level, setLevel] = useState<number>(1);
   const [score, setScore] = useState<number>(0);
   const [streak, setStreak] = useState<number>(0);
-  const [timeLeft, setTimeLeft] = useState<number>(15);
+  const [timeLeft, setTimeLeft] = useState<number>(25);
+  const [showHint, setShowHint] = useState<boolean>(false);
   const [gameOver, setGameOver] = useState<boolean>(false);
-  const [levelConfig, setLevelConfig] = useState<LevelConfig>(() => generateLevel(1));
+  const [levelConfig, setLevelConfig] = useState<LevelConfig>(() => generateLevel(1, 'easy'));
 
   const maxLevels = 10;
 
@@ -121,6 +125,7 @@ export const OddOneOut: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       const newStreak = streak + 1;
       setScore(newScore);
       setStreak(newStreak);
+      setShowHint(false);
 
       if (level >= maxLevels) {
         sound.playVictory();
@@ -130,24 +135,40 @@ export const OddOneOut: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       } else {
         const nextLevel = level + 1;
         setLevel(nextLevel);
-        setTimeLeft(Math.max(8, 16 - nextLevel));
-        setLevelConfig(generateLevel(nextLevel));
+        const nextTime = difficulty === 'easy' ? 25 : Math.max(8, 16 - nextLevel);
+        setTimeLeft(nextTime);
+        setLevelConfig(generateLevel(nextLevel, difficulty));
       }
     } else {
       sound.playWrong();
       setStreak(0);
-      setTimeLeft(prev => Math.max(1, prev - 3));
+      if (difficulty === 'normal') {
+        setTimeLeft(prev => Math.max(1, prev - 3));
+      }
     }
   };
 
-  const handleRestart = () => {
+  const handleRestart = (diff = difficulty) => {
     sound.playClick();
     setLevel(1);
     setScore(0);
     setStreak(0);
-    setTimeLeft(15);
+    setTimeLeft(diff === 'easy' ? 25 : 15);
+    setShowHint(false);
     setGameOver(false);
-    setLevelConfig(generateLevel(1));
+    setLevelConfig(generateLevel(1, diff));
+  };
+
+  const toggleDifficulty = () => {
+    sound.playClick();
+    const nextDiff = difficulty === 'easy' ? 'normal' : 'easy';
+    setDifficulty(nextDiff);
+    handleRestart(nextDiff);
+  };
+
+  const handleHint = () => {
+    sound.playClick();
+    setShowHint(true);
   };
 
   const handleShare = () => {
@@ -162,6 +183,9 @@ export const OddOneOut: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       ]
     });
   };
+
+  // Find odd item index for hint highlighting
+  const oddIndex = levelConfig.items.findIndex(it => it.isOdd);
 
   return (
     <div className="w-full max-w-xl mx-auto py-6 px-4 flex flex-col items-center animate-in fade-in">
@@ -178,14 +202,53 @@ export const OddOneOut: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           <h2 className="text-sm font-bold text-arena-textPrimary">Odd One Out</h2>
           <span className="text-[11px] text-arena-textSubtle">Level {level} of {maxLevels}</span>
         </div>
-        <button
-          onClick={handleRestart}
-          className="p-1.5 text-arena-textSecondary hover:text-arena-textPrimary"
-          title="Restart"
-        >
-          <RefreshCw className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={toggleDifficulty}
+            className={`px-2 py-1 rounded text-[11px] font-medium border transition-colors ${
+              difficulty === 'easy'
+                ? 'bg-arena-success/15 border-arena-success/30 text-arena-success'
+                : 'bg-arena-elevated border-arena-border text-arena-textSecondary'
+            }`}
+            title="Toggle difficulty (Easy gives 25s and no penalty)"
+          >
+            {difficulty === 'easy' ? '🟢 Easy' : '🟡 Normal'}
+          </button>
+          <button
+            onClick={handleHint}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-arena-amber/15 hover:bg-arena-amber/25 border border-arena-amber/30 text-arena-amber text-xs font-semibold shadow-sm transition-all"
+            title="Corner Hint: Highlights the odd item quadrant"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-arena-amber animate-pulse" />
+            <span>💡 Hint</span>
+          </button>
+          <button
+            onClick={() => handleRestart(difficulty)}
+            className="p-1.5 text-arena-textSecondary hover:text-arena-textPrimary"
+            title="Restart"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        </div>
       </div>
+
+      {/* Floating Corner Hint Banner */}
+      {showHint && !gameOver && (
+        <div className="w-full mb-3 p-3 rounded-lg bg-arena-amber/10 border border-arena-amber/30 text-arena-textPrimary text-xs flex items-start justify-between gap-2 animate-in fade-in">
+          <div className="flex items-start gap-2">
+            <span className="text-base leading-none">💡</span>
+            <div>
+              <span className="font-semibold text-arena-amber block">Corner Clue:</span>
+              <span className="text-arena-textSecondary text-[11px] leading-tight block mt-0.5">
+                Look for {levelConfig.hint}. The odd tile is pulsing with an amber border glow!
+              </span>
+            </div>
+          </div>
+          <button onClick={() => setShowHint(false)} className="text-arena-textSubtle hover:text-arena-textPrimary p-0.5">
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Stats Bar */}
       <div className="w-full grid grid-cols-3 gap-2 mb-4">
@@ -209,10 +272,10 @@ export const OddOneOut: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         </div>
       </div>
 
-      {/* Hint */}
+      {/* Hint Pill */}
       <p className="text-xs text-arena-textSecondary mb-4 flex items-center gap-1.5 font-medium">
         <AlertCircle className="w-3.5 h-3.5 text-arena-teal" />
-        <span>Hint: {levelConfig.hint}</span>
+        <span>Target: {levelConfig.hint}</span>
       </p>
 
       {/* Grid */}
@@ -223,19 +286,26 @@ export const OddOneOut: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             gridTemplateColumns: `repeat(${levelConfig.gridSize}, minmax(0, 1fr))`
           }}
         >
-          {levelConfig.items.map((item, idx) => (
-            <button
-              key={idx}
-              onClick={() => handleCellClick(item.isOdd)}
-              className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg border border-arena-border hover:border-arena-borderHover flex items-center justify-center text-lg font-bold transition-all active:scale-95 text-arena-textPrimary"
-              style={{
-                backgroundColor: item.bg || '#242A2D',
-                transform: item.rotate ? `rotate(${item.rotate}deg)` : undefined
-              }}
-            >
-              {item.text}
-            </button>
-          ))}
+          {levelConfig.items.map((item, idx) => {
+            const isTargetHinted = showHint && item.isOdd;
+            return (
+              <button
+                key={idx}
+                onClick={() => handleCellClick(item.isOdd)}
+                className={`w-14 h-14 sm:w-16 sm:h-16 rounded-lg border flex items-center justify-center text-lg font-bold transition-all active:scale-95 text-arena-textPrimary ${
+                  isTargetHinted 
+                    ? 'border-arena-amber bg-arena-amber/20 ring-2 ring-arena-amber animate-pulse' 
+                    : 'border-arena-border hover:border-arena-borderHover'
+                }`}
+                style={{
+                  backgroundColor: item.bg || (isTargetHinted ? undefined : '#242A2D'),
+                  transform: item.rotate ? `rotate(${item.rotate}deg)` : undefined
+                }}
+              >
+                {item.text}
+              </button>
+            );
+          })}
         </div>
       ) : (
         /* Game Over Screen */
@@ -253,7 +323,7 @@ export const OddOneOut: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </div>
 
           <div className="flex gap-2 pt-2">
-            <button onClick={handleRestart} className="btn-secondary flex-1 py-2 text-xs">
+            <button onClick={() => handleRestart(difficulty)} className="btn-secondary flex-1 py-2 text-xs">
               Play Again
             </button>
             <button onClick={handleShare} className="btn-primary flex-1 py-2 text-xs gap-1.5">

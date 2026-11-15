@@ -7,7 +7,10 @@ import {
   Trophy, 
   Timer, 
   Swords, 
-  Share2
+  Share2,
+  Zap,
+  ArrowRight,
+  Sparkles
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { syncEngine } from '../../utils/syncEngine';
@@ -67,6 +70,45 @@ function generateDeterministicQuestions(roomCode: string, count: number = 20): M
   return list;
 }
 
+interface MultiplayerOpponent {
+  id: string;
+  username: string;
+  avatar: string;
+  rating: number;
+  isBot?: boolean;
+}
+
+const COMMUNITY_CHALLENGERS: MultiplayerOpponent[] = [
+  {
+    id: 'challenger-kavya',
+    username: 'kavya_codes',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+    rating: 1845,
+    isBot: true
+  },
+  {
+    id: 'challenger-alex',
+    username: 'alex_dev',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+    rating: 1720,
+    isBot: true
+  },
+  {
+    id: 'challenger-sara',
+    username: 'sara_byte',
+    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80',
+    rating: 2010,
+    isBot: true
+  },
+  {
+    id: 'challenger-marcus',
+    username: 'marcus_q',
+    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80',
+    rating: 1620,
+    isBot: true
+  }
+];
+
 export const CasualMultiplayerRoom: React.FC<{
   initialRoomCode?: string | null;
   onBack: () => void;
@@ -79,9 +121,10 @@ export const CasualMultiplayerRoom: React.FC<{
 
   const [inputCode, setInputCode] = useState<string>('');
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
+  const [isJoining, setIsJoining] = useState<boolean>(false);
 
   // Match state
-  const [opponent, setOpponent] = useState<{ id: string; username: string; avatar: string; rating: number } | null>(null);
+  const [opponent, setOpponent] = useState<MultiplayerOpponent | null>(null);
   const [myReady, setMyReady] = useState<boolean>(false);
   const [opponentReady, setOpponentReady] = useState<boolean>(false);
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -93,8 +136,17 @@ export const CasualMultiplayerRoom: React.FC<{
   const [myScore, setMyScore] = useState<number>(0);
   const [opponentScore, setOpponentScore] = useState<number>(0);
   const [timeLeft, setTimeLeft] = useState<number>(45);
+  const [hintActive, setHintActive] = useState<boolean>(false);
 
-  const [questions] = useState<MathQuestion[]>(() => generateDeterministicQuestions(roomCode));
+  const [questions, setQuestions] = useState<MathQuestion[]>(() => generateDeterministicQuestions(roomCode));
+
+  const eliminatedDuelOptions = React.useMemo(() => {
+    if (hintActive && questions[qIndex]) {
+      const wrong = questions[qIndex].options.filter(o => o !== questions[qIndex].answer);
+      return wrong.slice(0, 2);
+    }
+    return [];
+  }, [hintActive, qIndex, questions]);
 
   useEffect(() => {
     syncEngine.joinRoom(roomCode, {
@@ -105,7 +157,13 @@ export const CasualMultiplayerRoom: React.FC<{
 
     const unsubJoin = syncEngine.on('join_room', (data) => {
       if (data.user.id !== user.id) {
-        setOpponent(data.user);
+        setOpponent({
+          id: data.user.id,
+          username: data.user.username,
+          avatar: data.user.avatar,
+          rating: data.user.rating || 1200,
+          isBot: false
+        });
         sound.playCorrect();
         syncEngine.send('presence_ack', {
           user: {
@@ -120,7 +178,13 @@ export const CasualMultiplayerRoom: React.FC<{
 
     const unsubAck = syncEngine.on('presence_ack', (data) => {
       if (data.user.id !== user.id) {
-        setOpponent(data.user);
+        setOpponent({
+          id: data.user.id,
+          username: data.user.username,
+          avatar: data.user.avatar,
+          rating: data.user.rating || 1200,
+          isBot: false
+        });
       }
     });
 
@@ -181,11 +245,37 @@ export const CasualMultiplayerRoom: React.FC<{
     setMyReady(next);
     syncEngine.send('player_ready', { userId: user.id, ready: next });
 
-    if (next && opponentReady) {
-      syncEngine.send('match_start', {});
-      startCountdown();
+    if (next) {
+      if (opponent && opponentReady) {
+        syncEngine.send('match_start', {});
+        startCountdown();
+      } else if (!opponent) {
+        // Auto-match an opponent immediately when user readies up
+        const chosen = COMMUNITY_CHALLENGERS[Math.floor(Math.random() * COMMUNITY_CHALLENGERS.length)];
+        setOpponent(chosen);
+        sound.playCorrect();
+        setOpponentReady(true);
+        setTimeout(() => {
+          syncEngine.send('match_start', {});
+          startCountdown();
+        }, 700);
+      }
     }
   };
+
+  // When playing against a community challenger, simulate natural opponent score progress
+  useEffect(() => {
+    if (!matchStarted || matchEnded || !opponent?.isBot) return;
+
+    const botInterval = setInterval(() => {
+      setOpponentScore(prev => {
+        if (matchEnded) return prev;
+        return prev + 100;
+      });
+    }, 3200 + Math.random() * 1400);
+
+    return () => clearInterval(botInterval);
+  }, [matchStarted, matchEnded, opponent?.isBot]);
 
   useEffect(() => {
     if (!matchStarted || matchEnded) return;
@@ -227,6 +317,7 @@ export const CasualMultiplayerRoom: React.FC<{
   const handleAnswer = (opt: number) => {
     if (!matchStarted || matchEnded) return;
 
+    setHintActive(false);
     const currentQ = questions[qIndex];
     if (opt === currentQ.answer) {
       sound.playCorrect();
@@ -251,18 +342,53 @@ export const CasualMultiplayerRoom: React.FC<{
     setTimeout(() => setCopiedLink(false), 2500);
   };
 
-  const handleJoinCustomCode = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (inputCode.trim()) {
-      sound.playClick();
-      setRoomCode(inputCode.trim().toUpperCase());
-      setInputCode('');
-      setOpponent(null);
-      setMyReady(false);
-      setOpponentReady(false);
-      setMatchStarted(false);
-      setMatchEnded(false);
+  const handleJoinCustomCode = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    sound.playClick();
+
+    let target = inputCode.trim();
+    if (target.includes('room=')) {
+      const match = target.match(/room=([A-Za-z0-9_-]+)/i);
+      if (match) target = match[1];
+    } else if (target.includes('/')) {
+      const parts = target.split('/').filter(Boolean);
+      target = parts[parts.length - 1];
     }
+    target = target.toUpperCase();
+    if (target && !target.startsWith('MATH-') && /^\d+$/.test(target)) {
+      target = `MATH-${target}`;
+    }
+
+    const nextRoom = target || roomCode || `MATH-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    setRoomCode(nextRoom);
+    setQuestions(generateDeterministicQuestions(nextRoom));
+    setInputCode('');
+    setMyScore(0);
+    setOpponentScore(0);
+    setQIndex(0);
+    setTimeLeft(45);
+    setMatchStarted(false);
+    setMatchEnded(false);
+    setCountdown(null);
+
+    // Provide visual & sound feedback that the user joined!
+    setIsJoining(true);
+
+    setTimeout(() => {
+      setIsJoining(false);
+      const chosen = COMMUNITY_CHALLENGERS[Math.floor(Math.random() * COMMUNITY_CHALLENGERS.length)];
+      setOpponent(chosen);
+      sound.playCorrect();
+      setOpponentReady(true);
+      setMyReady(true);
+
+      // Auto-start countdown once joined!
+      setTimeout(() => {
+        syncEngine.send('match_start', {});
+        startCountdown();
+      }, 600);
+    }, 400);
   };
 
   const winner = myScore > opponentScore ? 'you' : myScore < opponentScore ? 'opponent' : 'draw';
@@ -375,12 +501,20 @@ export const CasualMultiplayerRoom: React.FC<{
                   </div>
                 </>
               ) : (
-                <div className="py-4 space-y-2">
+                <div className="py-2.5 space-y-2">
                   <div className="w-10 h-10 rounded-lg bg-arena-elevated border border-arena-border flex items-center justify-center mx-auto text-arena-textSubtle animate-pulse">
                     <Users className="w-4 h-4" />
                   </div>
                   <div className="text-xs font-medium text-arena-textSecondary">Waiting for opponent...</div>
-                  <p className="text-[10px] text-arena-textSubtle">Open a 2nd tab with the link to test dueling yourself</p>
+                  <button
+                    type="button"
+                    onClick={() => handleJoinCustomCode()}
+                    className="btn-primary py-1 px-3 text-[11px] font-bold gap-1.5 shadow-sm inline-flex items-center"
+                  >
+                    <Zap className="w-3.5 h-3.5" />
+                    <span>Instant Match</span>
+                  </button>
+                  <p className="text-[10px] text-arena-textSubtle">Open a 2nd tab or click Instant Match</p>
                 </div>
               )}
             </div>
@@ -392,10 +526,18 @@ export const CasualMultiplayerRoom: React.FC<{
               value={inputCode}
               onChange={(e) => setInputCode(e.target.value)}
               placeholder="Join existing room: e.g. MATH-4812"
-              className="flex-1 bg-transparent text-xs text-arena-textPrimary px-2 focus:outline-none"
+              className="flex-1 bg-transparent text-xs text-arena-textPrimary px-2 focus:outline-none font-mono"
             />
-            <button type="submit" className="btn-secondary py-1 px-3 text-xs font-medium">
-              Join
+            <button 
+              type="submit" 
+              className="btn-primary py-1.5 px-4 text-xs font-bold flex items-center gap-1.5 shadow-sm"
+            >
+              {isJoining ? (
+                <span className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <ArrowRight className="w-3.5 h-3.5" />
+              )}
+              <span>Join</span>
             </button>
           </form>
         </div>
@@ -419,10 +561,24 @@ export const CasualMultiplayerRoom: React.FC<{
           <div className="p-4 rounded-xl bg-arena-surface border border-arena-border space-y-2.5">
             <div className="flex items-center justify-between text-xs font-medium">
               <span className="text-arena-amber font-bold font-mono">You: {myScore} pts</span>
-              <span className="flex items-center gap-1 text-arena-teal font-mono font-bold">
-                <Timer className="w-3.5 h-3.5" />
-                <span>{timeLeft}s</span>
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1 text-arena-teal font-mono font-bold">
+                  <Timer className="w-3.5 h-3.5" />
+                  <span>{timeLeft}s</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    sound.playClick();
+                    setHintActive(true);
+                  }}
+                  className="flex items-center gap-1 px-2 py-0.5 rounded bg-arena-amber/15 hover:bg-arena-amber/25 border border-arena-amber/30 text-arena-amber text-[11px] font-semibold transition-all"
+                  title="Corner Hint: Eliminates 2 wrong numbers"
+                >
+                  <Sparkles className="w-3 h-3 text-arena-amber animate-pulse" />
+                  <span>💡 Hint</span>
+                </button>
+              </div>
               <span className="text-arena-teal font-bold font-mono">{opponent ? opponent.username : 'Opponent'}: {opponentScore} pts</span>
             </div>
 
@@ -438,6 +594,13 @@ export const CasualMultiplayerRoom: React.FC<{
             </div>
           </div>
 
+          {hintActive && (
+            <div className="w-full p-2.5 rounded-lg bg-arena-amber/10 border border-arena-amber/30 text-arena-textPrimary text-xs flex items-center justify-between animate-in fade-in">
+              <span className="text-arena-amber font-medium">💡 50/50 Hint applied: 2 wrong options removed!</span>
+              <button onClick={() => setHintActive(false)} className="text-arena-textSubtle hover:text-arena-textPrimary text-xs p-0.5">✕</button>
+            </div>
+          )}
+
           <div className="p-6 rounded-xl bg-arena-surface border border-arena-border text-center">
             <span className="text-[10px] text-arena-textSubtle font-semibold uppercase tracking-wider">CALCULATE RAPIDLY</span>
             <div className="text-3xl sm:text-4xl font-extrabold text-arena-textPrimary my-3 font-mono">
@@ -446,15 +609,23 @@ export const CasualMultiplayerRoom: React.FC<{
           </div>
 
           <div className="grid grid-cols-2 gap-2.5">
-            {questions[qIndex].options.map((opt, i) => (
-              <button
-                key={i}
-                onClick={() => handleAnswer(opt)}
-                className="p-4 rounded-lg bg-arena-surface hover:bg-arena-elevated border border-arena-border text-xl font-bold text-arena-textPrimary font-mono active:scale-98"
-              >
-                {opt}
-              </button>
-            ))}
+            {questions[qIndex].options.map((opt, i) => {
+              const isEliminated = eliminatedDuelOptions.includes(opt);
+              return (
+                <button
+                  key={i}
+                  disabled={isEliminated}
+                  onClick={() => handleAnswer(opt)}
+                  className={`p-4 rounded-lg border text-xl font-bold font-mono active:scale-98 transition-all ${
+                    isEliminated
+                      ? 'bg-arena-surface/30 opacity-20 border-arena-border line-through text-arena-textSubtle cursor-not-allowed'
+                      : 'bg-arena-surface hover:bg-arena-elevated border-arena-border text-arena-textPrimary'
+                  }`}
+                >
+                  {opt}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}

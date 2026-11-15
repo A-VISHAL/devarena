@@ -1,19 +1,21 @@
 import React, { useState } from 'react';
-import { 
-  Flame, 
-  Swords, 
-  Gamepad2, 
-  BookOpen, 
-  Users, 
-  Trophy, 
-  User, 
-  Volume2, 
-  VolumeX, 
+import {
+  Flame,
+  Swords,
+  Gamepad2,
+  BookOpen,
+  Users,
+  Trophy,
+  User,
+  Volume2,
+  VolumeX,
   Menu,
   X,
   Sparkles,
   Compass,
-  Layers
+  Layers,
+  FileSpreadsheet,
+  Wrench
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { NavigationTab } from '../../types';
@@ -23,11 +25,11 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ onOpenAccountModal }) => {
-  const { 
-    user, 
-    activeTab, 
-    setActiveTab, 
-    isSoundMuted, 
+  const {
+    user,
+    activeTab,
+    setActiveTab,
+    isSoundMuted,
     toggleSound,
     navigateToLanding
   } = useApp();
@@ -36,8 +38,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAccountModal }) => {
 
   const navItems: { id: NavigationTab; label: string; icon: React.ReactNode }[] = [
     { id: 'home', label: 'Home', icon: <Sparkles className="w-3.5 h-3.5" /> },
-    { id: 'play', label: 'Play', icon: <Gamepad2 className="w-3.5 h-3.5" /> },
     { id: 'arena', label: 'Code Arena', icon: <Swords className="w-3.5 h-3.5" /> },
+    { id: 'tools', label: 'Tools', icon: <Wrench className="w-3.5 h-3.5" /> },
+    { id: 'dsa-sheets', label: 'DSA Sheets', icon: <FileSpreadsheet className="w-3.5 h-3.5" /> },
+    { id: 'play', label: 'Play', icon: <Gamepad2 className="w-3.5 h-3.5" /> },
     { id: 'cards', label: 'Cards', icon: <Layers className="w-3.5 h-3.5" /> },
     { id: 'learn', label: 'Learn', icon: <BookOpen className="w-3.5 h-3.5" /> },
     { id: 'community', label: 'Community', icon: <Users className="w-3.5 h-3.5" /> },
@@ -48,17 +52,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAccountModal }) => {
   return (
     <header className="sticky top-0 z-50 bg-arena-bg border-b border-arena-border">
       <div className="w-[94%] max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
-        
+
         {/* Brand Logo - Minimal & Refined Midnight & Amber */}
         <div className="flex items-center gap-2">
-          <div 
+          <div
             onClick={() => setActiveTab('home')}
             className="flex items-center gap-2.5 cursor-pointer select-none group"
           >
             <div className="w-7 h-7 rounded-lg bg-arena-surface border border-arena-border flex items-center justify-center transition-colors group-hover:border-arena-borderHover">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-arena-amber">
-                <path d="M6 4L14 12L6 20" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                <circle cx="18" cy="18" r="2.5" fill="#83B6A3"/>
+                <path d="M6 4L14 12L6 20" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx="18" cy="18" r="2.5" fill="#83B6A3" />
               </svg>
             </div>
             <span className="font-bold text-sm tracking-tight text-arena-textPrimary">
@@ -84,11 +88,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAccountModal }) => {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                  isActive
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${isActive
                     ? 'bg-arena-elevated text-arena-textPrimary border border-arena-border shadow-subtle'
                     : 'text-arena-textSecondary hover:text-arena-textPrimary hover:bg-arena-elevated/50'
-                }`}
+                  }`}
               >
                 <span className={isActive ? 'text-arena-amber' : 'text-arena-textSubtle'}>
                   {item.icon}
@@ -115,7 +118,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAccountModal }) => {
           </button>
 
           {/* Streak Indicator */}
-          <div 
+          <div
             title={`${user.streak} day streak`}
             className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-lg bg-arena-surface border border-arena-border text-xs font-semibold text-arena-textPrimary"
           >
@@ -124,7 +127,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAccountModal }) => {
           </div>
 
           {/* Dev Rating Badge */}
-          <div 
+          <div
             title={`Rating: ${user.rating} Elo`}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-arena-surface border border-arena-border text-xs font-semibold text-arena-textPrimary font-mono"
           >
@@ -146,10 +149,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAccountModal }) => {
               onClick={() => setActiveTab('profile')}
               className="flex items-center gap-2 p-0.5 pr-2.5 rounded-lg bg-arena-surface border border-arena-border hover:border-arena-borderHover transition-colors"
             >
-              <img 
-                src={user.avatar} 
-                alt={user.username} 
-                className="w-6 h-6 rounded-md object-cover" 
+              <img
+                src={user.avatar}
+                alt={user.username}
+                className="w-6 h-6 rounded-md object-cover"
               />
               <span className="text-xs font-medium text-arena-textPrimary hidden sm:inline">{user.username}</span>
             </button>
@@ -175,11 +178,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAccountModal }) => {
                 setActiveTab(item.id);
                 setMobileMenuOpen(false);
               }}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium ${
-                activeTab === item.id 
-                  ? 'bg-arena-elevated text-arena-textPrimary border border-arena-border' 
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium ${activeTab === item.id
+                  ? 'bg-arena-elevated text-arena-textPrimary border border-arena-border'
                   : 'text-arena-textSecondary hover:bg-arena-elevated/50'
-              }`}
+                }`}
             >
               <div className="flex items-center gap-2.5">
                 <span className={activeTab === item.id ? 'text-arena-amber' : 'text-arena-textSubtle'}>

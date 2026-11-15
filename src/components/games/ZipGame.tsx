@@ -45,8 +45,16 @@ export const ZipGame: React.FC<{
   const GRID_SIZE = 6;
   const CHALLENGE_NUMBER = 42;
 
-  // Level Definition for Daily Zip #42
-  const checkpoints: NodeCheckpoint[] = [
+  // Level Difficulty Mode
+  const [difficulty, setDifficulty] = useState<'easy' | 'normal'>('easy');
+  const [hintMessage, setHintMessage] = useState<string>('');
+
+  // Level Definitions (Easy: 3 Checkpoints, 1 Obstacle; Normal: 6 Checkpoints, 5 Obstacles)
+  const checkpoints: NodeCheckpoint[] = difficulty === 'easy' ? [
+    { id: 1, r: 0, c: 0 },
+    { id: 2, r: 2, c: 2 },
+    { id: 3, r: 4, c: 4 }
+  ] : [
     { id: 1, r: 0, c: 0 },
     { id: 2, r: 0, c: 4 },
     { id: 3, r: 2, c: 2 },
@@ -55,7 +63,9 @@ export const ZipGame: React.FC<{
     { id: 6, r: 5, c: 5 }
   ];
 
-  const obstacles: Coord[] = [
+  const obstacles: Coord[] = difficulty === 'easy' ? [
+    { r: 1, c: 3 }
+  ] : [
     { r: 1, c: 1 },
     { r: 2, c: 4 },
     { r: 3, c: 2 },
@@ -205,6 +215,19 @@ export const ZipGame: React.FC<{
     setCurrentCheckpoint(maxReached - 1);
   };
 
+  const handleSwitchDifficulty = (newDiff: 'easy' | 'normal') => {
+    sound.playClick();
+    setDifficulty(newDiff);
+    setPath([{ r: 0, c: 0 }]);
+    setCurrentCheckpoint(1);
+    setMoveCount(0);
+    setSeconds(0);
+    setIsCompleted(false);
+    setIsRunning(true);
+    setHintCell(null);
+    setHintMessage('');
+  };
+
   const handleReset = () => {
     sound.playClick();
     setPath([{ r: 0, c: 0 }]);
@@ -214,6 +237,7 @@ export const ZipGame: React.FC<{
     setIsCompleted(false);
     setIsRunning(true);
     setHintCell(null);
+    setHintMessage('');
   };
 
   const handleHint = () => {
@@ -242,7 +266,11 @@ export const ZipGame: React.FC<{
         const distB = Math.abs(b.r - nextTarget.r) + Math.abs(b.c - nextTarget.c);
         return distA - distB;
       });
-      setHintCell(neighbors[0]);
+      const best = neighbors[0];
+      setHintCell(best);
+      setHintMessage(`Step towards Checkpoint #${currentCheckpoint + 1} at Row ${best.r + 1}, Col ${best.c + 1}. Follow the glowing tile!`);
+    } else {
+      setHintMessage(`No forward tile available. Click "Undo" to step back and take another path.`);
     }
   };
 
@@ -277,9 +305,28 @@ export const ZipGame: React.FC<{
                 <span className="text-[11px] font-mono text-arena-amber font-semibold px-2 py-0.2 rounded bg-arena-elevated border border-arena-border">
                   #{CHALLENGE_NUMBER}
                 </span>
-                <span className="text-[10px] font-medium px-2 py-0.2 rounded bg-arena-elevated text-arena-textSecondary border border-arena-border hidden md:inline">
-                  Daily Puzzle
-                </span>
+
+                {/* Difficulty Selector: Easy / Normal */}
+                <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-arena-elevated border border-arena-border">
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchDifficulty('easy')}
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+                      difficulty === 'easy' ? 'bg-arena-success text-slate-950 shadow-sm' : 'text-arena-textSubtle hover:text-white'
+                    }`}
+                  >
+                    Easy Mode
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchDifficulty('normal')}
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+                      difficulty === 'normal' ? 'bg-arena-amber text-slate-950 shadow-sm' : 'text-arena-textSubtle hover:text-white'
+                    }`}
+                  >
+                    Normal
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -292,6 +339,18 @@ export const ZipGame: React.FC<{
 
           {/* Action Controls */}
           <div className="flex items-center gap-2">
+            {/* CORNER HINT BUTTON */}
+            <button
+              type="button"
+              onClick={handleHint}
+              disabled={isCompleted}
+              className="px-2.5 py-1.5 rounded-lg bg-arena-amber/15 hover:bg-arena-amber/25 border border-arena-amber/40 text-arena-amber text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm active:scale-95 disabled:opacity-40"
+              title="Show next step hint"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>💡 Hint</span>
+            </button>
+
             <button
               onClick={handleUndo}
               disabled={path.length <= 1 || isCompleted}
@@ -385,15 +444,38 @@ export const ZipGame: React.FC<{
           </div>
 
           {/* Center Panel: The Game Board (Desktop 6 Cols) */}
-          <div className="lg:col-span-6 flex flex-col items-center order-1 lg:order-2">
+          <div className="lg:col-span-6 flex flex-col items-center order-1 lg:order-2 relative">
             
             {/* Status Feedback Pill */}
-            <div className="mb-4 flex items-center gap-2">
+            <div className="mb-3 flex items-center gap-2">
               <div className="px-3 py-1 rounded-full bg-arena-elevated border border-arena-border text-xs font-medium text-arena-textSecondary flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-arena-amber animate-pulse" />
                 <span>Next Target: <strong>Checkpoint {currentCheckpoint + 1 <= checkpoints.length ? currentCheckpoint + 1 : 'Complete'}</strong></span>
+                <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded font-bold ${difficulty === 'easy' ? 'text-arena-success bg-arena-success/15' : 'text-arena-amber bg-arena-amber/15'}`}>
+                  {difficulty.toUpperCase()}
+                </span>
               </div>
             </div>
+
+            {/* Corner Hint Banner */}
+            {hintMessage && (
+              <div className="w-full max-w-sm mb-3 p-3 rounded-xl bg-arena-amber/15 border border-arena-amber/50 flex items-start justify-between gap-2 shadow-lg animate-in slide-in-from-top-2">
+                <div className="flex items-start gap-2 text-xs">
+                  <span className="text-sm">💡</span>
+                  <div>
+                    <span className="font-bold text-arena-amber block">Corner Hint</span>
+                    <p className="text-arena-textPrimary text-[11px] leading-snug">{hintMessage}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setHintMessage('')}
+                  className="p-1 rounded text-arena-textSubtle hover:text-white"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
 
             {/* Interactive Zip Board */}
             <div 

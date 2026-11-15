@@ -321,6 +321,29 @@ export const PostItem: React.FC<PostItemProps> = ({
         </div>
       )}
 
+      {/* 5b. Puzzle / Game Result Banner (if Puzzle Streak / Challenge Result) */}
+      {post.type === 'puzzle_streak' && post.metadata && (
+        <div className="p-3.5 rounded-xl bg-[#12181A] border border-[#27373B] flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-arena-teal/15 border border-arena-teal/40 flex items-center justify-center text-arena-teal">
+              <Sparkles className="w-4 h-4 text-arena-teal" />
+            </div>
+            <div>
+              <span className="font-bold text-arena-textPrimary block">
+                {post.metadata.gameName || 'Daily Challenge'}
+              </span>
+              <span className="text-[11px] text-arena-textSubtle">
+                Verified Gameplay Execution • DEVARENA Certified
+              </span>
+            </div>
+          </div>
+
+          <span className="font-mono font-bold text-xs px-2.5 py-1 rounded bg-arena-amber/15 border border-arena-amber/40 text-arena-amber">
+            {post.metadata.score || 'Solved'}
+          </span>
+        </div>
+      )}
+
       {/* 6. Post Footer Action Bar */}
       <div className="pt-3 border-t border-[#232F32] flex flex-wrap items-center justify-between gap-3 text-xs text-arena-textSecondary">
         

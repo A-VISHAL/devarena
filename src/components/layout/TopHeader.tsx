@@ -1,10 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   Menu, 
   Bell, 
   Swords, 
   Flame, 
   User, 
+  Users,
   Volume2, 
   VolumeX, 
   Settings, 
@@ -36,7 +37,8 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
     setActiveTab, 
     isSoundMuted, 
     toggleSound,
-    navigateToLanding 
+    navigateToLanding,
+    settings 
   } = useApp();
 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -60,9 +62,10 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const notifications = [
+  const allNotifications = [
     {
       id: 'notif-1',
+      category: 'battle' as const,
       icon: <Swords className="w-4 h-4 text-arena-amber" />,
       title: '1v1 Duel Challenge',
       desc: '@alex_dev challenged you to Two Sum duel.',
@@ -72,6 +75,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
     },
     {
       id: 'notif-2',
+      category: 'daily' as const,
       icon: <Flame className="w-4 h-4 text-arena-warning" />,
       title: 'Streak Reminder',
       desc: "Solve today's Daily Word Puzzle to keep your streak!",
@@ -81,14 +85,37 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
     },
     {
       id: 'notif-3',
+      category: 'achievement' as const,
       icon: <Trophy className="w-4 h-4 text-arena-teal" />,
       title: 'Achievement Unlocked',
       desc: 'You unlocked the [Speed Thinker] card.',
       time: '3h ago',
       unread: false,
       actionTab: 'cards' as const
+    },
+    {
+      id: 'notif-4',
+      category: 'friend' as const,
+      icon: <Users className="w-4 h-4 text-arena-cyan" />,
+      title: 'Community Activity',
+      desc: '@kavya_codes shared a new verified victory card.',
+      time: '4h ago',
+      unread: false,
+      actionTab: 'community' as const
     }
   ];
+
+  const notifications = useMemo(() => {
+    return allNotifications.filter(n => {
+      if (n.category === 'battle' && settings?.battleInvites === false) return false;
+      if (n.category === 'daily' && settings?.dailyReminders === false) return false;
+      if (n.category === 'achievement' && settings?.achievementAlerts === false) return false;
+      if (n.category === 'friend' && settings?.friendActivity === false) return false;
+      return true;
+    });
+  }, [settings?.battleInvites, settings?.dailyReminders, settings?.achievementAlerts, settings?.friendActivity]);
+
+  const activeUnreadCount = notifications.filter(n => n.unread).length;
 
   return (
     <header className="sticky top-0 z-40 bg-arena-bg/95 backdrop-blur-md border-b border-arena-border h-14 shrink-0 transition-colors">
@@ -174,7 +201,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
               aria-label="Notifications"
             >
               <Bell className="w-4 h-4" />
-              {unreadNotifications > 0 && (
+              {notifications.length > 0 && unreadNotifications > 0 && (
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-arena-amber ring-2 ring-arena-bg" />
               )}
             </button>
@@ -185,13 +212,13 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                 <div className="flex items-center justify-between px-2 py-1.5 border-b border-[#232F32]">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-xs text-arena-textPrimary">Notifications</span>
-                    {unreadNotifications > 0 && (
+                    {notifications.length > 0 && unreadNotifications > 0 && (
                       <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-arena-amber/15 text-arena-amber border border-arena-amber/30">
-                        {unreadNotifications} new
+                        {Math.min(unreadNotifications, notifications.length)} new
                       </span>
                     )}
                   </div>
-                  {unreadNotifications > 0 && (
+                  {notifications.length > 0 && unreadNotifications > 0 && (
                     <button
                       onClick={() => setUnreadNotifications(0)}
                       className="text-[11px] text-arena-textSubtle hover:text-arena-textSecondary"
@@ -202,32 +229,48 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                 </div>
 
                 <div className="space-y-1 max-h-72 overflow-y-auto">
-                  {notifications.map(n => (
-                    <div
-                      key={n.id}
-                      onClick={() => {
-                        sound.playClick();
-                        setActiveTab(n.actionTab);
-                        setNotificationsOpen(false);
-                      }}
-                      className={`p-2.5 rounded-xl cursor-pointer transition-all flex items-start gap-2.5 ${
-                        n.unread ? 'bg-[#12181A] hover:bg-[#1A2427]' : 'hover:bg-[#12181A]/50 opacity-80'
-                      }`}
-                    >
-                      <div className="p-1.5 rounded-lg bg-[#182326] border border-[#27373B] shrink-0 mt-0.5">
-                        {n.icon}
-                      </div>
-                      <div className="flex-1 min-w-0 space-y-0.5">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-arena-textPrimary truncate">{n.title}</span>
-                          <span className="text-[10px] text-arena-textSubtle font-mono">{n.time}</span>
-                        </div>
-                        <p className="text-[11px] text-arena-textSecondary leading-snug line-clamp-2">
-                          {n.desc}
-                        </p>
-                      </div>
+                  {notifications.length === 0 ? (
+                    <div className="p-4 text-center text-xs text-arena-textSubtle space-y-1.5">
+                      <p>In-app alerts are paused by your settings.</p>
+                      <button
+                        onClick={() => {
+                          sound.playClick();
+                          setActiveTab('settings');
+                          setNotificationsOpen(false);
+                        }}
+                        className="text-arena-cyan hover:underline text-[11px] font-mono"
+                      >
+                        Configure Notifications ⚙
+                      </button>
                     </div>
-                  ))}
+                  ) : (
+                    notifications.map(n => (
+                      <div
+                        key={n.id}
+                        onClick={() => {
+                          sound.playClick();
+                          setActiveTab(n.actionTab);
+                          setNotificationsOpen(false);
+                        }}
+                        className={`p-2.5 rounded-xl cursor-pointer transition-all flex items-start gap-2.5 ${
+                          n.unread ? 'bg-[#12181A] hover:bg-[#1A2427]' : 'hover:bg-[#12181A]/50 opacity-80'
+                        }`}
+                      >
+                        <div className="p-1.5 rounded-lg bg-[#182326] border border-[#27373B] shrink-0 mt-0.5">
+                          {n.icon}
+                        </div>
+                        <div className="flex-1 min-w-0 space-y-0.5">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold text-arena-textPrimary truncate">{n.title}</span>
+                            <span className="text-[10px] text-arena-textSubtle font-mono">{n.time}</span>
+                          </div>
+                          <p className="text-[11px] text-arena-textSecondary leading-snug line-clamp-2">
+                            {n.desc}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )}
@@ -260,11 +303,19 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
               }}
               className="flex items-center gap-2 p-1 pr-2 sm:pr-2.5 rounded-xl bg-arena-surface hover:bg-arena-elevated border border-arena-border transition-all group"
             >
-              <img 
-                src={user.avatar} 
-                alt={user.username} 
-                className="w-7 h-7 rounded-lg object-cover border border-[#2B3B3F]" 
-              />
+              <div className="relative">
+                <img 
+                  src={user.avatar} 
+                  alt={user.username} 
+                  className="w-7 h-7 rounded-lg object-cover border border-[#2B3B3F]" 
+                />
+                <span 
+                  className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full ring-2 ring-arena-surface ${
+                    settings?.onlineStatus === 'invisible' ? 'bg-slate-500' : 'bg-arena-cyan shadow-[0_0_4px_#00E5FF]'
+                  }`} 
+                  title={settings?.onlineStatus === 'invisible' ? 'Status: Invisible' : 'Status: Online'}
+                />
+              </div>
               <span className="text-xs font-bold text-arena-textPrimary hidden sm:inline max-w-[90px] truncate">
                 {user.displayName}
               </span>
@@ -303,13 +354,13 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                   <button
                     onClick={() => {
                       sound.playClick();
-                      onOpenAccountModal();
+                      setActiveTab('settings');
                       setProfileMenuOpen(false);
                     }}
                     className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-arena-textSecondary hover:text-arena-textPrimary hover:bg-[#1C272A] transition-colors"
                   >
-                    <Settings className="w-4 h-4 text-arena-teal" />
-                    <span>Account Settings</span>
+                    <Settings className="w-4 h-4 text-arena-amber" />
+                    <span>Settings</span>
                   </button>
 
                   <button

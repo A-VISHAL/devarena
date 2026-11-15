@@ -17,7 +17,8 @@ import {
   Layers, 
   Compass,
   Code2,
-  Sparkles
+  Sparkles,
+  FileSpreadsheet
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { CasualGameId } from '../types';
@@ -406,20 +407,27 @@ export const Home: React.FC = () => {
             </div>
           </div>
 
-          <div className="pt-3 border-t border-arena-border flex gap-3">
+          <div className="pt-3 border-t border-arena-border flex flex-wrap gap-2.5">
             <button
               onClick={() => setActiveTab('arena')}
-              className="btn-primary flex-1 py-2 text-xs font-semibold gap-1.5"
+              className="btn-primary flex-1 min-w-[110px] py-2 text-xs font-semibold gap-1.5"
             >
               <Swords className="w-3.5 h-3.5" />
               <span>Enter Arena</span>
             </button>
             <button
+              onClick={() => setActiveTab('dsa-sheets')}
+              className="btn-secondary flex-1 min-w-[110px] py-2 text-xs font-semibold gap-1.5 text-arena-cyan hover:border-arena-cyan/40"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>DSA Sheets</span>
+            </button>
+            <button
               onClick={() => setActiveTab('learn')}
-              className="btn-secondary flex-1 py-2 text-xs font-semibold gap-1.5"
+              className="btn-secondary flex-1 min-w-[110px] py-2 text-xs font-semibold gap-1.5"
             >
               <BookOpen className="w-3.5 h-3.5 text-arena-teal" />
-              <span>Explore Roadmap</span>
+              <span>Roadmap</span>
             </button>
           </div>
         </div>

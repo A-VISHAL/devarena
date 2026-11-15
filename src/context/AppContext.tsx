@@ -8,12 +8,15 @@ import {
   BattleRecord,
   GameResultData,
   GameHistoryEntry,
-  ShareCardData
+  ShareCardData,
+  AppSettings,
+  DEFAULT_APP_SETTINGS
 } from '../types';
 import { CollectibleCard } from '../types/cards';
 import { BASE_COLLECTIBLE_CARDS } from '../data/collectibleCards';
 import { createDefaultGuest, INITIAL_COMMUNITY_POSTS, ACHIEVEMENTS } from '../data/mockData';
 import { sound } from '../utils/sound';
+import { recordLearningActivity } from '../services/learningActivityService';
 
 interface AppContextType {
   user: UserProfile;
@@ -54,8 +57,22 @@ interface AppContextType {
     timeSpentSec: number
   ) => { newRating: number; ratingDelta: number };
   recordProblemSolved: (problemId: string, topicId?: string) => void;
+  selectedArenaProblemId: string | null;
+  setSelectedArenaProblemId: (id: string | null) => void;
+  openProblemInArena: (problemId: string) => void;
+  bookmarkedProblemIds: string[];
+  toggleBookmarkProblem: (problemId: string) => void;
+  attemptedProblemIds: string[];
+  recordProblemAttempt: (problemId: string) => void;
+  savedCodeCache: Record<string, Record<string, string>>;
+  saveProblemCode: (problemId: string, lang: string, code: string) => void;
+  toggleMarkProblemSolved: (problemId: string) => void;
   isSoundMuted: boolean;
   toggleSound: () => void;
+  settings: AppSettings;
+  updateSettings: (partial: Partial<AppSettings>) => void;
+  resetSettingsToDefault: () => void;
+  clearCodeCache: () => void;
   shareCardData: ShareCardData | null;
   openShareModal: (data: ShareCardData) => void;
   closeShareModal: () => void;
@@ -143,8 +160,204 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return localStorage.getItem(`devarena_daily_${new Date().toDateString()}`) === 'true';
   });
 
+  // 2.5 Code Arena & DSA Sheets problem management
+  const [selectedArenaProblemId, setSelectedArenaProblemId] = useState<string | null>(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const p = urlParams.get('problem') || urlParams.get('p');
+      if (p) return p;
+      return localStorage.getItem('devarena_selected_problem') || 'two-sum';
+    } catch {
+      return 'two-sum';
+    }
+  });
+
+  const [bookmarkedProblemIds, setBookmarkedProblemIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('devarena_bookmarked_problems');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return ['two-sum', 'valid-parentheses'];
+  });
+
+  const [attemptedProblemIds, setAttemptedProblemIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('devarena_attempted_problems');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return ['two-sum', 'maximum-subarray'];
+  });
+
+  const [savedCodeCache, setSavedCodeCache] = useState<Record<string, Record<string, string>>>(() => {
+    try {
+      const saved = localStorage.getItem('devarena_code_cache');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {};
+  });
+
+  useEffect(() => {
+    try {
+      if (selectedArenaProblemId) {
+        localStorage.setItem('devarena_selected_problem', selectedArenaProblemId);
+      }
+    } catch {}
+  }, [selectedArenaProblemId]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('devarena_bookmarked_problems', JSON.stringify(bookmarkedProblemIds));
+    } catch {}
+  }, [bookmarkedProblemIds]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('devarena_attempted_problems', JSON.stringify(attemptedProblemIds));
+    } catch {}
+  }, [attemptedProblemIds]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('devarena_code_cache', JSON.stringify(savedCodeCache));
+    } catch {}
+  }, [savedCodeCache]);
+
+  const openProblemInArena = (problemId: string) => {
+    sound.playClick();
+    setSelectedArenaProblemId(problemId);
+    setActiveTabState('arena');
+    try {
+      window.history.pushState({ view: 'app', tab: 'arena', problem: problemId }, '', `/app/arena?problem=${problemId}`);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {}
+  };
+
+  const toggleBookmarkProblem = (problemId: string) => {
+    sound.playClick();
+    setBookmarkedProblemIds(prev => {
+      const isBookmarked = prev.includes(problemId);
+      return isBookmarked ? prev.filter(id => id !== problemId) : [...prev, problemId];
+    });
+  };
+
+  const recordProblemAttempt = (problemId: string) => {
+    setAttemptedProblemIds(prev => prev.includes(problemId) ? prev : [...prev, problemId]);
+  };
+
+  const saveProblemCode = (problemId: string, lang: string, code: string) => {
+    setSavedCodeCache(prev => ({
+      ...prev,
+      [problemId]: {
+        ...(prev[problemId] || {}),
+        [lang]: code
+      }
+    }));
+  };
+
+  const toggleMarkProblemSolved = (problemId: string) => {
+    sound.playClick();
+    setUser(prev => {
+      const alreadySolved = prev.problemsSolved.includes(problemId);
+      const newSolved = alreadySolved
+        ? prev.problemsSolved.filter(id => id !== problemId)
+        : [...prev.problemsSolved, problemId];
+
+      if (!alreadySolved) {
+        try {
+          recordLearningActivity('problem_solved', {
+            problemId,
+            points: 4,
+            details: `Completed problem: ${problemId}`
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      const currentCards = prev.unlockedCards || ['speed_thinker', 'daily_challenger', 'first_blood', 'perfect_submission'];
+      const { nextCards, newlyEarned } = checkProblemMilestoneUnlocks(newSolved.length, currentCards);
+
+      if (newlyEarned) {
+        sound.playVictory();
+        setNewlyUnlockedCard(newlyEarned);
+      }
+
+      return {
+        ...prev,
+        problemsSolved: newSolved,
+        unlockedCards: nextCards
+      };
+    });
+  };
+
   // 3. Sound
   const [isSoundMuted, setIsSoundMuted] = useState<boolean>(sound.getMuted());
+
+  // Settings state
+  const [settings, setSettings] = useState<AppSettings>(() => {
+    try {
+      const saved = localStorage.getItem('devarena_user_settings');
+      if (saved) {
+        return { ...DEFAULT_APP_SETTINGS, ...JSON.parse(saved) };
+      }
+    } catch {}
+    return DEFAULT_APP_SETTINGS;
+  });
+
+  // Apply visual and accessibility settings to root document
+  useEffect(() => {
+    try {
+      if (typeof document !== 'undefined') {
+        document.documentElement.setAttribute('data-theme', settings.theme);
+        document.documentElement.classList.toggle('reduce-motion', settings.reducedMotion);
+        document.documentElement.setAttribute('data-accent', settings.accentColor);
+        document.documentElement.setAttribute('data-density', settings.layoutDensity);
+      }
+    } catch {}
+  }, [settings.theme, settings.reducedMotion, settings.accentColor, settings.layoutDensity]);
+
+  const updateSettings = (partial: Partial<AppSettings>) => {
+    setSettings(prev => {
+      const next = { ...prev, ...partial };
+      try {
+        localStorage.setItem('devarena_user_settings', JSON.stringify(next));
+
+        // Sync sound if soundEffects setting was toggled
+        if (partial.soundEffects !== undefined) {
+          const currentMuted = sound.getMuted();
+          if (partial.soundEffects === currentMuted) {
+            sound.toggleMute();
+            setIsSoundMuted(!partial.soundEffects);
+          }
+        }
+      } catch {}
+      return next;
+    });
+  };
+
+  const resetSettingsToDefault = () => {
+    setSettings(DEFAULT_APP_SETTINGS);
+    try {
+      localStorage.setItem('devarena_user_settings', JSON.stringify(DEFAULT_APP_SETTINGS));
+      if (sound.getMuted() && DEFAULT_APP_SETTINGS.soundEffects) {
+        sound.toggleMute();
+        setIsSoundMuted(false);
+      }
+      if (typeof document !== 'undefined') {
+        document.documentElement.classList.remove('reduce-motion');
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.documentElement.setAttribute('data-accent', 'orange');
+        document.documentElement.setAttribute('data-density', 'comfortable');
+      }
+    } catch {}
+  };
+
+  const clearCodeCache = () => {
+    setSavedCodeCache({});
+    try {
+      localStorage.removeItem('devarena_code_cache');
+    } catch {}
+  };
 
   // 4. Community posts
   const [posts, setPosts] = useState<CommunityPost[]>(() => {
@@ -166,15 +379,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setNewlyUnlockedCard(null);
   };
 
+  const checkProblemMilestoneUnlocks = (count: number, currentCards: string[]): { nextCards: string[]; newlyEarned: CollectibleCard | null } => {
+    const milestones = [
+      { threshold: 1000, cardId: 'dsa_1000_club' },
+      { threshold: 500, cardId: 'dsa_500_club' },
+      { threshold: 200, cardId: 'dsa_200_club' },
+      { threshold: 100, cardId: 'dsa_100_club' },
+      { threshold: 50, cardId: 'dsa_50_club' },
+    ];
+
+    let nextCards = [...currentCards];
+    let newlyEarned: CollectibleCard | null = null;
+
+    for (const m of milestones) {
+      if (count >= m.threshold && !nextCards.includes(m.cardId)) {
+        nextCards.push(m.cardId);
+        const cardDef = BASE_COLLECTIBLE_CARDS.find(c => c.id === m.cardId);
+        if (cardDef && !newlyEarned) {
+          newlyEarned = { ...cardDef, unlocked: true, unlockedAt: 'Just now' };
+        }
+      }
+    }
+
+    return { nextCards, newlyEarned };
+  };
+
   const unlockCard = (cardId: string) => {
     const cardDef = BASE_COLLECTIBLE_CARDS.find(c => c.id === cardId);
     if (!cardDef) return;
+
+    sound.playVictory();
+    setNewlyUnlockedCard({ ...cardDef, unlocked: true, unlockedAt: 'Just now' });
 
     setUser(prev => {
       const currentCards = prev.unlockedCards || ['speed_thinker', 'daily_challenger', 'first_blood', 'perfect_submission'];
       if (currentCards.includes(cardId)) return prev;
 
-      setNewlyUnlockedCard({ ...cardDef, unlocked: true, unlockedAt: 'Just now' });
       return {
         ...prev,
         unlockedCards: [...currentCards, cardId]
@@ -200,9 +440,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (pathname.startsWith('/app')) {
         setCurrentView('app');
         const parts = pathname.split('/').filter(Boolean);
-        if (parts[1] && ['home', 'play', 'arena', 'cards', 'learn', 'community', 'leaderboard', 'profile'].includes(parts[1])) {
+        if (parts[1] && ['home', 'play', 'arena', 'dsa-sheets', 'cards', 'learn', 'community', 'leaderboard', 'profile', 'settings', 'tools'].includes(parts[1])) {
           setActiveTabState(parts[1] as NavigationTab);
         }
+      }
+
+      const problemParam = urlParams.get('problem') || urlParams.get('p');
+      if (problemParam) {
+        setSelectedArenaProblemId(problemParam);
+        setActiveTabState('arena');
       }
 
       if (battleParam) {
@@ -247,7 +493,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ) {
           setCurrentView('app');
           const parts = pathname.split('/').filter(Boolean);
-          if (parts[1] && ['home', 'play', 'arena', 'cards', 'learn', 'community', 'leaderboard', 'profile'].includes(parts[1])) {
+          if (parts[1] && ['home', 'play', 'arena', 'dsa-sheets', 'cards', 'learn', 'community', 'leaderboard', 'profile', 'settings', 'tools'].includes(parts[1])) {
             setActiveTabState(parts[1] as NavigationTab);
           }
         } else {
@@ -295,6 +541,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const toggleSound = () => {
     const muted = sound.toggleMute();
     setIsSoundMuted(muted);
+    setSettings(prev => {
+      const next = { ...prev, soundEffects: !muted };
+      try {
+        localStorage.setItem('devarena_user_settings', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
   };
 
   const openShareModal = (data: ShareCardData) => {
@@ -554,6 +807,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const recordProblemSolved = (problemId: string, topicId?: string) => {
+    try {
+      recordLearningActivity('problem_solved', {
+        problemId,
+        topicId,
+        points: 4,
+        details: `Solved in Code Arena`
+      });
+    } catch (e) {
+      console.error(e);
+    }
+
     setUser(prev => {
       const alreadySolved = prev.problemsSolved.includes(problemId);
       const newSolved = alreadySolved ? prev.problemsSolved : [...prev.problemsSolved, problemId];
@@ -563,10 +827,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         newTopicProgress[topicId] = Math.min(100, (newTopicProgress[topicId] || 0) + 35);
       }
 
+      const currentCards = prev.unlockedCards || ['speed_thinker', 'daily_challenger', 'first_blood', 'perfect_submission'];
+      const { nextCards, newlyEarned } = checkProblemMilestoneUnlocks(newSolved.length, currentCards);
+
+      if (newlyEarned) {
+        sound.playVictory();
+        setNewlyUnlockedCard(newlyEarned);
+      }
+
       return {
         ...prev,
         problemsSolved: newSolved,
-        topicProgress: newTopicProgress
+        topicProgress: newTopicProgress,
+        unlockedCards: nextCards
       };
     });
   };
@@ -717,8 +990,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         toggleSaveGame,
         recordCodingBattleResult,
         recordProblemSolved,
+        selectedArenaProblemId,
+        setSelectedArenaProblemId,
+        openProblemInArena,
+        bookmarkedProblemIds,
+        toggleBookmarkProblem,
+        attemptedProblemIds,
+        recordProblemAttempt,
+        savedCodeCache,
+        saveProblemCode,
+        toggleMarkProblemSolved,
         isSoundMuted,
         toggleSound,
+        settings,
+        updateSettings,
+        resetSettingsToDefault,
+        clearCodeCache,
         shareCardData,
         openShareModal,
         closeShareModal,

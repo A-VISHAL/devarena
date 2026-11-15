@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, RefreshCw, Share2, Compass, Trophy, Check, X, Lightbulb } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Share2, Compass, Trophy, Check, X, Lightbulb, Sparkles } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { sound } from '../../utils/sound';
 import confetti from 'canvas-confetti';
@@ -74,14 +74,25 @@ const LOGIC_PUZZLES: LogicPuzzle[] = [
 export const LogicSprint: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { recordCasualGameResult, openShareModal } = useApp();
 
+  const [difficulty, setDifficulty] = useState<'easy' | 'normal'>('easy');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
+  const [showHint, setShowHint] = useState<boolean>(false);
   const [score, setScore] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [gameOver, setGameOver] = useState(false);
 
   const currentPuzzle = LOGIC_PUZZLES[currentIndex];
+
+  // In Easy mode or when hint is activated, eliminate 2 wrong answers (50/50)
+  const eliminatedOpts = React.useMemo(() => {
+    if (difficulty === 'easy' || showHint) {
+      const wrong = currentPuzzle.options.filter(o => o !== currentPuzzle.answer);
+      return wrong.slice(0, 2);
+    }
+    return [];
+  }, [difficulty, showHint, currentPuzzle]);
 
   const handleSelectOption = (opt: string) => {
     if (isAnswered || gameOver) return;
@@ -93,7 +104,7 @@ export const LogicSprint: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     if (isCorrect) {
       sound.playCorrect();
-      setScore(prev => prev + 200);
+      setScore(prev => prev + (difficulty === 'easy' ? 160 : 200));
       setCorrectCount(prev => prev + 1);
     } else {
       sound.playWrong();
@@ -102,6 +113,7 @@ export const LogicSprint: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   const handleNext = () => {
     sound.playClick();
+    setShowHint(false);
     if (currentIndex + 1 >= LOGIC_PUZZLES.length) {
       sound.playVictory();
       setGameOver(true);
@@ -119,9 +131,21 @@ export const LogicSprint: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     setCurrentIndex(0);
     setSelectedOption(null);
     setIsAnswered(false);
+    setShowHint(false);
     setScore(0);
     setCorrectCount(0);
     setGameOver(false);
+  };
+
+  const toggleDifficulty = () => {
+    sound.playClick();
+    setDifficulty(d => d === 'easy' ? 'normal' : 'easy');
+    handleRestart();
+  };
+
+  const handleHint = () => {
+    sound.playClick();
+    setShowHint(true);
   };
 
   const handleShare = () => {
@@ -152,10 +176,49 @@ export const LogicSprint: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           <h2 className="text-sm font-bold text-arena-textPrimary">Logic Sprint</h2>
           <span className="text-[11px] text-arena-textSubtle">Puzzle {currentIndex + 1} of {LOGIC_PUZZLES.length}</span>
         </div>
-        <button onClick={handleRestart} className="p-1.5 text-arena-textSecondary hover:text-arena-textPrimary">
-          <RefreshCw className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={toggleDifficulty}
+            className={`px-2 py-1 rounded text-[11px] font-medium border transition-colors ${
+              difficulty === 'easy'
+                ? 'bg-arena-success/15 border-arena-success/30 text-arena-success'
+                : 'bg-arena-elevated border-arena-border text-arena-textSecondary'
+            }`}
+            title="Toggle difficulty (Easy eliminates 2 wrong answers for 50/50)"
+          >
+            {difficulty === 'easy' ? '🟢 Easy' : '🟡 Normal'}
+          </button>
+          <button
+            onClick={handleHint}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-arena-amber/15 hover:bg-arena-amber/25 border border-arena-amber/30 text-arena-amber text-xs font-semibold shadow-sm transition-all"
+            title="Corner Hint: Provides clue & 50/50 elimination"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-arena-amber animate-pulse" />
+            <span>💡 Hint</span>
+          </button>
+          <button onClick={handleRestart} className="p-1.5 text-arena-textSecondary hover:text-arena-textPrimary">
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        </div>
       </div>
+
+      {/* Floating Corner Hint Banner */}
+      {showHint && !isAnswered && !gameOver && (
+        <div className="w-full mb-3 p-3 rounded-lg bg-arena-amber/10 border border-arena-amber/30 text-arena-textPrimary text-xs flex items-start justify-between gap-2 animate-in fade-in">
+          <div className="flex items-start gap-2">
+            <span className="text-base leading-none">💡</span>
+            <div>
+              <span className="font-semibold text-arena-amber block">Corner Deduction Hint (50/50 applied):</span>
+              <span className="text-arena-textSecondary text-[11px] leading-tight block mt-0.5">
+                {currentPuzzle.explanation.split('.')[0]}. Two invalid choices have been crossed out!
+              </span>
+            </div>
+          </div>
+          <button onClick={() => setShowHint(false)} className="text-arena-textSubtle hover:text-arena-textPrimary p-0.5">
+            ✕
+          </button>
+        </div>
+      )}
 
       {!gameOver ? (
         <div className="w-full space-y-4">
@@ -178,10 +241,13 @@ export const LogicSprint: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             {currentPuzzle.options.map((opt, idx) => {
               const isSelected = selectedOption === opt;
               const isCorrectOpt = opt === currentPuzzle.answer;
+              const isEliminated = eliminatedOpts.includes(opt);
 
               let btnClass = 'bg-arena-surface hover:bg-arena-elevated border-arena-border text-arena-textPrimary';
 
-              if (isAnswered) {
+              if (isEliminated && !isAnswered) {
+                btnClass = 'bg-arena-surface/30 opacity-25 border-arena-border line-through text-arena-textSubtle cursor-not-allowed';
+              } else if (isAnswered) {
                 if (isCorrectOpt) {
                   btnClass = 'bg-arena-success text-slate-950 font-bold border-arena-success';
                 } else if (isSelected && !isCorrectOpt) {
@@ -195,12 +261,13 @@ export const LogicSprint: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 <button
                   key={idx}
                   onClick={() => handleSelectOption(opt)}
-                  disabled={isAnswered}
+                  disabled={isAnswered || isEliminated}
                   className={`w-full p-3 rounded-lg border text-left text-xs font-medium flex items-center justify-between gap-3 transition-all ${btnClass}`}
                 >
                   <span>{opt}</span>
                   {isAnswered && isCorrectOpt && <Check className="w-4 h-4 text-slate-950 shrink-0" />}
                   {isAnswered && isSelected && !isCorrectOpt && <X className="w-4 h-4 text-arena-error shrink-0" />}
+                  {isEliminated && !isAnswered && <span className="text-[10px] text-arena-textSubtle no-underline font-mono ml-auto">(50/50 out)</span>}
                 </button>
               );
             })}

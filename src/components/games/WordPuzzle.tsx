@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Share2, Trophy, Delete, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Share2, Trophy, Delete, ArrowRight, Sparkles, X } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { CasualGameId, GameResultData } from '../../types';
 import { sound } from '../../utils/sound';
@@ -11,6 +11,29 @@ const WORD_LIST = [
   'QUERY', 'SCOPE', 'SHARD', 'FETCH', 'BUILD',
   'CACHE', 'ROUTE', 'TOKEN', 'ASYNC', 'DEBUG'
 ];
+
+const WORD_CLUES: Record<string, string> = {
+  'STACK': 'LIFO data structure with push and pop operations.',
+  'QUEUE': 'FIFO linear waiting list structure.',
+  'ARRAY': 'Contiguous index-based memory collection.',
+  'LOGIC': 'Reasoning principles determining truth values.',
+  'GRAPH': 'Collection of vertices and connecting edges.',
+  'BYTES': 'Standard 8-bit digital storage units.',
+  'NODES': 'Individual elements in a linked list or tree.',
+  'TREES': 'Hierarchical structures with a single root node.',
+  'REACT': 'Popular component-based user interface library.',
+  'PIVOT': 'Reference partition element in quicksort.',
+  'QUERY': 'Structured statement to retrieve database rows.',
+  'SCOPE': 'Contextual boundary determining variable visibility.',
+  'SHARD': 'Horizontal partitioning of database records.',
+  'FETCH': 'Web API to retrieve resources over HTTP.',
+  'BUILD': 'Process compiling code into deployment artifacts.',
+  'CACHE': 'High-speed temporary memory storage.',
+  'ROUTE': 'URL mapping to application views or endpoints.',
+  'TOKEN': 'Cryptographic string used for authentication (JWT).',
+  'ASYNC': 'Non-blocking concurrent execution model.',
+  'DEBUG': 'Process of finding and fixing software bugs.'
+};
 
 function getDailyWord(): string {
   const dayIndex = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
@@ -26,6 +49,8 @@ export const WordPuzzle: React.FC<{
   const { recordCasualGameCompletion, openShareModal } = useApp();
 
   const [targetWord] = useState<string>(getDailyWord);
+  const [difficulty, setDifficulty] = useState<'easy' | 'normal'>('easy');
+  const [hintText, setHintText] = useState<string>('');
   const [guesses, setGuesses] = useState<string[]>([]);
   const [currentGuess, setCurrentGuess] = useState<string>('');
   const [gameOver, setGameOver] = useState<boolean>(false);
@@ -33,8 +58,14 @@ export const WordPuzzle: React.FC<{
   const [shakeRow, setShakeRow] = useState<boolean>(false);
   const [message, setMessage] = useState<string>('');
 
-  const maxAttempts = 6;
+  const maxAttempts = difficulty === 'easy' ? 8 : 6;
   const wordLength = 5;
+
+  const handleHint = () => {
+    sound.playClick();
+    const clue = WORD_CLUES[targetWord] || 'Standard developer programming term.';
+    setHintText(`💡 Clue: ${clue} (First letter is "${targetWord[0]}")`);
+  };
 
   const getKeyStatuses = useCallback((): Record<string, LetterStatus> => {
     const statuses: Record<string, LetterStatus> = {};
@@ -87,9 +118,9 @@ export const WordPuzzle: React.FC<{
       sound.playVictory();
       setGameOver(true);
       setHasWon(true);
-      setMessage(`Solved in ${newGuesses.length}/6 attempts.`);
+      setMessage(`Solved in ${newGuesses.length}/${maxAttempts} attempts.`);
       confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 } });
-      const pts = (7 - newGuesses.length) * 100;
+      const pts = (maxAttempts + 1 - newGuesses.length) * 100;
       const res: GameResultData = {
         gameId: 'word-puzzle',
         gameTitle: 'Daily Word Puzzle #42',
@@ -99,13 +130,13 @@ export const WordPuzzle: React.FC<{
         moves: newGuesses.length,
         won: true,
         streak: 4,
-        headline: `Solved in ${newGuesses.length}/6 Attempts!`,
+        headline: `Solved in ${newGuesses.length}/${maxAttempts} Attempts!`,
         customStats: [
-          { label: 'Attempts', value: `${newGuesses.length}/6` },
+          { label: 'Attempts', value: `${newGuesses.length}/${maxAttempts}` },
           { label: 'Target Word', value: targetWord },
           { label: 'Daily Streak', value: '4 Days' }
         ],
-        shareSummary: `DEVARENA Word Puzzle #42: ${newGuesses.length}/6 attempts 🟩🟨\nplay.devarena.com`
+        shareSummary: `DEVARENA Word Puzzle #42: ${newGuesses.length}/${maxAttempts} attempts 🟩🟨\nplay.devarena.com`
       };
       recordCasualGameCompletion(res);
     } else if (newGuesses.length >= maxAttempts) {
@@ -119,16 +150,16 @@ export const WordPuzzle: React.FC<{
         challengeNumber: 42,
         score: 30,
         timeTakenSec: 90,
-        moves: 6,
+        moves: maxAttempts,
         won: false,
         streak: 0,
         headline: `Word was ${targetWord}`,
         customStats: [
-          { label: 'Attempts', value: '6/6' },
+          { label: 'Attempts', value: `${maxAttempts}/${maxAttempts}` },
           { label: 'Target Word', value: targetWord },
           { label: 'Outcome', value: 'Missed' }
         ],
-        shareSummary: `DEVARENA Word Puzzle #42: Missed after 6 attempts!\nplay.devarena.com`
+        shareSummary: `DEVARENA Word Puzzle #42: Missed after ${maxAttempts} attempts!\nplay.devarena.com`
       };
       recordCasualGameCompletion(res);
     } else {
@@ -216,9 +247,49 @@ export const WordPuzzle: React.FC<{
         </button>
         <div className="text-center">
           <h2 className="text-sm font-bold text-arena-textPrimary">Daily Word Puzzle</h2>
-          <span className="text-[11px] text-arena-textSubtle">Guess today's hidden 5-letter word</span>
+          <div className="flex items-center justify-center gap-2 mt-0.5">
+            <span className="text-[11px] text-arena-textSubtle">5-letter dev word</span>
+            {/* Difficulty Toggle */}
+            <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-arena-elevated border border-arena-border">
+              <button
+                type="button"
+                onClick={() => {
+                  sound.playClick();
+                  setDifficulty('easy');
+                }}
+                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+                  difficulty === 'easy' ? 'bg-arena-success text-slate-950 shadow-sm' : 'text-arena-textSubtle hover:text-white'
+                }`}
+              >
+                Easy (8 Tries)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  sound.playClick();
+                  setDifficulty('normal');
+                }}
+                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+                  difficulty === 'normal' ? 'bg-arena-amber text-slate-950 shadow-sm' : 'text-arena-textSubtle hover:text-white'
+                }`}
+              >
+                Normal
+              </button>
+            </div>
+          </div>
         </div>
-        <div className="w-16 flex justify-end">
+        <div className="flex items-center gap-2">
+          {/* CORNER HINT BUTTON */}
+          <button
+            type="button"
+            onClick={handleHint}
+            className="px-2.5 py-1.5 rounded-lg bg-arena-amber/15 hover:bg-arena-amber/25 border border-arena-amber/40 text-arena-amber text-xs font-bold transition-all flex items-center gap-1 shadow-sm active:scale-95"
+            title="Reveal developer clue"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>💡 Hint</span>
+          </button>
+
           {gameOver && (
             <button
               onClick={handleShareResult}
@@ -231,6 +302,26 @@ export const WordPuzzle: React.FC<{
         </div>
       </div>
 
+      {/* Corner Hint Bubble Banner */}
+      {hintText && (
+        <div className="w-full max-w-md mb-4 p-3 rounded-xl bg-arena-amber/15 border border-arena-amber/50 flex items-start justify-between gap-2 shadow-lg animate-in slide-in-from-top-2">
+          <div className="flex items-start gap-2 text-xs">
+            <span className="text-base">💡</span>
+            <div>
+              <span className="font-bold text-arena-amber block">Corner Clue</span>
+              <p className="text-arena-textPrimary text-[11px] leading-snug">{hintText}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setHintText('')}
+            className="p-1 rounded text-arena-textSubtle hover:text-white"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       {message && (
         <div className="mb-4 px-3 py-1.5 rounded-lg bg-arena-elevated border border-arena-border text-xs font-medium text-center text-arena-textPrimary animate-in fade-in">
           {message}
@@ -238,7 +329,7 @@ export const WordPuzzle: React.FC<{
       )}
 
       {/* Word Grid */}
-      <div className="grid grid-rows-6 gap-2 mb-6">
+      <div className="grid gap-2 mb-6">
         {Array.from({ length: maxAttempts }).map((_, rowIndex) => {
           const guess = guesses[rowIndex] || (rowIndex === guesses.length ? currentGuess : '');
           const isCurrentRow = rowIndex === guesses.length;

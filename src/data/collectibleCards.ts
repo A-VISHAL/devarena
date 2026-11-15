@@ -289,7 +289,104 @@ export const BASE_COLLECTIBLE_CARDS: Omit<CollectibleCard, 'unlocked'>[] = [
       { label: 'Room Mode', value: '1v1 Clash' },
       { label: 'Margin', value: '+4 Pts Victory' }
     ]
+  },
+
+  // ==========================================
+  // D. DSA PROBLEM SOLVING MILESTONE CARDS (50, 100, 200, 500, 1000)
+  // ==========================================
+  {
+    id: 'dsa_50_club',
+    cardId: 'DA-DSA-050',
+    title: '50 Problems Mastered',
+    category: 'coding',
+    rarity: 'rare',
+    description: 'Cracked 50 verified DSA algorithmic problems across fundamental linear, hashing and two-pointer structures.',
+    unlockCriteria: 'Solve 50 coding problems in DEVARENA.',
+    artworkType: 'binary-tree',
+    benchmarkPercentile: 'Top 14.5%',
+    engineBuild: 'DEVARENA-DSA-CORPS',
+    verifiedHash: '0xD50-88A2-4411',
+    metrics: [
+      { label: 'Milestone', value: '50 Problems' },
+      { label: 'Rank', value: 'Cadet Solver' }
+    ]
+  },
+  {
+    id: 'dsa_100_club',
+    cardId: 'DA-DSA-100',
+    title: 'Century Coder (100 Problems)',
+    category: 'coding',
+    rarity: 'epic',
+    description: 'Triple-digit algorithmic mastery unlocked. Solved 100 problems covering dynamic programming, graphs, and recursion.',
+    unlockCriteria: 'Solve 100 coding problems in DEVARENA.',
+    artworkType: 'monaco-check',
+    benchmarkPercentile: 'Top 6.8%',
+    engineBuild: 'DEVARENA-DSA-CORPS',
+    verifiedHash: '0xD100-77C3-9942',
+    metrics: [
+      { label: 'Milestone', value: '100 Problems' },
+      { label: 'Rank', value: 'Century Club' }
+    ]
+  },
+  {
+    id: 'dsa_200_club',
+    cardId: 'DA-DSA-200',
+    title: 'Algorithm Veteran (200 Problems)',
+    category: 'coding',
+    rarity: 'epic',
+    description: '200 solved technical challenges spanning trees, heaps, monotonic stacks, and complex matrix traversals.',
+    unlockCriteria: 'Solve 200 coding problems in DEVARENA.',
+    artworkType: 'circuit-path',
+    benchmarkPercentile: 'Top 2.9%',
+    engineBuild: 'DEVARENA-DSA-CORPS',
+    verifiedHash: '0xD200-33F8-01E4',
+    metrics: [
+      { label: 'Milestone', value: '200 Problems' },
+      { label: 'Rank', value: 'Algorithm Veteran' }
+    ]
+  },
+  {
+    id: 'dsa_500_club',
+    cardId: 'DA-DSA-500',
+    title: 'Leet Titan (500 Problems)',
+    category: 'coding',
+    rarity: 'legendary',
+    description: 'Half-a-thousand algorithmic triumphs. Elite competitive endurance and full-spectrum problem solving.',
+    unlockCriteria: 'Solve 500 coding problems in DEVARENA.',
+    artworkType: 'arena-crest',
+    benchmarkPercentile: 'Top 0.8%',
+    engineBuild: 'DEVARENA-DSA-CORPS',
+    verifiedHash: '0xD500-11A0-7799',
+    metrics: [
+      { label: 'Milestone', value: '500 Problems' },
+      { label: 'Rank', value: 'Leet Titan' }
+    ]
+  },
+  {
+    id: 'dsa_1000_club',
+    cardId: 'DA-DSA-1000',
+    title: 'Mythic Legend (1,000 Problems)',
+    category: 'coding',
+    rarity: 'legendary',
+    description: 'The immortal 1,000 problem pinnacle. An extraordinary demonstration of lifelong algorithmic discipline.',
+    unlockCriteria: 'Solve 1,000 coding problems in DEVARENA.',
+    artworkType: 'world-globe',
+    benchmarkPercentile: 'Top 0.05%',
+    engineBuild: 'DEVARENA-DSA-CORPS',
+    verifiedHash: '0xD1K-9999-EVAL',
+    metrics: [
+      { label: 'Milestone', value: '1,000 Solved' },
+      { label: 'Rank', value: 'Hall of Fame' }
+    ]
   }
+];
+
+export const DSA_MILESTONE_THRESHOLDS = [
+  { threshold: 50, cardId: 'dsa_50_club', badge: '50 CLUB', label: 'Cadet Milestone' },
+  { threshold: 100, cardId: 'dsa_100_club', badge: '100 CLUB', label: 'Century Coder' },
+  { threshold: 200, cardId: 'dsa_200_club', badge: '200 CLUB', label: 'Algorithm Veteran' },
+  { threshold: 500, cardId: 'dsa_500_club', badge: '500 CLUB', label: 'Leet Titan' },
+  { threshold: 1000, cardId: 'dsa_1000_club', badge: '1000 CLUB', label: 'Mythic Legend' },
 ];
 
 export function getUserCards(unlockedCardIds: string[] = []): CollectibleCard[] {

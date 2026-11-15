@@ -8,6 +8,7 @@ export interface TestCaseResult {
   actual?: any;
   passed: boolean;
   isHidden?: boolean;
+  isCustom?: boolean;
   error?: string;
   executionTimeMs: number;
   logs?: string[];
@@ -21,6 +22,9 @@ export interface ExecutionReport {
   results: TestCaseResult[];
   compileError?: string;
   totalTimeMs: number;
+  statusLabel: 'Accepted' | 'Wrong Answer' | 'Compilation Error' | 'Runtime Error';
+  executionEnvironment: 'Native JavaScript Engine' | 'Simulated Client Transpiler (Regex JS Sandbox)';
+  memoryNote: string;
 }
 
 // Deep equality comparison
@@ -54,7 +58,7 @@ export function deepEqual(a: any, b: any): boolean {
 // Translate basic Python to JS for browser-side execution if Python is chosen
 function transpilePythonToJS(pyCode: string, functionName: string): string {
   let js = pyCode;
-  
+
   // Replace standard python idioms
   js = js.replace(/def\s+([a-zA-Z0-9_]+)\s*\(([^)]*)\):/g, 'function $1($2) {');
   js = js.replace(/:\s*$/gm, ' {');
@@ -66,7 +70,7 @@ function transpilePythonToJS(pyCode: string, functionName: string): string {
   js = js.replace(/\bnot\b/g, '!');
   js = js.replace(/\blen\(([^)]+)\)/g, '($1).length');
   js = js.replace(/\bprint\(([^)]*)\)/g, 'console.log($1)');
-  
+
   // Close blocks roughly or wrap
   return js;
 }
@@ -75,12 +79,19 @@ export async function executeCode(
   problem: CodingProblem,
   code: string,
   language: 'javascript' | 'typescript' | 'python' | 'cpp' | 'java',
-  includeHidden: boolean = false
+  includeHidden: boolean = false,
+  customTestCases?: { input: any[]; expected?: any; isCustom?: boolean }[]
 ): Promise<ExecutionReport> {
   const startTime = performance.now();
-  const testCasesToRun = includeHidden 
-    ? problem.testCases 
-    : problem.testCases.filter(t => !t.isHidden);
+  const isNative = language === 'javascript' || language === 'typescript';
+  const executionEnvironment = isNative
+    ? 'Native JavaScript Engine'
+    : 'Simulated Client Transpiler (Regex JS Sandbox)';
+  const memoryNote = 'Browser Sandbox: memory metrics not exposed directly by browser security standards';
+
+  const testCasesToRun = customTestCases && customTestCases.length > 0
+    ? customTestCases
+    : (includeHidden ? problem.testCases : problem.testCases.filter(t => !t.isHidden));
 
   const results: TestCaseResult[] = [];
 
@@ -89,7 +100,7 @@ export async function executeCode(
   if (language === 'typescript') {
     // Strip basic typescript types
     executableCode = code.replace(/:\s*[A-Za-z0-9_\[\]<>, |]+/g, '')
-                         .replace(/as\s+[A-Za-z0-9_\[\]<>, |]+/g, '');
+      .replace(/as\s+[A-Za-z0-9_\[\]<>, |]+/g, '');
   } else if (language === 'python') {
     executableCode = transpilePythonToJS(code, problem.functionName);
   } else if (language === 'java' || language === 'cpp') {
@@ -154,7 +165,7 @@ export async function executeCode(
           expected: tc.expected,
           actual,
           passed,
-          isHidden: tc.isHidden,
+          isHidden: 'isHidden' in tc ? tc.isHidden : false,
           executionTimeMs: duration,
           logs
         });
@@ -168,7 +179,7 @@ export async function executeCode(
           expected: tc.expected,
           actual: undefined,
           passed: false,
-          isHidden: tc.isHidden,
+          isHidden: 'isHidden' in tc ? tc.isHidden : false,
           error: testError,
           executionTimeMs: Math.round((testEnd - testStart) * 100) / 100,
           logs
@@ -179,6 +190,11 @@ export async function executeCode(
     const totalPassed = results.filter(r => r.passed).length;
     const allPassed = totalPassed === testCasesToRun.length;
     const totalTime = Math.round((performance.now() - startTime) * 100) / 100;
+    const hasRuntimeError = results.some(r => !!r.error);
+
+    const statusLabel: 'Accepted' | 'Wrong Answer' | 'Runtime Error' = allPassed
+      ? 'Accepted'
+      : (hasRuntimeError ? 'Runtime Error' : 'Wrong Answer');
 
     return {
       success: true,
@@ -186,7 +202,10 @@ export async function executeCode(
       totalPassed,
       totalTests: testCasesToRun.length,
       results,
-      totalTimeMs: totalTime
+      totalTimeMs: totalTime,
+      statusLabel,
+      executionEnvironment,
+      memoryNote
     };
 
   } catch (globalErr: any) {
@@ -197,7 +216,10 @@ export async function executeCode(
       totalTests: testCasesToRun.length,
       results: [],
       compileError: globalErr.message || 'Syntax Error in solution code',
-      totalTimeMs: Math.round((performance.now() - startTime) * 100) / 100
+      totalTimeMs: Math.round((performance.now() - startTime) * 100) / 100,
+      statusLabel: 'Compilation Error',
+      executionEnvironment,
+      memoryNote
     };
   }
 }

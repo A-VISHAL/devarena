@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Gamepad2, Swords, Layers, BookOpen, User } from 'lucide-react';
+import { Sparkles, Gamepad2, Swords, Layers, BookOpen, User, FileSpreadsheet, Wrench } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { NavigationTab } from '../../types';
 
@@ -8,10 +8,11 @@ export const MobileNav: React.FC = () => {
 
   const tabs: { id: NavigationTab; label: string; icon: React.ReactNode }[] = [
     { id: 'home', label: 'Home', icon: <Sparkles className="w-4 h-4" /> },
-    { id: 'play', label: 'Play', icon: <Gamepad2 className="w-4 h-4" /> },
     { id: 'arena', label: 'Arena', icon: <Swords className="w-4 h-4" /> },
+    { id: 'tools', label: 'Tools', icon: <Wrench className="w-4 h-4" /> },
+    { id: 'dsa-sheets', label: 'Sheets', icon: <FileSpreadsheet className="w-4 h-4" /> },
+    { id: 'play', label: 'Play', icon: <Gamepad2 className="w-4 h-4" /> },
     { id: 'cards', label: 'Cards', icon: <Layers className="w-4 h-4" /> },
-    { id: 'learn', label: 'Learn', icon: <BookOpen className="w-4 h-4" /> },
     { id: 'profile', label: 'Profile', icon: <User className="w-4 h-4" /> },
   ];
 

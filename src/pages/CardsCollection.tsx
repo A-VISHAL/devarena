@@ -11,7 +11,9 @@ import {
   Swords, 
   Calendar,
   Layers,
-  Pin
+  Pin,
+  ArrowRight,
+  Check
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { CollectibleCard, CardRarity, CardCategory } from '../types/cards';
@@ -22,7 +24,7 @@ import { CardShareStudioModal } from '../components/cards/CardShareStudioModal';
 import { sound } from '../utils/sound';
 
 export const CardsCollection: React.FC = () => {
-  const { user, updateUserProfile } = useApp();
+  const { user, updateUserProfile, setActiveTab } = useApp();
 
   // State
   const [selectedCategory, setSelectedCategory] = useState<CardCategory | 'all'>('all');
@@ -30,6 +32,7 @@ export const CardsCollection: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'unlocked' | 'locked'>('all');
   const [sortBy, setSortBy] = useState<'recent' | 'rarity' | 'id'>('recent');
   const [searchQuery, setSearchQuery] = useState('');
+  const [toastMessage, setToastMessage] = useState<{ text: string; cardTitle?: string } | null>(null);
 
   // Modals
   const [inspectingCard, setInspectingCard] = useState<CollectibleCard | null>(null);
@@ -41,11 +44,12 @@ export const CardsCollection: React.FC = () => {
   }, [user.unlockedCards]);
 
   const pinnedCardIds = useMemo(() => {
-    return user.pinnedCardIds || ['first_blood', 'perfect_submission'];
+    return user.pinnedCardIds !== undefined ? user.pinnedCardIds : ['first_blood', 'perfect_submission'];
   }, [user.pinnedCardIds]);
 
   const cards = useMemo(() => {
-    return getUserCards(userUnlockedIds);
+    // Problem milestone cards are exclusively featured in the developer Profile
+    return getUserCards(userUnlockedIds).filter(c => !c.id.startsWith('dsa_'));
   }, [userUnlockedIds]);
 
   // Handle pinning card to profile
@@ -57,15 +61,26 @@ export const CardsCollection: React.FC = () => {
 
     if (isPinned) {
       nextPinned = currentPinned.filter(id => id !== card.id);
+      setToastMessage({
+        text: `Removed "${card.title}" from Profile showcase.`
+      });
     } else {
       if (currentPinned.length >= 3) {
         nextPinned = [...currentPinned.slice(1), card.id];
       } else {
         nextPinned = [...currentPinned, card.id];
       }
+      setToastMessage({
+        text: `📌 Pinned "${card.title}" to your Profile showcase! (${nextPinned.length}/3 slots filled)`,
+        cardTitle: card.title
+      });
     }
 
     updateUserProfile({ pinnedCardIds: nextPinned });
+
+    setTimeout(() => {
+      setToastMessage(prev => (prev?.cardTitle === card.title ? null : prev));
+    }, 4500);
   };
 
   // Stats calculation
@@ -200,6 +215,39 @@ export const CardsCollection: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Pinned on Profile Quick Bar */}
+      <div className="p-4 rounded-2xl bg-[#141B1D] border border-arena-amber/35 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-arena-amber/15 border border-arena-amber/40 flex items-center justify-center text-arena-amber shrink-0">
+            <Pin className="w-4 h-4 fill-current" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-arena-textPrimary">Profile Showcase</span>
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-arena-amber/15 border border-arena-amber/40 text-arena-amber">
+                {pinnedCardIds.length} / 3 PINNED
+              </span>
+            </div>
+            <p className="text-[11px] text-arena-textSecondary mt-0.5">
+              {pinnedCardIds.length === 0
+                ? 'Click the pin icon on any unlocked card to feature it on your public developer profile.'
+                : `Featured on profile: ${cards.filter(c => pinnedCardIds.includes(c.id)).map(c => c.title).join(', ')}`}
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => {
+            sound.playClick();
+            setActiveTab('profile');
+          }}
+          className="btn-secondary py-1.5 px-3 text-xs font-semibold gap-1.5 shrink-0 text-arena-amber hover:text-white"
+        >
+          <span>View on Profile</span>
+          <ArrowRight className="w-3.5 h-3.5 text-arena-amber" />
+        </button>
       </div>
 
       {/* Control Filter Bar */}
@@ -358,6 +406,30 @@ export const CardsCollection: React.FC = () => {
         user={user}
         onClose={() => setSharingCard(null)}
       />
+
+      {/* Floating Toast Notification for Pin/Unpin Actions */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-sm p-3.5 rounded-2xl bg-[#12181A] border border-arena-amber/50 shadow-2xl flex items-center justify-between gap-3 animate-in slide-in-from-bottom-4 duration-300">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-arena-amber/20 border border-arena-amber/40 flex items-center justify-center text-arena-amber shrink-0">
+              <Pin className="w-3.5 h-3.5 fill-current" />
+            </div>
+            <p className="text-xs font-medium text-arena-textPrimary leading-snug">
+              {toastMessage.text}
+            </p>
+          </div>
+
+          <button
+            onClick={() => {
+              sound.playClick();
+              setActiveTab('profile');
+            }}
+            className="btn-primary py-1 px-2.5 text-[11px] font-bold whitespace-nowrap shrink-0"
+          >
+            View Profile
+          </button>
+        </div>
+      )}
 
     </div>
   );

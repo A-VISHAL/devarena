@@ -102,7 +102,7 @@ export const PublicResultPage: React.FC = () => {
     setShowNotice(true);
     setCopiedText(true);
     setTimeout(() => setCopiedText(false), 3000);
-    window.open(getLinkedInShareUrl(url), '_blank', 'noopener,noreferrer');
+    window.open(getLinkedInShareUrl(url, postText), '_blank', 'noopener,noreferrer');
   };
 
   if (loading) {

@@ -9,11 +9,14 @@ import { Landing } from './pages/Landing';
 import { Home } from './pages/Home';
 import { Play } from './pages/Play';
 import { CodeArena } from './pages/CodeArena';
+import { DsaSheetsPage } from './pages/DsaSheetsPage';
 import { Learn } from './pages/Learn';
 import { Community } from './pages/Community';
 import { Leaderboard } from './pages/Leaderboard';
 import { Profile } from './pages/Profile';
+import { Settings } from './pages/Settings';
 import { CardsCollection } from './pages/CardsCollection';
+import { FreeToolsPage } from './pages/FreeToolsPage';
 import { PublicResultPage } from './pages/PublicResultPage';
 import { VictoryCardUnlockModal } from './components/cards/VictoryCardUnlockModal';
 import { CardDetailModal } from './components/cards/CardDetailModal';
@@ -48,11 +51,14 @@ const AppContent: React.FC = () => {
       {activeTab === 'home' && <Home />}
       {activeTab === 'play' && <Play />}
       {activeTab === 'arena' && <CodeArena />}
+      {activeTab === 'dsa-sheets' && <DsaSheetsPage />}
       {activeTab === 'cards' && <CardsCollection />}
       {activeTab === 'learn' && <Learn />}
       {activeTab === 'community' && <Community />}
       {activeTab === 'leaderboard' && <Leaderboard />}
       {activeTab === 'profile' && <Profile />}
+      {activeTab === 'tools' && <FreeToolsPage />}
+      {activeTab === 'settings' && <Settings onOpenAccountModal={() => setIsAccountModalOpen(true)} />}
 
       {/* Modals */}
       <ShareCardModal />

@@ -12,11 +12,14 @@ import {
   Trophy,
   Gamepad2,
   Swords,
-  QrCode
+  QrCode,
+  Users,
+  ExternalLink
 } from 'lucide-react';
 import { CollectibleCard } from '../../types/cards';
 import { UserProfile } from '../../types';
 import { sound } from '../../utils/sound';
+import { useApp } from '../../context/AppContext';
 
 interface CardShareStudioModalProps {
   card: CollectibleCard | null;
@@ -29,15 +32,53 @@ export const CardShareStudioModal: React.FC<CardShareStudioModalProps> = ({
   user,
   onClose
 }) => {
+  const { addPost, setActiveTab } = useApp();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedDiscord, setCopiedDiscord] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [hasShared, setHasShared] = useState(false);
+  const [postedToCommunity, setPostedToCommunity] = useState(false);
 
   if (!card) return null;
 
-  const shareUrl = `${window.location.origin}/app/cards?id=${card.id}&user=${user.username}`;
-  const shareText = `🏆 Just unlocked the verified [${card.title}] (${card.rarity.toUpperCase()}) card on DEVARENA!\n\n${card.description}\n\nEarn your own. Challenge me on DEVARENA:\n${shareUrl}`;
+  const shareUrl = `${window.location.origin}/app/profile?ref=${user.username}&milestone=${card.id}`;
+  const shareText = `🏆 Proud to unlock the verified [${card.title}] on DEVARENA!\n\n${card.description}\n\nCan you beat my score? Accept the coding challenge and build your verified developer profile on DEVARENA:\n👉 ${shareUrl}`;
+
+  const handlePostCardToCommunity = () => {
+    sound.playVictory();
+    addPost({
+      title: `Unlocked Card: ${card.title}`,
+      content: `Just unlocked the verified [${card.title}] (${card.rarity.toUpperCase()}) collectible card on DEVARENA!\n\n${card.description}\n\nRarity: ${card.rarity.toUpperCase()} • Category: ${card.category.toUpperCase()}`,
+      type: 'achievement_unlocked',
+      collectibleCardId: card.id,
+      author: {
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName,
+        headline: user.headline || 'Full-Stack Developer & Problem Solver',
+        avatar: user.avatar,
+        rating: user.rating
+      },
+      tags: [
+        'achievement',
+        card.category,
+        card.rarity,
+        'devarena'
+      ],
+      metadata: {
+        badgeName: card.title,
+        score: card.rarity.toUpperCase()
+      }
+    });
+    setPostedToCommunity(true);
+  };
+
+  const handleGoToCommunity = () => {
+    sound.playClick();
+    onClose();
+    setActiveTab('community');
+  };
 
   // Draw card onto high-resolution Canvas for PNG download
   useEffect(() => {
@@ -272,15 +313,34 @@ export const CardShareStudioModal: React.FC<CardShareStudioModalProps> = ({
   const handleLinkedInShare = () => {
     sound.playClick();
     navigator.clipboard.writeText(shareText);
-    const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+    const linkedInUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(shareText)}`;
     window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  // Handle Twitter / X Share
+  const handleTwitterShare = () => {
+    sound.playClick();
+    navigator.clipboard.writeText(shareText);
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
+    window.open(twitterUrl, '_blank', 'noopener,noreferrer');
   };
 
   // Handle WhatsApp Share
   const handleWhatsAppShare = () => {
     sound.playClick();
+    navigator.clipboard.writeText(shareText);
     const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
     window.open(waUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  // Handle Discord Share
+  const handleDiscordShare = () => {
+    sound.playClick();
+    const discordFormatted = `🏆 **DEVARENA Verified Milestone: [${card.title}]**\n> "${card.description}"\n> **Tier:** ${card.rarity.toUpperCase()} • **Player:** ${user.displayName} (@${user.username}) • **Elo:** ${user.rating}\n\n⚡ Level up your algorithmic skills & take on the challenge:\n👉 ${shareUrl}`;
+    navigator.clipboard.writeText(discordFormatted);
+    setCopiedDiscord(true);
+    setTimeout(() => setCopiedDiscord(false), 2500);
+    window.open('https://discord.com/channels/@me', '_blank', 'noopener,noreferrer');
   };
 
   // Handle Copy Link
@@ -333,6 +393,32 @@ export const CardShareStudioModal: React.FC<CardShareStudioModalProps> = ({
 
           {/* Sharing Channel Actions */}
           <div className="space-y-3">
+            {/* Post Card to DEVARENA Community Feed */}
+            {!postedToCommunity ? (
+              <button
+                onClick={handlePostCardToCommunity}
+                className="w-full py-3 px-4 rounded-xl bg-arena-amber hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-2.5 transition-all shadow-md active:scale-[0.99]"
+              >
+                <Users className="w-4 h-4 text-slate-950 shrink-0" />
+                <span>Post Card to Community Feed</span>
+                <Send className="w-3.5 h-3.5" />
+              </button>
+            ) : (
+              <div className="p-3 rounded-xl bg-arena-lime/15 border border-arena-lime/40 flex items-center justify-between text-xs animate-in fade-in">
+                <div className="flex items-center gap-2 text-arena-lime font-bold">
+                  <Check className="w-4 h-4 text-arena-lime shrink-0" />
+                  <span>Card Published to Community Feed!</span>
+                </div>
+                <button
+                  onClick={handleGoToCommunity}
+                  className="px-3 py-1 rounded-lg bg-arena-lime text-slate-950 font-bold hover:bg-arena-lime/90 transition-all flex items-center gap-1 shadow-sm"
+                >
+                  <span>View Feed</span>
+                  <ExternalLink className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               
               {/* Download PNG */}
@@ -356,24 +442,47 @@ export const CardShareStudioModal: React.FC<CardShareStudioModalProps> = ({
 
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               
               {/* WhatsApp Share */}
               <button
                 onClick={handleWhatsAppShare}
-                className="py-2.5 px-4 rounded-xl bg-[#25D366]/15 hover:bg-[#25D366]/25 border border-[#25D366]/40 text-[#25D366] text-xs font-semibold flex items-center justify-center gap-2 transition-all"
+                className="py-2.5 px-3 rounded-xl bg-[#25D366]/15 hover:bg-[#25D366]/25 border border-[#25D366]/40 text-[#25D366] text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span>Share via WhatsApp</span>
+                <span>WhatsApp</span>
+              </button>
+
+              {/* Discord Share */}
+              <button
+                onClick={handleDiscordShare}
+                className="py-2.5 px-3 rounded-xl bg-[#5865F2]/15 hover:bg-[#5865F2]/25 border border-[#5865F2]/40 text-[#5865F2] text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
+                title="Copy Discord invite markdown and open Discord"
+              >
+                <svg className="w-3.5 h-3.5 fill-current shrink-0" viewBox="0 0 24 24">
+                  <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028z" />
+                </svg>
+                <span>{copiedDiscord ? 'Copied!' : 'Discord'}</span>
+              </button>
+
+              {/* Twitter / X Share */}
+              <button
+                onClick={handleTwitterShare}
+                className="py-2.5 px-3 rounded-xl bg-[#141B1D] hover:bg-[#1C2426] border border-[#2B383C] text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
+              >
+                <svg className="w-3.5 h-3.5 fill-current shrink-0" viewBox="0 0 24 24">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+                <span>Share on X</span>
               </button>
 
               {/* Native Device Share / Copy */}
               <button
                 onClick={handleNativeShare}
-                className="btn-secondary py-2.5 px-4 text-xs font-semibold gap-2 flex items-center justify-center"
+                className="btn-secondary py-2.5 px-3 text-xs font-semibold gap-1.5 flex items-center justify-center"
               >
                 <Share2 className="w-3.5 h-3.5 text-arena-amber" />
-                <span>Native Device Share</span>
+                <span>More</span>
               </button>
 
             </div>

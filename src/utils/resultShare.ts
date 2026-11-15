@@ -32,10 +32,36 @@ export async function copyTextToClipboard(text: string): Promise<boolean> {
 }
 
 /**
- * Generate official LinkedIn share endpoint URL
+ * Generate official LinkedIn share endpoint URL with prefilled post content.
+ * Modern LinkedIn web composer accepts 'feed/?shareActive=true&text=...' which opens
+ * the compose dialog with your formatted challenge text directly inserted.
  */
-export function getLinkedInShareUrl(publicUrl: string): string {
-  return `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(publicUrl)}`;
+export function getLinkedInShareUrl(publicUrl: string, postText?: string): string {
+  if (postText) {
+    return `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(postText)}`;
+  }
+  return `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(publicUrl)}`;
+}
+
+/**
+ * Generate official Twitter / X share endpoint URL with prefilled text.
+ */
+export function getTwitterShareUrl(postText: string): string {
+  return `https://twitter.com/intent/tweet?text=${encodeURIComponent(postText)}`;
+}
+
+/**
+ * Generate official WhatsApp share endpoint URL with prefilled text.
+ */
+export function getWhatsAppShareUrl(postText: string): string {
+  return `https://api.whatsapp.com/send?text=${encodeURIComponent(postText)}`;
+}
+
+/**
+ * Generate official Telegram share endpoint URL with prefilled text.
+ */
+export function getTelegramShareUrl(publicUrl: string, postText?: string): string {
+  return `https://t.me/share/url?url=${encodeURIComponent(publicUrl)}&text=${encodeURIComponent(postText || '')}`;
 }
 
 /**
@@ -272,17 +298,19 @@ export function saveSharedResult(result: PublicSharedResult): void {
     console.warn('Failed to store result in localStorage', e);
   }
 
-  // 2. Fire-and-forget sync to relay backend if active
-  try {
-    fetch('/api/results', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(result)
-    }).catch(() => {
-      // Offline or local server not running — non-fatal as URL payload serves as fallback
-    });
-  } catch (e) {
-    // ignore
+  // 2. Fire-and-forget sync to relay backend only if running on backend port 3001
+  if (typeof window !== 'undefined' && window.location.port === '3001') {
+    try {
+      fetch('/api/results', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(result)
+      }).catch(() => {
+        // Offline or local server not running — non-fatal as URL payload serves as fallback
+      });
+    } catch (e) {
+      // ignore
+    }
   }
 }
 
@@ -312,15 +340,17 @@ export async function getSharedResult(id: string, encodedPayload?: string): Prom
     }
   }
 
-  // 3. Try fetching from backend relay server
-  try {
-    const res = await fetch(`/api/results/${encodeURIComponent(id)}`);
-    if (res.ok) {
-      const data = await res.json();
-      return data;
+  // 3. Try fetching from backend relay server only if running on backend port 3001
+  if (typeof window !== 'undefined' && window.location.port === '3001') {
+    try {
+      const res = await fetch(`/api/results/${encodeURIComponent(id)}`);
+      if (res.ok) {
+        const data = await res.json();
+        return data;
+      }
+    } catch (e) {
+      // ignore
     }
-  } catch (e) {
-    // ignore
   }
 
   // 4. Fallback sample mock result if id is referenced but data missing

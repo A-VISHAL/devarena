@@ -10,7 +10,9 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronUp,
-  AlertCircle
+  AlertCircle,
+  Send,
+  Users
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { sound } from '../../utils/sound';
@@ -19,15 +21,18 @@ import {
   buildShareableResultUrl, 
   saveSharedResult, 
   copyTextToClipboard,
-  getLinkedInShareUrl 
+  getLinkedInShareUrl,
+  getTwitterShareUrl,
+  getWhatsAppShareUrl
 } from '../../utils/resultShare';
 import { PublicSharedResult } from '../../types';
 
 export const ShareCardModal: React.FC = () => {
-  const { shareCardData, closeShareModal, user } = useApp();
+  const { shareCardData, closeShareModal, user, addPost, setActiveTab } = useApp();
   
   const [copiedText, setCopiedText] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [postedToCommunity, setPostedToCommunity] = useState(false);
   const [showLinkedInNotice, setShowLinkedInNotice] = useState(false);
   const [showPostPreview, setShowPostPreview] = useState(false);
   const [copyError, setCopyError] = useState<string | null>(null);
@@ -88,26 +93,78 @@ export const ShareCardModal: React.FC = () => {
 
   if (!shareCardData || !publicResult) return null;
 
-  // 1. Share on LinkedIn
+  // 0. Post directly to DEVARENA Community Feed
+  const handlePostToCommunity = () => {
+    sound.playVictory();
+
+    addPost({
+      title: `${shareCardData.gameOrBattle}: ${shareCardData.scoreOrResult}`,
+      content: `Just conquered ${shareCardData.gameOrBattle} on DEVARENA!\n\nScore: ${shareCardData.scoreOrResult}${shareCardData.subtitle ? `\nPerformance: ${shareCardData.subtitle}` : ''}\n🔥 Streak: ${user.streak} days\n\nVerified execution on DEVARENA Platform.`,
+      type: 'puzzle_streak',
+      author: {
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName,
+        headline: user.headline || 'Full-Stack Developer & Problem Solver',
+        avatar: user.avatar,
+        rating: user.rating
+      },
+      tags: [
+        shareCardData.gameId ? shareCardData.gameId.replace(/-/g, '') : 'casualgaming',
+        'verifiedresult',
+        'streak',
+        'devarena'
+      ],
+      metadata: {
+        gameName: shareCardData.gameOrBattle,
+        score: shareCardData.scoreOrResult
+      }
+    });
+
+    setPostedToCommunity(true);
+  };
+
+  const handleGoToCommunity = () => {
+    sound.playClick();
+    closeShareModal();
+    setActiveTab('community');
+  };
+
+  // 1. Share on LinkedIn (with pre-filled content in composer)
   const handleShareOnLinkedIn = async () => {
     sound.playClick();
     setCopyError(null);
 
-    // 1 & 2: URL & Post text are generated above
-    // 3: Copy generated post text to clipboard
+    // Guaranteed copy to clipboard as seamless backup
     const copied = await copyTextToClipboard(linkedInPostText);
     
     if (copied) {
       setShowLinkedInNotice(true);
       setCopiedText(true);
-      setTimeout(() => setCopiedText(false), 3000);
+      setTimeout(() => setCopiedText(false), 3500);
     } else {
       setCopyError('Could not auto-copy post text. Please use the "Copy Post Text" button below.');
     }
 
-    // 4: Open LinkedIn's official share URL
-    const linkedInShareUrl = getLinkedInShareUrl(publicResultUrl);
+    // Open LinkedIn compose endpoint with prefilled text
+    const linkedInShareUrl = getLinkedInShareUrl(publicResultUrl, linkedInPostText);
     window.open(linkedInShareUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  // 1b. Share on Twitter / X
+  const handleShareOnTwitter = async () => {
+    sound.playClick();
+    await copyTextToClipboard(linkedInPostText);
+    const twitterUrl = getTwitterShareUrl(linkedInPostText);
+    window.open(twitterUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  // 1c. Share on WhatsApp
+  const handleShareOnWhatsApp = async () => {
+    sound.playClick();
+    await copyTextToClipboard(linkedInPostText);
+    const waUrl = getWhatsAppShareUrl(linkedInPostText);
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
   };
 
   // 2. Copy Post Text
@@ -244,15 +301,15 @@ export const ShareCardModal: React.FC = () => {
             )}
           </div>
 
-          {/* 2. Instruction Banner when LinkedIn Share clicked */}
+          {/* 2. Instruction Banner when Share clicked */}
           {showLinkedInNotice && (
             <div className="p-3.5 rounded-xl bg-arena-amber/10 border border-arena-amber/40 text-arena-textPrimary text-xs space-y-1 animate-in fade-in">
               <div className="flex items-center gap-1.5 font-bold text-arena-amber">
                 <Check className="w-4 h-4 text-arena-amber shrink-0" />
-                <span>Your post text has been copied!</span>
+                <span>Post content prepared & copied to clipboard!</span>
               </div>
               <p className="text-[11px] text-arena-textSecondary leading-relaxed pl-5.5">
-                Paste it into your LinkedIn post when the sharing window opens.
+                LinkedIn composer opened with your text pre-filled. If your browser restricts URL pre-filling, simply press <span className="font-mono text-arena-amber font-bold">Ctrl + V</span> to paste.
               </p>
             </div>
           )}
@@ -265,18 +322,67 @@ export const ShareCardModal: React.FC = () => {
             </div>
           )}
 
-          {/* 3. PRIMARY SOCIAL ACTION: Share on LinkedIn */}
-          <button
-            onClick={handleShareOnLinkedIn}
-            className="w-full py-3 px-4 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2.5 transition-all shadow-md active:scale-[0.99]"
-          >
-            {/* LinkedIn Official Logo SVG */}
-            <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
-              <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 8.76a1.62 1.62 0 1 0 0-3.24 1.62 1.62 0 0 0 0 3.24M7.86 18.5V10.13H5.07V18.5h2.79Z" />
-            </svg>
-            <span>Share on LinkedIn</span>
-            <ExternalLink className="w-3.5 h-3.5 opacity-80" />
-          </button>
+          {/* 3. PRIMARY SOCIAL ACTIONS */}
+          <div className="space-y-2">
+            {/* Post Directly to DEVARENA Community Feed */}
+            {!postedToCommunity ? (
+              <button
+                onClick={handlePostToCommunity}
+                className="w-full py-3 px-4 rounded-xl bg-arena-amber hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-2.5 transition-all shadow-md active:scale-[0.99]"
+              >
+                <Users className="w-4 h-4 text-slate-950 shrink-0" />
+                <span>Post to Community Feed</span>
+                <Send className="w-3.5 h-3.5" />
+              </button>
+            ) : (
+              <div className="p-3 rounded-xl bg-arena-lime/15 border border-arena-lime/40 flex items-center justify-between text-xs animate-in fade-in">
+                <div className="flex items-center gap-2 text-arena-lime font-bold">
+                  <Check className="w-4 h-4 text-arena-lime shrink-0" />
+                  <span>Published to Community Feed!</span>
+                </div>
+                <button
+                  onClick={handleGoToCommunity}
+                  className="px-3 py-1 rounded-lg bg-arena-lime text-slate-950 font-bold hover:bg-arena-lime/90 transition-all flex items-center gap-1 shadow-sm"
+                >
+                  <span>View Feed</span>
+                  <ExternalLink className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+
+            {/* Share on LinkedIn */}
+            <button
+              onClick={handleShareOnLinkedIn}
+              className="w-full py-3 px-4 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2.5 transition-all shadow-md active:scale-[0.99]"
+            >
+              <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
+                <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 8.76a1.62 1.62 0 1 0 0-3.24 1.62 1.62 0 0 0 0 3.24M7.86 18.5V10.13H5.07V18.5h2.79Z" />
+              </svg>
+              <span>Share on LinkedIn</span>
+              <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+            </button>
+
+            {/* Quick Share Buttons Row: X (Twitter) & WhatsApp */}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={handleShareOnTwitter}
+                className="py-2.5 px-3 rounded-xl bg-[#141B1D] hover:bg-[#1C2426] border border-arena-border hover:border-arena-borderHover text-white text-xs font-semibold flex items-center justify-center gap-2 transition-all"
+              >
+                <svg className="w-3.5 h-3.5 fill-current shrink-0" viewBox="0 0 24 24">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+                <span>Share on X</span>
+              </button>
+
+              <button
+                onClick={handleShareOnWhatsApp}
+                className="py-2.5 px-3 rounded-xl bg-[#25D366]/10 hover:bg-[#25D366]/20 border border-[#25D366]/35 text-[#25D366] text-xs font-semibold flex items-center justify-center gap-2 transition-all"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>Share WhatsApp</span>
+              </button>
+            </div>
+          </div>
 
           {/* 4. Secondary Action Buttons Row */}
           <div className="grid grid-cols-2 gap-2">

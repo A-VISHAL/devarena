@@ -50,12 +50,15 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
   problem,
   onBack
 }) => {
-  const { user, recordCodingBattleResult, openShareModal } = useApp();
+  const { user, recordCodingBattleResult, openShareModal, settings } = useApp();
 
   // Language & Code State
-  const [language, setLanguage] = useState<SupportedLanguage>('python');
+  const [language, setLanguage] = useState<SupportedLanguage>(() => {
+    return (settings?.defaultLanguage as SupportedLanguage) || 'python';
+  });
   const [code, setCode] = useState<string>(() => {
-    return problem.starterCode.python || problem.starterCode.javascript;
+    const prefLang = (settings?.defaultLanguage as SupportedLanguage) || 'python';
+    return problem.starterCode[prefLang] || problem.starterCode.python || problem.starterCode.javascript;
   });
 
   // Battle Lifecycle State
@@ -68,6 +71,7 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
   // Participants & Synchronization State
   const [myReady, setMyReady] = useState<boolean>(false);
   const [opponent, setOpponent] = useState<BattleParticipant | null>(null);
+  const [botSearchSeconds, setBotSearchSeconds] = useState<number>(5);
 
   // Execution & Submissions State
   const [isRunning, setIsRunning] = useState<boolean>(false);
@@ -245,6 +249,7 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
   }, [battleId, user, problem]);
 
   const startCountdown = () => {
+    if (roomStatus !== 'lobby') return;
     setRoomStatus('countdown');
     let c = 3;
     setCountdown(c);
@@ -264,6 +269,59 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
       }
     }, 1000);
   };
+
+  // 5-Second Auto Bot Matchmaking when waiting in lobby without opponent
+  useEffect(() => {
+    if (roomStatus !== 'lobby' || opponent) return;
+
+    setBotSearchSeconds(5);
+    const countdownInterval = setInterval(() => {
+      setBotSearchSeconds(prev => Math.max(0, prev - 1));
+    }, 1000);
+
+    const botTimer = setTimeout(() => {
+      setOpponent(current => {
+        if (current) return current; // Real opponent connected in time
+
+        sound.playCorrect();
+        const botOpponent: BattleParticipant = {
+          id: 'bot_algo_ai',
+          username: 'AlgoBot (AI)',
+          avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80',
+          rating: Math.max(1180, (user.rating || 1200) + 20),
+          isReady: false,
+          status: 'idle',
+          code: '',
+          language: 'javascript',
+          testsPassed: 0,
+          totalTests: problem.testCases.length,
+          hasPassedAll: false
+        };
+
+        // Ready up the bot after 1.2s
+        setTimeout(() => {
+          setOpponent(c => {
+            if (!c || c.id !== 'bot_algo_ai') return c;
+            return { ...c, isReady: true };
+          });
+        }, 1200);
+
+        return botOpponent;
+      });
+    }, 5000);
+
+    return () => {
+      clearInterval(countdownInterval);
+      clearTimeout(botTimer);
+    };
+  }, [roomStatus, opponent, problem.testCases.length, user.rating]);
+
+  // Auto-start countdown when both players are ready
+  useEffect(() => {
+    if (roomStatus === 'lobby' && myReady && opponent?.isReady) {
+      startCountdown();
+    }
+  }, [myReady, opponent?.isReady, roomStatus]);
 
   const handleToggleReady = () => {
     sound.playClick();
@@ -446,6 +504,70 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
     }
   };
 
+  // Bot Solving Simulation — Bot slowly solves test cases and submits
+  useEffect(() => {
+    if (roomStatus !== 'battle' || opponent?.id !== 'bot_algo_ai') return;
+
+    const totalTests = problem.testCases.length;
+    const timeouts: NodeJS.Timeout[] = [];
+
+    // Step 1: Initial thinking and typing (starts after 3.5s)
+    timeouts.push(setTimeout(() => {
+      setOpponent(prev => prev && prev.id === 'bot_algo_ai' ? { ...prev, status: 'typing' } : prev);
+    }, 3500));
+
+    // Step 2: Incremental test solving
+    const stepDuration = 12000; // ~12s per test
+    for (let testNum = 1; testNum <= totalTests; testNum++) {
+      const runTime = 3500 + (testNum - 1) * stepDuration + 7000;
+      const passTime = runTime + 2500;
+
+      // Bot runs tests
+      timeouts.push(setTimeout(() => {
+        setOpponent(prev => prev && prev.id === 'bot_algo_ai' ? { ...prev, status: 'running' } : prev);
+      }, runTime));
+
+      // Bot passes this test
+      timeouts.push(setTimeout(() => {
+        setOpponent(prev => {
+          if (!prev || prev.id !== 'bot_algo_ai') return prev;
+          return {
+            ...prev,
+            status: testNum < totalTests ? 'typing' : 'running',
+            testsPassed: testNum
+          };
+        });
+      }, passTime));
+    }
+
+    // Step 3: Final submission after all tests pass
+    const submitTime = 3500 + (totalTests - 1) * stepDuration + 7000 + 2500 + 5000;
+    timeouts.push(setTimeout(() => {
+      setOpponent(prev => {
+        if (!prev || prev.id !== 'bot_algo_ai') return prev;
+        const timeSpent = Math.max(1, Math.round((Date.now() - startTimeRef.current) / 1000));
+        const botSub = {
+          passed: true,
+          testsPassed: totalTests,
+          totalTests: totalTests,
+          timeTaken: timeSpent
+        };
+        setOpponentSubmission(botSub);
+        evaluateFinalWinner(mySubmission, botSub);
+        return {
+          ...prev,
+          status: 'submitted',
+          hasPassedAll: true,
+          testsPassed: totalTests
+        };
+      });
+    }, submitTime));
+
+    return () => {
+      timeouts.forEach(t => clearTimeout(t));
+    };
+  }, [roomStatus, opponent?.id, problem.testCases.length, mySubmission]);
+
   const inviteUrl = `${window.location.origin}/app/arena?battle=${battleId}`;
 
   const handleCopyLink = () => {
@@ -564,8 +686,8 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
             <div className="h-3 w-px bg-[#2B383C] mx-0.5" />
 
             <div className="flex items-center gap-1.5 text-xs">
-              <span className="font-semibold text-white truncate max-w-[90px] sm:max-w-[120px]">
-                {opponent ? opponent.username : 'Searching...'}
+              <span className="font-semibold text-white truncate max-w-[100px] sm:max-w-[130px]">
+                {opponent ? opponent.username : `Searching... (${botSearchSeconds}s)`}
               </span>
               {opponent && (
                 <span className="text-[#9BA8A8] font-mono text-[11px] hidden md:inline">
@@ -620,15 +742,17 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
             <div className="text-[11px] text-[#9BA8A8]">
               {opponent ? (
                 <span>
-                  <strong className="text-white font-mono">@{opponent.username}</strong> joined the room.{' '}
+                  <strong className="text-white font-mono">@{opponent.username}</strong> joined the match.{' '}
                   {opponent.isReady ? (
-                    <span className="text-emerald-400 font-semibold">Opponent is ready!</span>
+                    <span className="text-emerald-400 font-semibold">Opponent is ready! Click "Ready Up" to start.</span>
                   ) : (
                     <span>Waiting for opponent to ready up.</span>
                   )}
                 </span>
               ) : (
-                <span>Invite code: <strong className="text-white font-mono bg-[#101314] px-1.5 py-0.5 rounded border border-[#2B383C]">{battleId}</strong> • Share with a friend or test in another window.</span>
+                <span>
+                  Searching for opponent... Bot joins in <strong className="text-arena-amber font-mono font-bold">{botSearchSeconds}s</strong> • (Invite code: <strong className="text-white font-mono bg-[#101314] px-1.5 py-0.5 rounded border border-[#2B383C]">{battleId}</strong>)
+                </span>
               )}
             </div>
           </div>
@@ -893,7 +1017,7 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
           <div className="flex-1 min-h-[160px] relative">
             <Editor
               height="100%"
-              theme="vs-dark"
+              theme={settings?.editorTheme || 'vs-dark'}
               language={
                 language === 'python' 
                   ? 'python' 
@@ -909,7 +1033,7 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
               onChange={handleCodeChange}
               options={{
                 minimap: { enabled: false },
-                fontSize: 13,
+                fontSize: settings?.fontSize || 13,
                 fontFamily: 'JetBrains Mono, Menlo, Monaco, Consolas, monospace',
                 lineNumbers: 'on',
                 glyphMargin: false,
@@ -918,7 +1042,8 @@ export const CodingBattleRoom: React.FC<CodingBattleRoomProps> = ({
                 lineNumbersMinChars: 3,
                 scrollBeyondLastLine: false,
                 automaticLayout: true,
-                tabSize: 2,
+                tabSize: settings?.tabSize || 2,
+                wordWrap: settings?.wordWrap || 'on',
                 cursorBlinking: 'smooth',
                 cursorSmoothCaretAnimation: 'on',
                 smoothScrolling: true,

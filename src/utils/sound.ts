@@ -181,6 +181,18 @@ class SoundSystem {
     osc.start();
     osc.stop(this.ctx.currentTime + 0.25);
   }
+
+  public click() {
+    this.playClick();
+  }
+
+  public success() {
+    this.playCorrect();
+  }
+
+  public defeat() {
+    this.playWrong();
+  }
 }
 
 export const sound = new SoundSystem();

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, RefreshCw, Share2, Zap, Trophy, Activity, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Share2, Zap, Trophy, Activity, AlertTriangle, Sparkles } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { sound } from '../../utils/sound';
 import confetti from 'canvas-confetti';
@@ -17,21 +17,26 @@ function getPercentile(ms: number): { percentile: string; rank: string; color: s
 export const ReactionChallenge: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { recordCasualGameResult, openShareModal } = useApp();
 
+  const [difficulty, setDifficulty] = useState<'easy' | 'normal'>('easy');
+  const totalRounds = difficulty === 'easy' ? 3 : 5;
+
   const [state, setState] = useState<GameState>('idle');
   const [currentMs, setCurrentMs] = useState<number | null>(null);
   const [history, setHistory] = useState<number[]>([]);
+  const [showHint, setShowHint] = useState<boolean>(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
-
-  const totalRounds = 5;
 
   const startWaiting = () => {
     sound.playClick();
     setState('waiting');
     setCurrentMs(null);
 
-    const delay = Math.floor(1600 + Math.random() * 2600);
+    // In easy mode, shorter and more predictable anticipation window (1200 - 2000ms)
+    const delay = difficulty === 'easy'
+      ? Math.floor(1200 + Math.random() * 1000)
+      : Math.floor(1600 + Math.random() * 2600);
 
     timerRef.current = setTimeout(() => {
       startTimeRef.current = performance.now();
@@ -60,7 +65,7 @@ export const ReactionChallenge: React.FC<{ onBack: () => void }> = ({ onBack }) 
         setState('game_complete');
         const best = Math.min(...newHistory);
         recordCasualGameResult('reaction-challenge', best);
-        if (best < 220) confetti({ particleCount: 60, spread: 60 });
+        if (best < 240) confetti({ particleCount: 60, spread: 60 });
       } else {
         setState('round_result');
       }
@@ -75,6 +80,18 @@ export const ReactionChallenge: React.FC<{ onBack: () => void }> = ({ onBack }) 
     setState('idle');
     setCurrentMs(null);
     setHistory([]);
+    setShowHint(false);
+  };
+
+  const toggleDifficulty = () => {
+    sound.playClick();
+    setDifficulty(d => d === 'easy' ? 'normal' : 'easy');
+    handleReset();
+  };
+
+  const handleHint = () => {
+    sound.playClick();
+    setShowHint(prev => !prev);
   };
 
   useEffect(() => {
@@ -120,10 +137,49 @@ export const ReactionChallenge: React.FC<{ onBack: () => void }> = ({ onBack }) 
             {history.length < totalRounds ? `Attempt ${history.length + 1} of ${totalRounds}` : 'Complete'}
           </span>
         </div>
-        <button onClick={handleReset} className="p-1.5 text-arena-textSecondary hover:text-arena-textPrimary">
-          <RefreshCw className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={toggleDifficulty}
+            className={`px-2 py-1 rounded text-[11px] font-medium border transition-colors ${
+              difficulty === 'easy'
+                ? 'bg-arena-success/15 border-arena-success/30 text-arena-success'
+                : 'bg-arena-elevated border-arena-border text-arena-textSecondary'
+            }`}
+            title="Toggle difficulty (Easy gives 3 rounds & steady timing)"
+          >
+            {difficulty === 'easy' ? '🟢 Easy (3)' : '🟡 Normal (5)'}
+          </button>
+          <button
+            onClick={handleHint}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-arena-amber/15 hover:bg-arena-amber/25 border border-arena-amber/30 text-arena-amber text-xs font-semibold shadow-sm transition-all"
+            title="Corner Hint & Reflex Tips"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-arena-amber animate-pulse" />
+            <span>💡 Hint</span>
+          </button>
+          <button onClick={handleReset} className="p-1.5 text-arena-textSecondary hover:text-arena-textPrimary">
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        </div>
       </div>
+
+      {/* Floating Corner Hint Banner */}
+      {showHint && (
+        <div className="w-full mb-3 p-3 rounded-lg bg-arena-amber/10 border border-arena-amber/30 text-arena-textPrimary text-xs flex items-start justify-between gap-2 animate-in fade-in">
+          <div className="flex items-start gap-2">
+            <span className="text-base leading-none">💡</span>
+            <div>
+              <span className="font-semibold text-arena-amber block">Corner Reflex Tip:</span>
+              <span className="text-arena-textSecondary text-[11px] leading-tight block mt-0.5">
+                Rest your index finger pre-loaded on the mouse/trackpad. Focus on the center screen with soft peripheral vision. Human average is ~250ms; sub-200ms is elite pro tier!
+              </span>
+            </div>
+          </div>
+          <button onClick={() => setShowHint(false)} className="text-arena-textSubtle hover:text-arena-textPrimary p-0.5">
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Stats preview */}
       <div className="w-full grid grid-cols-2 gap-2 mb-4">
@@ -132,7 +188,7 @@ export const ReactionChallenge: React.FC<{ onBack: () => void }> = ({ onBack }) 
           <span className="text-base font-bold text-arena-teal font-mono">{bestMs ? `${bestMs} ms` : '--'}</span>
         </div>
         <div className="p-2.5 rounded-lg bg-arena-surface border border-arena-border text-center">
-          <span className="text-[10px] text-arena-textSubtle font-medium block">5-ROUND AVG</span>
+          <span className="text-[10px] text-arena-textSubtle font-medium block">{totalRounds}-ROUND AVG</span>
           <span className="text-base font-bold text-arena-amber font-mono">{averageMs ? `${averageMs} ms` : '--'}</span>
         </div>
       </div>
@@ -158,9 +214,9 @@ export const ReactionChallenge: React.FC<{ onBack: () => void }> = ({ onBack }) 
               <div className="w-12 h-12 rounded-lg bg-arena-elevated border border-arena-border text-arena-amber flex items-center justify-center mx-auto">
                 <Zap className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-arena-textPrimary">Click to Start</h3>
+              <h3 className="text-lg font-bold text-arena-textPrimary">Click Anywhere to Start</h3>
               <p className="text-xs text-arena-textSecondary max-w-xs leading-relaxed">
-                Wait for the red prompt to turn green, then click as fast as possible.
+                Wait for the red card to turn green, then click as fast as possible.
               </p>
             </div>
           )}

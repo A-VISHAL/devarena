@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Swords, 
-  Trophy, 
-  Users, 
-  Zap, 
-  Clock, 
-  CheckCircle2, 
-  Code2, 
+import {
+  Swords,
+  Trophy,
+  Users,
+  Zap,
+  Clock,
+  CheckCircle2,
+  Code2,
   Shield,
   Activity,
   Sparkles,
@@ -16,16 +16,21 @@ import {
   X,
   Play,
   Flame,
-  ArrowRight
+  ArrowRight,
+  ArrowLeft
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { CODING_PROBLEMS } from '../data/problems';
 import { CodingBattleRoom } from '../components/arena/CodingBattleRoom';
+import { LeetCodeArena } from '../components/arena/LeetCodeArena';
 import { CodingProblem, SupportedLanguage } from '../types';
 import { sound } from '../utils/sound';
 
 export const CodeArena: React.FC = () => {
-  const { user, activeBattleId, setActiveBattleId } = useApp();
+  const { user, activeBattleId, setActiveBattleId, selectedArenaProblemId } = useApp();
+
+  // Mode: Practice (LeetCode-style IDE) vs 1v1 Battle Lobby
+  const [arenaMode, setArenaMode] = useState<'practice' | 'battle-lobby'>('practice');
 
   // Matchmaking Config State
   const [difficulty, setDifficulty] = useState<'All' | 'Easy' | 'Medium' | 'Hard'>('All');
@@ -37,9 +42,19 @@ export const CodeArena: React.FC = () => {
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [searchTimer, setSearchTimer] = useState<number>(0);
   const [inputBattleCode, setInputBattleCode] = useState<string>('');
-  const [selectedProblem, setSelectedProblem] = useState<CodingProblem>(CODING_PROBLEMS[0]);
+  const [selectedProblem, setSelectedProblem] = useState<CodingProblem>(() => {
+    return CODING_PROBLEMS.find(p => p.id === selectedArenaProblemId) || CODING_PROBLEMS[0];
+  });
   const [createdRoomCode, setCreatedRoomCode] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
+
+  // Keep selectedProblem in sync
+  useEffect(() => {
+    if (selectedArenaProblemId) {
+      const found = CODING_PROBLEMS.find(p => p.id === selectedArenaProblemId);
+      if (found) setSelectedProblem(found);
+    }
+  }, [selectedArenaProblemId]);
 
   // Timer for active matchmaking search
   useEffect(() => {
@@ -60,6 +75,18 @@ export const CodeArena: React.FC = () => {
         battleId={activeBattleId}
         problem={selectedProblem}
         onBack={() => setActiveBattleId(null)}
+      />
+    );
+  }
+
+  // If user is in Practice mode (Default LeetCode-style environment)
+  if (arenaMode === 'practice') {
+    return (
+      <LeetCodeArena
+        onStart1v1Battle={() => {
+          sound.playClick();
+          setArenaMode('battle-lobby');
+        }}
       />
     );
   }
@@ -138,427 +165,283 @@ export const CodeArena: React.FC = () => {
     'Hash Table',
     'Two Pointers',
     'Stack',
-    'Dynamic Programming'
+    'Dynamic Programming',
+    'Sliding Window',
+    'Binary Search',
+    'Graphs'
   ];
 
   return (
-    <div className="page-container py-8 space-y-8 animate-in fade-in max-w-6xl mx-auto">
+    <div className="page-container py-6 space-y-6 animate-in fade-in max-w-6xl mx-auto">
       
+      {/* Return to Practice IDE button */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => {
+            sound.playClick();
+            setArenaMode('practice');
+          }}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#141A1C] hover:bg-[#1C2426] border border-[#253033] text-xs font-medium text-[#9AA5A6] hover:text-white transition-all"
+        >
+          <ArrowLeft className="w-3.5 h-3.5 text-[#FFAD42]" />
+          <span>Back to Solo Code Arena</span>
+        </button>
+
+        <span className="text-xs font-mono text-[#9AA5A6]">
+          1v1 Duel Lobby • Real-Time Synchronization
+        </span>
+      </div>
+
       {/* ============================================================== */}
       {/* 1. COMPACT ARENA HERO BANNER                                    */}
       {/* ============================================================== */}
       <div className="rounded-2xl bg-[#141A1C] border border-[#253033] p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#182023] border border-[#2B383C] text-arena-amber text-[10px] font-mono font-bold uppercase tracking-wider">
-            <Swords className="w-3 h-3 text-arena-amber" />
-            <span>1V1 VERSUS ARENA</span>
+          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#FFAD42]/10 border border-[#FFAD42]/30 text-[#FFAD42] text-xs font-mono font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#FFAD42] animate-pulse" />
+            1v1 CODE DUEL ARENA
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-            Competitive Code Arena
+          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+            Real-Time Competitive Problem Solving
           </h1>
-          <p className="text-xs text-[#9BA8A8]">
-            Synchronized real-time algorithm duels inspired by NeetCode Versus. Solved tests and fast submissions earn verified Elo.
+          <p className="text-xs text-[#9AA5A6] max-w-xl">
+            Challenge fellow developers, solve identical LeetCode algorithmic problems with live test runs, and climb the verified Elo rating ladder.
           </p>
         </div>
 
-        {/* Rating Summary Card */}
-        <div className="flex items-center gap-4 px-4 py-2.5 rounded-xl bg-[#101314] border border-[#253033] shrink-0">
-          <div className="w-10 h-10 rounded-lg bg-[#182023] border border-[#2B383C] text-arena-amber flex items-center justify-center font-black">
-            <Trophy className="w-5 h-5 text-arena-amber" />
-          </div>
+        {/* User Stats Snapshot */}
+        <div className="flex items-center gap-3 bg-[#101314] px-4 py-2.5 rounded-xl border border-[#253033] shrink-0 font-mono text-xs">
           <div>
-            <div className="text-[10px] font-mono font-semibold uppercase text-[#9BA8A8]">CURRENT RATING</div>
-            <div className="text-lg font-black text-white font-mono leading-tight">{user.rating} Elo</div>
-            <div className="text-[11px] text-emerald-400 font-mono font-medium">
-              {user.battlesWon}W - {user.battlesTotal - user.battlesWon}L ({user.battlesTotal > 0 ? Math.round((user.battlesWon / user.battlesTotal) * 100) : 0}%)
+            <div className="text-[10px] text-[#64748B] uppercase">Rating</div>
+            <div className="text-base font-bold text-[#FFAD42]">{user.rating} Elo</div>
+          </div>
+          <div className="h-6 w-px bg-[#253033]" />
+          <div>
+            <div className="text-[10px] text-[#64748B] uppercase">Win Rate</div>
+            <div className="text-base font-bold text-[#B5FF4A]">
+              {user.battlesTotal > 0 ? Math.round((user.battlesWon / user.battlesTotal) * 100) : 0}%
             </div>
+          </div>
+          <div className="h-6 w-px bg-[#253033]" />
+          <div>
+            <div className="text-[10px] text-[#64748B] uppercase">Duels</div>
+            <div className="text-base font-bold text-white">{user.battlesTotal}</div>
           </div>
         </div>
       </div>
 
       {/* ============================================================== */}
-      {/* 2. CENTERED MATCHMAKING SETUP PANEL (NeetCode Versus Style)    */}
+      {/* 2. MATCHMAKING & PRIVATE ROOM LAUNCHER                          */}
       {/* ============================================================== */}
-      <div className="bg-[#141A1C] border border-[#253033] rounded-2xl p-6 sm:p-8 relative overflow-hidden shadow-xl">
-        
-        {/* Active Opponent Search Overlay */}
-        {isSearching ? (
-          <div className="py-12 flex flex-col items-center justify-center text-center space-y-6 animate-in fade-in">
-            {/* Animated Pulsing Radar Indicator */}
-            <div className="relative flex items-center justify-center">
-              <span className="w-20 h-20 rounded-full bg-arena-amber/10 animate-ping absolute" />
-              <span className="w-14 h-14 rounded-full bg-arena-amber/20 animate-pulse absolute" />
-              <div className="w-12 h-12 rounded-full bg-[#182023] border border-arena-amber flex items-center justify-center relative z-10 text-arena-amber shadow-[0_0_16px_rgba(255,173,66,0.4)]">
-                <Swords className="w-5 h-5 animate-spin" />
-              </div>
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-            <div className="space-y-1.5">
-              <h2 className="text-lg font-black text-white">Searching for Opponent...</h2>
-              <div className="text-sm font-mono font-bold text-arena-amber tracking-wider">
-                {formatSearchTime(searchTimer)}
-              </div>
-              <p className="text-xs text-[#9BA8A8]">
-                Matching with players around {user.rating} (±150 Elo)
-              </p>
+        {/* Left Column: Quick Matchmaker Setup */}
+        <div className="lg:col-span-7 bg-[#141A1C] border border-[#253033] rounded-2xl p-6 space-y-6">
+          <div className="flex items-center justify-between pb-3 border-b border-[#253033]">
+            <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-[#FFAD42]" />
+              <h2 className="font-bold text-sm text-white">Match Preferences</h2>
             </div>
-
-            {/* Criteria Badges */}
-            <div className="flex flex-wrap items-center justify-center gap-2 pt-1 font-mono text-[11px]">
-              <span className="px-2.5 py-1 rounded bg-[#101314] border border-[#253033] text-[#CBD5E1]">
-                Difficulty: <strong className="text-white">{difficulty}</strong>
-              </span>
-              <span className="px-2.5 py-1 rounded bg-[#101314] border border-[#253033] text-[#CBD5E1]">
-                Language: <strong className="text-white">{language}</strong>
-              </span>
-              <span className="px-2.5 py-1 rounded bg-[#101314] border border-[#253033] text-[#CBD5E1]">
-                Time: <strong className="text-white">{duration}m</strong>
-              </span>
-            </div>
-
-            {/* Cancel Button */}
-            <button
-              onClick={handleCancelSearch}
-              className="mt-4 px-5 py-2 rounded-xl bg-[#20292D] hover:bg-[#283236] text-[#CBD5E1] hover:text-white text-xs font-mono font-semibold border border-[#344247] transition-colors"
-            >
-              Cancel Search
-            </button>
+            <span className="text-[11px] text-[#64748B] font-mono">15 Min Duel</span>
           </div>
-        ) : (
-          /* Matchmaking Configuration Interface */
-          <div className="space-y-6">
-            
-            {/* A. Head-to-Head Visual: You VS Opponent */}
-            <div className="grid grid-cols-1 md:grid-cols-7 items-center gap-4 p-4 rounded-xl bg-[#101314] border border-[#253033]">
-              
-              {/* You Card (3 cols) */}
-              <div className="md:col-span-3 flex items-center gap-3 p-3 rounded-lg bg-[#161D20] border border-[#253033]">
-                <img 
-                  src={user.avatar} 
-                  alt={user.displayName}
-                  className="w-10 h-10 rounded-full object-cover ring-2 ring-arena-amber"
-                />
-                <div className="min-w-0">
-                  <div className="text-xs font-mono font-bold text-arena-amber">YOU</div>
-                  <div className="text-sm font-bold text-white truncate">{user.displayName}</div>
-                  <div className="text-[11px] font-mono text-[#9BA8A8]">{user.rating} Elo</div>
-                </div>
-              </div>
 
-              {/* VS Badge (1 col) */}
-              <div className="md:col-span-1 flex justify-center py-2 md:py-0">
-                <span className="w-8 h-8 rounded-full bg-[#182023] border border-[#2B383C] text-arena-amber font-mono font-black text-xs flex items-center justify-center shadow-inner">
-                  VS
-                </span>
-              </div>
+          {/* Difficulty Selector */}
+          <div className="space-y-2">
+            <label className="text-xs text-[#9AA5A6] font-medium block">Difficulty Tier</label>
+            <div className="grid grid-cols-4 gap-2">
+              {(['All', 'Easy', 'Medium', 'Hard'] as const).map((diff) => (
+                <button
+                  key={diff}
+                  onClick={() => {
+                    sound.playClick();
+                    setDifficulty(diff);
+                  }}
+                  className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all ${
+                    difficulty === diff
+                      ? 'bg-[#1C2426] text-white border-[#FFAD42] shadow-subtle'
+                      : 'bg-[#101314] text-[#9AA5A6] border-[#253033] hover:border-[#3E4C50]'
+                  }`}
+                >
+                  {diff}
+                </button>
+              ))}
+            </div>
+          </div>
 
-              {/* Opponent Card (3 cols) */}
-              <div className="md:col-span-3 flex items-center gap-3 p-3 rounded-lg bg-[#161D20] border border-[#253033] border-dashed">
-                <div className="w-10 h-10 rounded-full bg-[#182023] border border-[#253033] flex items-center justify-center text-[#9BA8A8]">
-                  <Users className="w-5 h-5 text-[#9BA8A8]" />
-                </div>
+          {/* Topic Preference */}
+          <div className="space-y-2">
+            <label className="text-xs text-[#9AA5A6] font-medium block">Algorithm Category</label>
+            <div className="flex flex-wrap gap-1.5">
+              {topicOptions.map((top) => (
+                <button
+                  key={top}
+                  onClick={() => {
+                    sound.playClick();
+                    setTopic(top);
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                    topic === top
+                      ? 'bg-[#FFAD42]/15 text-[#FFAD42] border-[#FFAD42]/40'
+                      : 'bg-[#101314] text-[#9AA5A6] border-[#253033] hover:text-white hover:border-[#3E4C50]'
+                  }`}
+                >
+                  {top}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Primary Action Button */}
+          {isSearching ? (
+            <div className="p-4 rounded-xl bg-[#101314] border border-[#FFAD42]/40 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-4 h-4 border-2 border-[#FFAD42] border-t-transparent rounded-full animate-spin" />
                 <div>
-                  <div className="text-xs font-mono font-bold text-[#9BA8A8]">OPPONENT</div>
-                  <div className="text-sm font-bold text-white">Ranked Opponent</div>
-                  <div className="text-[11px] font-mono text-[#9BA8A8]">~{user.rating} Elo (Auto-Matched)</div>
+                  <div className="text-xs font-semibold text-white">Searching for Duel Opponent...</div>
+                  <div className="text-[10px] text-[#9AA5A6]">Matching skill rating around {user.rating} Elo</div>
                 </div>
               </div>
-
-            </div>
-
-            {/* B. Settings Selection Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              
-              {/* 1. Difficulty */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-mono font-bold text-[#9BA8A8] uppercase tracking-wider block">
-                  DIFFICULTY
-                </label>
-                <div className="grid grid-cols-4 gap-1 bg-[#101314] p-1 rounded-xl border border-[#253033]">
-                  {(['All', 'Easy', 'Medium', 'Hard'] as const).map(d => (
-                    <button
-                      key={d}
-                      type="button"
-                      onClick={() => setDifficulty(d)}
-                      className={`py-1 text-xs font-mono rounded-lg transition-all ${
-                        difficulty === d
-                          ? 'bg-[#1F272A] text-white font-bold border border-[#344247] shadow-sm'
-                          : 'text-[#9BA8A8] hover:text-white'
-                      }`}
-                    >
-                      {d}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 2. Language */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-mono font-bold text-[#9BA8A8] uppercase tracking-wider block">
-                  LANGUAGE
-                </label>
-                <select
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value as SupportedLanguage)}
-                  className="w-full bg-[#101314] border border-[#253033] rounded-xl px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-arena-amber cursor-pointer"
+              <div className="flex items-center gap-3 font-mono">
+                <span className="text-xs font-bold text-[#FFAD42]">{formatSearchTime(searchTimer)}</span>
+                <button
+                  onClick={handleCancelSearch}
+                  className="px-2.5 py-1 rounded bg-[#253033] hover:bg-[#3E4C50] text-[11px] text-[#9AA5A6] hover:text-white"
                 >
-                  <option value="python">Python 3</option>
-                  <option value="javascript">JavaScript (ES6)</option>
-                  <option value="typescript">TypeScript</option>
-                  <option value="cpp">C++ (GCC)</option>
-                  <option value="java">Java (OpenJDK)</option>
-                </select>
+                  Cancel
+                </button>
               </div>
-
-              {/* 3. Topic */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-mono font-bold text-[#9BA8A8] uppercase tracking-wider block">
-                  TOPIC
-                </label>
-                <select
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  className="w-full bg-[#101314] border border-[#253033] rounded-xl px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-arena-amber cursor-pointer"
-                >
-                  {topicOptions.map(t => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* 4. Duration */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-mono font-bold text-[#9BA8A8] uppercase tracking-wider block">
-                  DURATION
-                </label>
-                <div className="grid grid-cols-4 gap-1 bg-[#101314] p-1 rounded-xl border border-[#253033]">
-                  {([10, 15, 20, 30] as const).map(m => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => setDuration(m)}
-                      className={`py-1 text-xs font-mono rounded-lg transition-all ${
-                        duration === m
-                          ? 'bg-[#1F272A] text-white font-bold border border-[#344247] shadow-sm'
-                          : 'text-[#9BA8A8] hover:text-white'
-                      }`}
-                    >
-                      {m}m
-                    </button>
-                  ))}
-                </div>
-              </div>
-
             </div>
+          ) : (
+            <button
+              onClick={handleStartSearch}
+              className="w-full py-3 rounded-xl bg-[#FFAD42] hover:bg-[#E59830] text-[#101314] font-bold text-sm flex items-center justify-center gap-2 shadow-subtle transition-all"
+            >
+              <Swords className="w-4 h-4" />
+              <span>Find Match (Random Duel)</span>
+            </button>
+          )}
+        </div>
 
-            {/* C. Primary Actions: Find Match & Private Duel */}
-            <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
-              <button
-                onClick={handleStartSearch}
-                className="w-full sm:flex-1 py-3 rounded-xl bg-arena-amber hover:bg-arena-amberHover text-zinc-950 font-bold text-sm font-mono flex items-center justify-center gap-2 shadow-sm transition-all"
-              >
-                <Swords className="w-4 h-4 text-zinc-950" />
-                <span>Find Random Match</span>
-              </button>
-
-              <button
-                onClick={handleCreatePrivateDuel}
-                className="w-full sm:w-auto px-5 py-3 rounded-xl bg-[#1C2426] hover:bg-[#252E32] text-white font-mono font-semibold text-xs border border-[#2B383C] transition-colors flex items-center justify-center gap-2"
-              >
-                <Zap className="w-3.5 h-3.5 text-arena-amber" />
-                <span>Create Private Duel</span>
-              </button>
+        {/* Right Column: Private Duel Room & Join Code */}
+        <div className="lg:col-span-5 space-y-4">
+          
+          {/* Create Private Duel */}
+          <div className="bg-[#141A1C] border border-[#253033] rounded-2xl p-5 space-y-4">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-[#00E5FF]" />
+              <h3 className="font-bold text-sm text-white">Challenge a Friend</h3>
             </div>
+            <p className="text-xs text-[#9AA5A6]">
+              Create an invite room with deterministic test cases and share the duel code with your friend.
+            </p>
 
-            {/* D. Inline Private Duel Code Box (if created) */}
-            {createdRoomCode && (
-              <div className="p-4 rounded-xl bg-[#101314] border border-arena-amber/40 flex flex-col sm:flex-row items-center justify-between gap-3 animate-in fade-in">
-                <div className="space-y-0.5 text-left">
-                  <div className="text-[10px] font-mono font-bold text-arena-amber uppercase tracking-wider">
-                    ROOM CREATED • SHARE WITH FRIEND
-                  </div>
-                  <div className="text-xs text-[#9BA8A8]">
-                    Send this room code to your friend to begin your 1v1 duel:
-                  </div>
-                  <div className="font-mono font-black text-lg text-white tracking-widest pt-0.5">
-                    {createdRoomCode}
-                  </div>
+            {createdRoomCode ? (
+              <div className="p-3 rounded-xl bg-[#101314] border border-[#253033] space-y-3 font-mono">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[#9AA5A6]">Room Code:</span>
+                  <span className="text-[#FFAD42] font-bold text-base tracking-wider">{createdRoomCode}</span>
                 </div>
-
-                <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="flex gap-2">
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(`${window.location.origin}/app/arena?battle=${createdRoomCode}`);
+                      navigator.clipboard.writeText(createdRoomCode);
                       setCopiedCode(true);
                       setTimeout(() => setCopiedCode(false), 2000);
                     }}
-                    className="flex-1 sm:flex-none px-3.5 py-2 rounded-lg bg-[#182023] hover:bg-[#20292D] border border-[#2B383C] text-xs font-mono font-semibold text-white flex items-center justify-center gap-1.5"
+                    className="flex-1 py-1.5 rounded-lg bg-[#1C2426] hover:bg-[#253033] border border-[#253033] text-xs font-semibold text-white flex items-center justify-center gap-1.5"
                   >
-                    {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedCode ? 'Link Copied' : 'Copy Link'}</span>
+                    {copiedCode ? <Check className="w-3.5 h-3.5 text-[#B5FF4A]" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedCode ? 'Copied' : 'Copy Code'}</span>
                   </button>
-
                   <button
                     onClick={handleEnterCreatedRoom}
-                    className="flex-1 sm:flex-none px-4 py-2 rounded-lg bg-arena-amber hover:bg-arena-amberHover text-zinc-950 text-xs font-mono font-bold"
+                    className="flex-1 py-1.5 rounded-lg bg-[#FFAD42] hover:bg-[#E59830] text-xs font-bold text-[#101314] flex items-center justify-center gap-1.5"
                   >
-                    Enter Room
+                    <Play className="w-3.5 h-3.5" />
+                    <span>Enter Room</span>
                   </button>
                 </div>
               </div>
+            ) : (
+              <button
+                onClick={handleCreatePrivateDuel}
+                className="w-full py-2.5 rounded-xl bg-[#1C2426] hover:bg-[#253033] border border-[#253033] hover:border-[#3E4C50] text-xs font-semibold text-white flex items-center justify-center gap-2 transition-all"
+              >
+                <span>Generate Private Duel Room</span>
+              </button>
             )}
+          </div>
 
-            {/* E. Join by Code Form */}
-            <div className="pt-4 border-t border-[#253033] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-              <span className="text-[#9BA8A8] text-xs">
-                Have a battle invite code from another player?
-              </span>
+          {/* Join with Room Code */}
+          <div className="bg-[#141A1C] border border-[#253033] rounded-2xl p-5 space-y-3">
+            <h3 className="font-bold text-xs text-white uppercase tracking-wider">Join with Code</h3>
+            <form onSubmit={handleJoinBattle} className="flex gap-2">
+              <input
+                type="text"
+                value={inputBattleCode}
+                onChange={(e) => setInputBattleCode(e.target.value.toUpperCase())}
+                placeholder="Enter Code (DEV-XXXX)"
+                className="flex-1 bg-[#101314] border border-[#253033] focus:border-[#FFAD42] rounded-xl px-3 py-2 text-xs font-mono text-white placeholder-[#64748B] focus:outline-none"
+              />
+              <button
+                type="submit"
+                disabled={!inputBattleCode.trim()}
+                className="px-4 py-2 rounded-xl bg-[#1C2426] hover:bg-[#253033] border border-[#253033] text-xs font-bold text-[#FFAD42] disabled:opacity-40 transition-all"
+              >
+                Join
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
 
-              <form onSubmit={handleJoinBattle} className="flex items-center gap-2 w-full sm:w-auto">
-                <input
-                  type="text"
-                  value={inputBattleCode}
-                  onChange={(e) => setInputBattleCode(e.target.value)}
-                  placeholder="e.g. DEV-8492"
-                  className="bg-[#101314] border border-[#253033] rounded-lg px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-arena-amber uppercase"
-                />
-                <button
-                  type="submit"
-                  className="px-3.5 py-1.5 rounded-lg bg-[#20292D] hover:bg-[#283236] text-white text-xs font-mono font-semibold border border-[#344247] transition-colors"
-                >
-                  Join
-                </button>
-              </form>
+      {/* ============================================================== */}
+      {/* 3. DIRECT PROBLEM DUEL SELECTOR                                */}
+      {/* ============================================================== */}
+      <div className="bg-[#141A1C] border border-[#253033] rounded-2xl p-6 space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-[#253033]">
+          <div className="flex items-center gap-2">
+            <Code2 className="w-4 h-4 text-[#00E5FF]" />
+            <h2 className="font-bold text-sm text-white">Direct Problem Duels</h2>
+          </div>
+          <span className="text-xs text-[#9AA5A6]">Click any problem to launch an instant battle room</span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {CODING_PROBLEMS.slice(0, 9).map((prob) => (
+            <div
+              key={prob.id}
+              onClick={() => handleDirectProblemBattle(prob)}
+              className="p-3.5 rounded-xl bg-[#101314] border border-[#253033] hover:border-[#FFAD42]/50 hover:bg-[#182022] cursor-pointer transition-all space-y-2 group"
+            >
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-mono text-[#9AA5A6] text-[11px]">#{prob.leetcodeNumber || '•'}</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-semibold font-mono border ${
+                  prob.difficulty === 'Easy'
+                    ? 'bg-[#B5FF4A]/10 text-[#B5FF4A] border-[#B5FF4A]/30'
+                    : prob.difficulty === 'Medium'
+                    ? 'bg-[#FFAD42]/10 text-[#FFAD42] border-[#FFAD42]/30'
+                    : 'bg-[#FF5C67]/10 text-[#FF5C67] border-[#FF5C67]/30'
+                }`}>
+                  {prob.difficulty}
+                </span>
+              </div>
+
+              <div className="font-bold text-xs text-white group-hover:text-[#FFAD42] truncate transition-colors">
+                {prob.title}
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] text-[#9AA5A6] pt-1">
+                <span>{prob.category}</span>
+                <span className="flex items-center gap-1 text-[#FFAD42] font-semibold group-hover:translate-x-0.5 transition-transform">
+                  <span>Duel</span>
+                  <ArrowRight className="w-3 h-3" />
+                </span>
+              </div>
             </div>
-
-          </div>
-        )}
-
-      </div>
-
-      {/* ============================================================== */}
-      {/* 3. PROBLEM BANK — NeetCode / LeetCode Style Problem Grid        */}
-      {/* ============================================================== */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
-              <Code2 className="w-4 h-4 text-arena-amber" />
-              <span>Problem Bank</span>
-            </h2>
-            <p className="text-xs text-[#9BA8A8]">
-              Select a specific problem to launch a direct 1v1 battle or sandbox session
-            </p>
-          </div>
-
-          <span className="text-xs font-mono text-[#9BA8A8]">
-            {CODING_PROBLEMS.length} Curated Challenges
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {CODING_PROBLEMS.map((problem) => {
-            const isSolved = user.problemsSolved.includes(problem.id);
-            return (
-              <div
-                key={problem.id}
-                className="bg-[#141A1C] border border-[#253033] rounded-xl p-4 flex flex-col justify-between space-y-3 hover:border-[#38484E] transition-all"
-              >
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono text-[#9BA8A8] uppercase tracking-wider">
-                      {problem.category}
-                    </span>
-                    <span className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded border ${
-                      problem.difficulty === 'Easy'
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                        : problem.difficulty === 'Medium'
-                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
-                        : 'bg-red-500/10 text-red-400 border-red-500/30'
-                    }`}>
-                      {problem.difficulty}
-                    </span>
-                  </div>
-
-                  <h3 className="font-bold text-sm text-white flex items-center gap-1.5">
-                    <span>{problem.title}</span>
-                    {isSolved && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />}
-                  </h3>
-
-                  <p className="text-xs text-[#9BA8A8] line-clamp-2 leading-relaxed">
-                    {problem.description.replace(/```[\s\S]*?```/g, '')}
-                  </p>
-                </div>
-
-                <div className="pt-3 border-t border-[#20292D] flex items-center justify-between text-xs">
-                  <span className="text-[11px] font-mono text-[#9BA8A8]">
-                    {problem.testCases.length} Test Cases
-                  </span>
-
-                  <button
-                    onClick={() => handleDirectProblemBattle(problem)}
-                    className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-[#182023] hover:bg-[#20292D] text-arena-amber hover:text-white border border-[#2B383C] text-xs font-mono font-semibold transition-colors"
-                  >
-                    <Swords className="w-3 h-3 text-arena-amber" />
-                    <span>Duel</span>
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+          ))}
         </div>
       </div>
-
-      {/* ============================================================== */}
-      {/* 4. RECENT BATTLE HISTORY                                       */}
-      {/* ============================================================== */}
-      {user.recentBattles && user.recentBattles.length > 0 && (
-        <div className="space-y-3">
-          <h2 className="text-sm font-bold text-white flex items-center gap-2">
-            <Clock className="w-4 h-4 text-[#9BA8A8]" />
-            <span>Recent Battles</span>
-          </h2>
-
-          <div className="space-y-2">
-            {user.recentBattles.map((b) => (
-              <div 
-                key={b.id} 
-                className="p-3 rounded-xl bg-[#141A1C] border border-[#253033] flex items-center justify-between text-xs font-mono"
-              >
-                <div className="flex items-center gap-3">
-                  <span className={`px-2 py-0.5 rounded font-bold text-[10px] ${
-                    b.result === 'won' 
-                      ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' 
-                      : 'bg-red-500/15 text-red-400 border border-red-500/30'
-                  }`}>
-                    {b.result === 'won' ? 'VICTORY' : 'DEFEAT'}
-                  </span>
-
-                  <div>
-                    <div className="font-semibold text-white flex items-center gap-1.5 font-sans">
-                      <span>vs @{b.opponentName}</span>
-                      <span className="text-[10px] text-[#9BA8A8] font-mono">({b.opponentRating} Elo)</span>
-                    </div>
-                    <div className="text-[11px] text-[#9BA8A8] mt-0.5 font-sans">
-                      {b.problemTitle} • {b.testsPassed} test cases passed
-                    </div>
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <span className={`font-bold font-mono ${
-                    b.ratingChange >= 0 ? 'text-emerald-400' : 'text-red-400'
-                  }`}>
-                    {b.ratingChange >= 0 ? `+${b.ratingChange}` : b.ratingChange} Elo
-                  </span>
-                  <div className="text-[10px] text-[#64748B]">{b.timestamp}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
     </div>
   );
 };

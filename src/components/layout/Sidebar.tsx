@@ -16,7 +16,9 @@ import {
   X,
   Sparkles,
   Flame,
-  ShieldCheck
+  ShieldCheck,
+  FileSpreadsheet,
+  Wrench
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { NavigationTab } from '../../types';
@@ -50,7 +52,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onCloseMobile,
   onOpenSettings
 }) => {
-  const { activeTab, setActiveTab, user } = useApp();
+  const { activeTab, setActiveTab, user, settings } = useApp();
 
   // Escape key listener to close mobile drawer
   useEffect(() => {
@@ -71,8 +73,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
       title: 'Main',
       items: [
         { id: 'home', label: 'Home', icon: Home },
-        { id: 'play', label: 'Play', icon: Gamepad2, badge: 'Daily' },
-        { id: 'arena', label: 'Code Arena', icon: Swords, badge: '1v1' }
+        { id: 'arena', label: 'Code Arena', icon: Swords, badge: 'Pro' },
+        { id: 'tools', label: 'Free Tools', icon: Wrench, badge: 'Free' },
+        { id: 'dsa-sheets', label: 'DSA Sheets', icon: FileSpreadsheet, badge: 'Curated' },
+        { id: 'play', label: 'Play', icon: Gamepad2, badge: 'Daily' }
       ]
     },
     {
@@ -93,7 +97,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       title: 'Account',
       items: [
         { id: 'profile', label: 'Profile', icon: User },
-        { id: 'settings', label: 'Settings', icon: Settings, action: onOpenSettings }
+        { id: 'settings', label: 'Settings', icon: Settings }
       ]
     }
   ];
@@ -162,14 +166,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
               {/* Section Nav Items */}
               {section.items.map(item => {
-                const isActive = item.id !== 'settings' && activeTab === item.id;
+                const isActive = activeTab === item.id;
                 const IconComponent = item.icon;
                 const isArena = item.id === 'arena';
                 const isCards = item.id === 'cards';
+                const isDsa = item.id === 'dsa-sheets';
 
                 // Badge semantic styling
                 const badgeClass = isArena
                   ? 'bg-arena-cyan/15 text-arena-cyan border-arena-cyan/30 shadow-[0_0_8px_rgba(0,229,255,0.2)]'
+                  : isDsa
+                  ? 'bg-arena-amber/15 text-arena-amber border-arena-amber/30 shadow-[0_0_8px_rgba(255,173,66,0.2)]'
                   : isCards
                   ? 'bg-arena-lime/15 text-arena-lime border-arena-lime/30 shadow-[0_0_8px_rgba(181,255,74,0.2)]'
                   : isActive
@@ -259,15 +266,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Desktop Sidebar Footer */}
         <div className={`p-3 border-t border-arena-border/70 text-xs ${isCollapsed ? 'text-center' : ''}`}>
           {isCollapsed ? (
-            <div className="w-2.5 h-2.5 rounded-full bg-arena-cyan mx-auto ring-4 ring-arena-cyan/20 shadow-[0_0_8px_#00E5FF]" title="Online Duels: Ready" />
+            settings?.onlineStatus === 'invisible' ? (
+              <div className="w-2.5 h-2.5 rounded-full bg-slate-500 mx-auto" title="Status: Invisible (Concealed)" />
+            ) : (
+              <div className="w-2.5 h-2.5 rounded-full bg-arena-cyan mx-auto ring-4 ring-arena-cyan/20 shadow-[0_0_8px_#00E5FF]" title="Online Duels: Ready" />
+            )
           ) : (
-            <div className="flex items-center justify-between text-[11px] text-arena-textSubtle font-mono">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-arena-cyan shadow-[0_0_8px_#00E5FF] animate-pulse inline-block" />
-                <span>ONLINE DUELS</span>
+            settings?.onlineStatus === 'invisible' ? (
+              <div className="flex items-center justify-between text-[11px] text-arena-textSubtle font-mono">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-slate-500 inline-block" />
+                  <span>ONLINE DUELS</span>
+                </div>
+                <span className="text-slate-400 font-bold">INVISIBLE</span>
               </div>
-              <span className="text-arena-cyan font-bold">READY</span>
-            </div>
+            ) : (
+              <div className="flex items-center justify-between text-[11px] text-arena-textSubtle font-mono">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-arena-cyan shadow-[0_0_8px_#00E5FF] animate-pulse inline-block" />
+                  <span>ONLINE DUELS</span>
+                </div>
+                <span className="text-arena-cyan font-bold">READY</span>
+              </div>
+            )
           )}
         </div>
       </aside>
@@ -317,7 +338,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </div>
 
                   {section.items.map(item => {
-                    const isActive = item.id !== 'settings' && activeTab === item.id;
+                    const isActive = activeTab === item.id;
                     const IconComponent = item.icon;
 
                     return (
