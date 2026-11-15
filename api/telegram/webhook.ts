@@ -18,12 +18,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const update = req.body;
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const host = req.headers.host;
+    const BASE_URL = process.env.VITE_APP_URL || (host && !host.includes('localhost') ? `https://${host}` : 'https://devarena-ten.vercel.app');
 
     // Helper to send messages back to Telegram
     const sendTelegramMessage = async (chatId: number | string, text: string, replyMarkup?: any) => {
-      if (!botToken) return;
+      if (!botToken) {
+        console.error('[Telegram Webhook] TELEGRAM_BOT_TOKEN not configured on backend.');
+        return;
+      }
       try {
-        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -33,8 +38,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             reply_markup: replyMarkup
           })
         });
+        const data = await res.json();
+        if (!data.ok) {
+          console.error('[Telegram Webhook] Telegram API rejected message:', data.description);
+        }
       } catch (err) {
-        console.error('[Telegram Vercel Webhook] Send message error:', err);
+        console.error('[Telegram Webhook] Send message error:', err);
       }
     };
 
@@ -50,7 +59,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           `👋 <b>DEVARENA Bot Connected!</b>\n\nDaily coding challenges will be automatically delivered here every morning (<b>09:00 IST</b>) and evening (<b>18:00 IST</b>).\n\n⚙️ Group admins can configure schedules and topics with <code>/settings</code> or in the DEVARENA Connect Dashboard.`,
           {
             inline_keyboard: [
-              [{ text: '⚡ Open DEVARENA Connect', url: 'https://devarena.io/app/connect' }]
+              [{ text: '⚡ Open DEVARENA Connect', url: `${BASE_URL}/app/connect` }]
             ]
           }
         );
@@ -75,7 +84,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (arg.startsWith('link_')) {
           await sendTelegramMessage(
             chat.id,
-            `✅ <b>Account Link Verification Initiated!</b>\n\nCode <code>${arg.replace('link_', '')}</code> received for user <b>@${from.username || from.first_name}</b>.\nHead to <a href="https://devarena.io/app/connect">DEVARENA Connect</a> to confirm status.`
+            `✅ <b>Account Link Verification Initiated!</b>\n\nCode <code>${arg.replace('link_', '')}</code> received for user <b>@${from.username || from.first_name}</b>.\nHead to <a href="${BASE_URL}/app/connect">DEVARENA Connect</a> to confirm status.`
           );
           return res.status(200).json({ ok: true });
         }
@@ -87,7 +96,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             inline_keyboard: [
               [
                 { text: '➕ Add to Group', url: `https://t.me/${botUsername}?startgroup=true` },
-                { text: '🌐 Open DEVARENA', url: 'https://devarena.io/app/connect' }
+                { text: '🌐 Open DEVARENA', url: `${BASE_URL}/app/connect` }
               ]
             ]
           }
@@ -101,7 +110,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           `📖 <b>DEVARENA Bot Commands & Guide</b>\n\n• <code>/daily</code> — Show today's morning (09:00) and evening (18:00) challenges\n• <code>/challenge</code> — Fetch a coding challenge to solve\n• <code>/leaderboard</code> — Display global Elo rankings and top coders\n• <code>/profile</code> — View your connected developer profile\n• <code>/streak</code> — Check your current daily coding streak\n• <code>/stats</code> — View 1v1 battle win rate and category mastery\n• <code>/link &lt;code&gt;</code> — Link Telegram identity to your DEVARENA account\n• <code>/settings</code> — Group configuration (Group Admins only)`,
           {
             inline_keyboard: [
-              [{ text: '⚔️ Enter Code Arena', url: 'https://devarena.io/app/arena' }]
+              [{ text: '⚔️ Enter Code Arena', url: `${BASE_URL}/app/arena` }]
             ]
           }
         );
@@ -111,12 +120,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (cmd === '/daily' || cmd === '/challenge') {
         await sendTelegramMessage(
           chat.id,
-          `⚔️ <b>DEVARENA DAILY CHALLENGE #142: Two Sum</b>\n━━━━━━━━━━━━━━━━━━━━\n🟢 <b>Difficulty:</b> Easy\n📁 <b>Topic:</b> Arrays & Hashing\n⚡ <b>Target Complexity:</b> O(N) or optimal\n\nGiven an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.\n\n<code>Input: nums = [2, 7, 11, 15], target = 9</code>\n<code>Output: [0, 1]</code>\n\n👉 <a href="https://devarena.io/app/arena?problem=two-sum">Solve on Code Arena</a>`,
+          `⚔️ <b>DEVARENA DAILY CHALLENGE #142: Two Sum</b>\n━━━━━━━━━━━━━━━━━━━━\n🟢 <b>Difficulty:</b> Easy\n📁 <b>Topic:</b> Arrays & Hashing\n⚡ <b>Target Complexity:</b> O(N) or optimal\n\nGiven an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.\n\n<code>Input: nums = [2, 7, 11, 15], target = 9</code>\n<code>Output: [0, 1]</code>\n\n👉 <a href="${BASE_URL}/app/arena?problem=two-sum">Solve on Code Arena</a>`,
           {
             inline_keyboard: [
               [
-                { text: '⚡ Solve Challenge', url: 'https://devarena.io/app/arena?problem=two-sum' },
-                { text: '🏆 View Leaderboard', url: 'https://devarena.io/app/leaderboard' }
+                { text: '⚡ Solve Challenge', url: `${BASE_URL}/app/arena?problem=two-sum` },
+                { text: '🏆 View Leaderboard', url: `${BASE_URL}/app/leaderboard` }
               ]
             ]
           }
@@ -130,7 +139,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           `🏆 <b>DEVARENA GLOBAL TOP CODERS</b>\n━━━━━━━━━━━━━━━━━━━━\n🥇 <b>#1 algo_zenith</b> — 2180 Elo (48 Wins)\n🥈 <b>#2 binary_ninja</b> — 2045 Elo (42 Wins)\n🥉 <b>#3 sara_byte</b> — 2010 Elo (39 Wins)\n• <b>#4 kavya_codes</b> — 1845 Elo (31 Wins)\n• <b>#5 rohit_algo</b> — 1790 Elo (28 Wins)\n\n━━━━━━━━━━━━━━━━━━━━\nClimb the ranks by solving daily challenges & 1v1 Code Arena battles!`,
           {
             inline_keyboard: [
-              [{ text: '🔥 View Full Leaderboard', url: 'https://devarena.io/app/leaderboard' }]
+              [{ text: '🔥 View Full Leaderboard', url: `${BASE_URL}/app/leaderboard` }]
             ]
           }
         );
@@ -143,7 +152,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           `👤 <b>DEVARENA Developer Profile</b>\n━━━━━━━━━━━━━━━━━━━━\n• <b>Developer:</b> ${from.username || from.first_name}\n• <b>Rating:</b> 1980 Elo (Master)\n• <b>Problems Solved:</b> 142\n• <b>Active Streak:</b> 🔥 12 days\n\n━━━━━━━━━━━━━━━━━━━━`,
           {
             inline_keyboard: [
-              [{ text: '⚡ View On Platform', url: 'https://devarena.io/app/profile' }]
+              [{ text: '⚡ View On Platform', url: `${BASE_URL}/app/profile` }]
             ]
           }
         );
@@ -172,7 +181,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           `⚙️ <b>DEVARENA Group Settings</b>\n━━━━━━━━━━━━━━━━━━━━\n☀️ <b>Morning Challenge:</b> ✅ ON (09:00 IST)\n🌙 <b>Evening Challenge:</b> ✅ ON (18:00 IST)\n🌐 <b>Timezone:</b> Asia/Kolkata\n🎯 <b>Difficulty:</b> Mixed\n\nConfigure custom topics and schedules in the web dashboard:`,
           {
             inline_keyboard: [
-              [{ text: '🌐 Web Admin Dashboard', url: 'https://devarena.io/app/connect' }]
+              [{ text: '🌐 Web Admin Dashboard', url: `${BASE_URL}/app/connect` }]
             ]
           }
         );

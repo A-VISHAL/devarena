@@ -223,12 +223,12 @@ function escapeHtml(str: string): string {
 
 export const MOCK_TELEGRAM_GROUPS: TelegramChatIntegration[] = [
   {
-    id: 'tg_demo_preview',
+    id: 'tg_lukizerk',
     userId: 'guest',
-    chatId: '-1001928374829',
-    chatTitle: 'DEVARENA Community (Demo Preview)',
-    chatType: 'supergroup',
-    memberCount: 312,
+    chatId: '-1002498192014',
+    chatTitle: 'lukizerk',
+    chatType: 'group',
+    memberCount: 3,
     status: 'connected',
     botPermissions: {
       canSendMessages: true,
@@ -237,23 +237,23 @@ export const MOCK_TELEGRAM_GROUPS: TelegramChatIntegration[] = [
     },
     settings: { ...TELEGRAM_DEFAULT_SETTINGS },
     lastChallengeSent: {
-      id: 'tg_ch_mock_prev_1',
-      chatId: '-1001928374829',
-      chatTitle: 'DEVARENA Community (Demo Preview)',
+      id: 'tg_ch_lukizerk_1',
+      chatId: '-1002498192014',
+      chatTitle: 'lukizerk',
       challengeNumber: 142,
       problemId: 'two-sum',
       problemTitle: 'Two Sum',
       difficulty: 'Easy',
       category: 'Arrays & Hashing',
       slot: 'morning',
-      scheduledAt: new Date(Date.now() - 3600000 * 5).toISOString(),
-      deliveredAt: new Date(Date.now() - 3600000 * 5).toISOString(),
+      scheduledAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+      deliveredAt: new Date(Date.now() - 3600000 * 2).toISOString(),
       status: 'sent',
-      telegramMessageId: 'tg_msg_demo_001'
+      telegramMessageId: 'tg_msg_lukizerk_001'
     },
-    connectedAt: new Date(Date.now() - 86400000 * 5).toISOString(),
-    addedByUsername: 'devarena_admin',
-    isDemo: true
+    connectedAt: new Date().toISOString(),
+    addedByUsername: 'Divya',
+    isDemo: false
   }
 ];
 

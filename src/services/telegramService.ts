@@ -49,6 +49,12 @@ class TelegramService {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
+          const hasLiveGroup = parsed.some((c: TelegramChatIntegration) => !c.isDemo && c.chatId !== '-1001928374829');
+          if (!hasLiveGroup) {
+            const updated = [...MOCK_TELEGRAM_GROUPS, ...parsed.filter((c: TelegramChatIntegration) => c.isDemo)];
+            localStorage.setItem(STORAGE_CHATS_KEY, JSON.stringify(updated));
+            return updated;
+          }
           return parsed.filter((c: TelegramChatIntegration) => c.userId === userId || c.userId === 'guest' || c.isDemo);
         }
       }

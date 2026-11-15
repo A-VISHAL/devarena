@@ -112,7 +112,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const chatId = (route === 'chats' ? pathParts[1] : (req.query.chatId as string)) || req.body?.chatId || '-1001849204820';
     const body = req.body || {};
     const payload = body.payload || {};
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const botToken = req.body?.botToken || process.env.TELEGRAM_BOT_TOKEN;
 
     let messageId = `tg_test_${Date.now()}`;
     let success = true;
@@ -141,6 +141,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         success = false;
         error = e.message;
       }
+    } else if (!botToken) {
+      success = false;
+      error = 'TELEGRAM_BOT_TOKEN not configured on backend. Add TELEGRAM_BOT_TOKEN in Vercel environment variables.';
     }
 
     return res.status(200).json({
@@ -150,6 +153,70 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       error,
       deliveredAt: new Date().toISOString()
     });
+  }
+
+  // 3b. Setup Webhook (/api/telegram/setup-webhook)
+  if (route === 'setup-webhook') {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    const botToken = req.body?.botToken || process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken) {
+      return res.status(400).json({
+        ok: false,
+        error: 'TELEGRAM_BOT_TOKEN is required. Please set it in Vercel environment variables or provide it in the body.'
+      });
+    }
+
+    const host = req.headers.host;
+    const defaultUrl = (host && !host.includes('localhost'))
+      ? `https://${host}/api/telegram/webhook`
+      : 'https://devarena-ten.vercel.app/api/telegram/webhook';
+    const targetUrl = req.body?.webhookUrl || defaultUrl;
+    const secretToken = req.body?.secretToken || process.env.TELEGRAM_WEBHOOK_SECRET || 'devarena_secret_token_2026';
+
+    try {
+      const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: targetUrl,
+          secret_token: secretToken,
+          allowed_updates: ['message', 'my_chat_member', 'callback_query']
+        })
+      });
+      const data = await tgRes.json();
+      return res.status(200).json({
+        ...data,
+        targetUrl
+      });
+    } catch (e: any) {
+      return res.status(500).json({ ok: false, error: e.message });
+    }
+  }
+
+  // 3c. Get Webhook Status (/api/telegram/webhook-status)
+  if (route === 'webhook-status') {
+    const botToken = (req.query.token as string) || req.body?.botToken || process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken) {
+      return res.status(200).json({
+        ok: false,
+        configured: false,
+        error: 'TELEGRAM_BOT_TOKEN not configured on server'
+      });
+    }
+
+    try {
+      const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/getWebhookInfo`);
+      const data = await tgRes.json();
+      return res.status(200).json({
+        configured: true,
+        ...data
+      });
+    } catch (e: any) {
+      return res.status(500).json({ ok: false, error: e.message });
+    }
   }
 
   // 4. Connected Groups Management (/api/telegram/chats)

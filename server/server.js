@@ -120,7 +120,7 @@ function discordApiRequest(path, method = 'GET', data = null, headers = {}) {
   return new Promise((resolve, reject) => {
     const url = new URL(`https://discord.com/api/v10${path}`);
     const reqHeaders = {
-      'User-Agent': 'DEVARENA-Bot (https://devarena.io, v2.0)',
+      'User-Agent': 'DEVARENA-Bot (https://devarena-ten.vercel.app, v2.0)',
       ...headers
     };
 
@@ -173,7 +173,7 @@ function telegramApiRequest(method, data = null) {
     const url = new URL(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/${method}`);
     const postData = data ? JSON.stringify(data) : '';
     const reqHeaders = {
-      'User-Agent': 'DEVARENA-Telegram-Bot (https://devarena.io, v2.0)'
+      'User-Agent': 'DEVARENA-Telegram-Bot (https://devarena-ten.vercel.app, v2.0)'
     };
 
     if (data) {
@@ -220,7 +220,7 @@ function escapeHtml(str) {
 }
 
 // Formats challenge message for Telegram
-function formatTelegramChallengeHtml(problem, slot, challengeNumber, baseUrl = 'https://devarena.io') {
+function formatTelegramChallengeHtml(problem, slot, challengeNumber, baseUrl = 'https://devarena-ten.vercel.app') {
   const isMorning = slot === 'morning';
   const greeting = slot === 'manual_test'
     ? '🔔 <b>DEVARENA TEST VERIFICATION CHALLENGE</b>'
@@ -317,7 +317,7 @@ async function runScheduledChallengesCheck() {
 
       const challengeNum = Math.floor(Math.random() * 200) + 100;
       const greeting = isMorning ? '☀️ Good morning, developers!' : '🌙 Good evening, developers!';
-      const solveUrl = `https://devarena.io/app/arena?problem=${p.id}`;
+      const solveUrl = `https://devarena-ten.vercel.app/app/arena?problem=${p.id}`;
 
       const payload = {
         content: `${greeting} Today's challenge #${challengeNum} is live!\n**Can you solve it?** 🚀`,
@@ -913,7 +913,7 @@ const server = http.createServer(async (req, res) => {
                     { name: '/streak', value: 'Check your current learning streak', inline: true },
                     { name: '/link <code>', value: 'Link your Discord tag to your DEVARENA account', inline: true }
                   ],
-                  footer: { text: 'DEVARENA • Connect your server at https://devarena.io/app/connect' }
+                  footer: { text: 'DEVARENA • Connect your server at https://devarena-ten.vercel.app/app/connect' }
                 }
               ]
             }
@@ -923,7 +923,7 @@ const server = http.createServer(async (req, res) => {
 
         if (commandName === 'daily' || commandName === 'challenge') {
           const p = SAMPLE_PROBLEMS[Math.floor(Math.random() * SAMPLE_PROBLEMS.length)];
-          const solveUrl = `https://devarena.io/app/arena?problem=${p.id}`;
+          const solveUrl = `https://devarena-ten.vercel.app/app/arena?problem=${p.id}`;
 
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({
@@ -966,7 +966,7 @@ const server = http.createServer(async (req, res) => {
                   title: '🏆 DEVARENA Global Top Coders',
                   color: 0xFFAD42,
                   description: '1. 🥇 **Chen Wei** — 2240 Elo (420 Solved)\n2. 🥈 **Sarah Connor** — 2150 Elo (310 Solved)\n3. 🥉 **Vishal Kumar** — 1980 Elo (142 Solved)\n4. **Elena Vance** — 1890 Elo (165 Solved)\n5. **Alex Algo** — 1720 Elo (88 Solved)',
-                  footer: { text: 'Climb the ranks at https://devarena.io/app/leaderboard' }
+                  footer: { text: 'Climb the ranks at https://devarena-ten.vercel.app/app/leaderboard' }
                 }
               ]
             }
@@ -999,7 +999,7 @@ const server = http.createServer(async (req, res) => {
           res.end(JSON.stringify({
             type: 4,
             data: {
-              content: '❌ **Invalid or expired link code.**\nPlease generate a new code from https://devarena.io/app/connect and execute `/link <code>` within 15 minutes.'
+              content: '❌ **Invalid or expired link code.**\nPlease generate a new code from https://devarena-ten.vercel.app/app/connect and execute `/link <code>` within 15 minutes.'
             }
           }));
           return;
@@ -1115,7 +1115,7 @@ const server = http.createServer(async (req, res) => {
               reply_markup: {
                 inline_keyboard: [
                   [
-                    { text: '⚡ Open DEVARENA Connect', url: 'https://devarena.io/app/connect' }
+                    { text: '⚡ Open DEVARENA Connect', url: 'https://devarena-ten.vercel.app/app/connect' }
                   ]
                 ]
               }
@@ -1181,7 +1181,7 @@ const server = http.createServer(async (req, res) => {
                 parse_mode: 'HTML',
                 reply_markup: {
                   inline_keyboard: [
-                    [{ text: '🌐 View Connect Dashboard', url: 'https://devarena.io/app/connect' }]
+                    [{ text: '🌐 View Connect Dashboard', url: 'https://devarena-ten.vercel.app/app/connect' }]
                   ]
                 }
               });
@@ -1190,7 +1190,7 @@ const server = http.createServer(async (req, res) => {
 
             await telegramApiRequest('sendMessage', {
               chat_id: chat.id,
-              text: `❌ <b>Invalid or Expired Link Code</b>\nPlease generate a fresh link code from <a href="https://devarena.io/app/connect">DEVARENA Connect</a> and try again.`,
+              text: `❌ <b>Invalid or Expired Link Code</b>\nPlease generate a fresh link code from <a href="https://devarena-ten.vercel.app/app/connect">DEVARENA Connect</a> and try again.`,
               parse_mode: 'HTML'
             });
             return;
@@ -1205,7 +1205,7 @@ const server = http.createServer(async (req, res) => {
               inline_keyboard: [
                 [
                   { text: '➕ Add to Group', url: `https://t.me/${TELEGRAM_BOT_USERNAME}?startgroup=true` },
-                  { text: '🌐 Open DEVARENA', url: 'https://devarena.io/app/connect' }
+                  { text: '🌐 Open DEVARENA', url: 'https://devarena-ten.vercel.app/app/connect' }
                 ]
               ]
             }
@@ -1221,7 +1221,7 @@ const server = http.createServer(async (req, res) => {
             parse_mode: 'HTML',
             reply_markup: {
               inline_keyboard: [
-                [{ text: '⚔️ Enter Code Arena', url: 'https://devarena.io/app/arena' }]
+                [{ text: '⚔️ Enter Code Arena', url: 'https://devarena-ten.vercel.app/app/arena' }]
               ]
             }
           });
@@ -1232,8 +1232,8 @@ const server = http.createServer(async (req, res) => {
         if (cmd === '/daily') {
           const mProblem = SAMPLE_PROBLEMS[0];
           const eProblem = SAMPLE_PROBLEMS[2];
-          const mSolveUrl = `https://devarena.io/app/arena?problem=${mProblem.id}`;
-          const eSolveUrl = `https://devarena.io/app/arena?problem=${eProblem.id}`;
+          const mSolveUrl = `https://devarena-ten.vercel.app/app/arena?problem=${mProblem.id}`;
+          const eSolveUrl = `https://devarena-ten.vercel.app/app/arena?problem=${eProblem.id}`;
 
           await telegramApiRequest('sendMessage', {
             chat_id: chat.id,
@@ -1287,7 +1287,7 @@ const server = http.createServer(async (req, res) => {
             parse_mode: 'HTML',
             reply_markup: {
               inline_keyboard: [
-                [{ text: '🔥 View Full Leaderboard', url: 'https://devarena.io/app/leaderboard' }]
+                [{ text: '🔥 View Full Leaderboard', url: 'https://devarena-ten.vercel.app/app/leaderboard' }]
               ]
             }
           });
@@ -1304,7 +1304,7 @@ const server = http.createServer(async (req, res) => {
               parse_mode: 'HTML',
               reply_markup: {
                 inline_keyboard: [
-                  [{ text: '⚡ View On Platform', url: 'https://devarena.io/app/profile' }]
+                  [{ text: '⚡ View On Platform', url: 'https://devarena-ten.vercel.app/app/profile' }]
                 ]
               }
             });
@@ -1313,11 +1313,11 @@ const server = http.createServer(async (req, res) => {
 
           await telegramApiRequest('sendMessage', {
             chat_id: chat.id,
-            text: `⚠️ <b>Telegram Account Not Linked</b>\n\nLink your Telegram profile to sync your DEVARENA rating, rank tier, and coding streaks!\n\n1. Go to <a href="https://devarena.io/app/connect">DEVARENA Connect</a>\n2. Click <b>Connect Telegram Account</b>\n3. Execute <code>/link &lt;code&gt;</code> here in chat.`,
+            text: `⚠️ <b>Telegram Account Not Linked</b>\n\nLink your Telegram profile to sync your DEVARENA rating, rank tier, and coding streaks!\n\n1. Go to <a href="https://devarena-ten.vercel.app/app/connect">DEVARENA Connect</a>\n2. Click <b>Connect Telegram Account</b>\n3. Execute <code>/link &lt;code&gt;</code> here in chat.`,
             parse_mode: 'HTML',
             reply_markup: {
               inline_keyboard: [
-                [{ text: '🔗 Link DEVARENA Account', url: 'https://devarena.io/app/connect' }]
+                [{ text: '🔗 Link DEVARENA Account', url: 'https://devarena-ten.vercel.app/app/connect' }]
               ]
             }
           });
@@ -1334,7 +1334,7 @@ const server = http.createServer(async (req, res) => {
               parse_mode: 'HTML',
               reply_markup: {
                 inline_keyboard: [
-                  [{ text: '⚡ Solve Today’s Challenge', url: 'https://devarena.io/app/arena' }]
+                  [{ text: '⚡ Solve Today’s Challenge', url: 'https://devarena-ten.vercel.app/app/arena' }]
                 ]
               }
             });
@@ -1355,7 +1355,7 @@ const server = http.createServer(async (req, res) => {
           if (!code) {
             await telegramApiRequest('sendMessage', {
               chat_id: chat.id,
-              text: `ℹ️ <b>Usage:</b> <code>/link &lt;code&gt;</code>\nExample: <code>/link DEV-8291</code>\n\nGenerate your linking code in <a href="https://devarena.io/app/connect">DEVARENA Connect</a>.`,
+              text: `ℹ️ <b>Usage:</b> <code>/link &lt;code&gt;</code>\nExample: <code>/link DEV-8291</code>\n\nGenerate your linking code in <a href="https://devarena-ten.vercel.app/app/connect">DEVARENA Connect</a>.`,
               parse_mode: 'HTML'
             });
             return;
@@ -1388,7 +1388,7 @@ const server = http.createServer(async (req, res) => {
               parse_mode: 'HTML',
               reply_markup: {
                 inline_keyboard: [
-                  [{ text: '🌐 Open Connect Dashboard', url: 'https://devarena.io/app/connect' }]
+                  [{ text: '🌐 Open Connect Dashboard', url: 'https://devarena-ten.vercel.app/app/connect' }]
                 ]
               }
             });
@@ -1397,7 +1397,7 @@ const server = http.createServer(async (req, res) => {
 
           await telegramApiRequest('sendMessage', {
             chat_id: chat.id,
-            text: `❌ <b>Invalid or expired link code.</b>\nPlease generate a new link code from <a href="https://devarena.io/app/connect">DEVARENA Connect</a>.`,
+            text: `❌ <b>Invalid or expired link code.</b>\nPlease generate a new link code from <a href="https://devarena-ten.vercel.app/app/connect">DEVARENA Connect</a>.`,
             parse_mode: 'HTML'
           });
           return;
@@ -1411,7 +1411,7 @@ const server = http.createServer(async (req, res) => {
             parse_mode: 'HTML',
             reply_markup: {
               inline_keyboard: [
-                [{ text: '⚔️ Enter 1v1 Battle Room', url: 'https://devarena.io/app/arena' }]
+                [{ text: '⚔️ Enter 1v1 Battle Room', url: 'https://devarena-ten.vercel.app/app/arena' }]
               ]
             }
           });
@@ -1472,7 +1472,7 @@ const server = http.createServer(async (req, res) => {
                     { text: '🌙 Toggle Evening', callback_data: `toggle_evening:${chat.id}` }
                   ],
                   [
-                    { text: '🌐 Web Admin Dashboard', url: 'https://devarena.io/app/connect' }
+                    { text: '🌐 Web Admin Dashboard', url: 'https://devarena-ten.vercel.app/app/connect' }
                   ]
                 ]
               }
@@ -1492,7 +1492,7 @@ const server = http.createServer(async (req, res) => {
             parse_mode: 'HTML',
             reply_markup: {
               inline_keyboard: [
-                [{ text: '🌐 Open Connect Dashboard', url: 'https://devarena.io/app/connect' }]
+                [{ text: '🌐 Open Connect Dashboard', url: 'https://devarena-ten.vercel.app/app/connect' }]
               ]
             }
           });
@@ -1536,7 +1536,7 @@ const server = http.createServer(async (req, res) => {
                       { text: '🌙 Toggle Evening', callback_data: `toggle_evening:${targetChatId}` }
                     ],
                     [
-                      { text: '🌐 Web Admin Dashboard', url: 'https://devarena.io/app/connect' }
+                      { text: '🌐 Web Admin Dashboard', url: 'https://devarena-ten.vercel.app/app/connect' }
                     ]
                   ]
                 }
