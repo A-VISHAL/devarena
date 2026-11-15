@@ -2,28 +2,52 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
-      "source": "/api/discord/oauth/url",
-      "destination": "/api/discord/oauth"
+      "source": "/api/discord/interactions",
+      "destination": "/api/discord/interactions"
     },
     {
-      "source": "/api/discord/servers/:guildId/channels",
-      "destination": "/api/discord/channels?guildId=:guildId"
+      "source": "/api/discord/cron",
+      "destination": "/api/cron?platform=discord"
     },
     {
-      "source": "/api/discord/servers/:serverId/test",
-      "destination": "/api/discord/test?serverId=:serverId"
+      "source": "/api/telegram/webhook",
+      "destination": "/api/telegram/webhook"
     },
     {
-      "source": "/api/telegram/chats/:chatId/test",
-      "destination": "/api/telegram/test?chatId=:chatId"
+      "source": "/api/telegram/cron",
+      "destination": "/api/cron?platform=telegram"
     },
     {
-      "source": "/api/telegram/chats/verify",
-      "destination": "/api/telegram/verify"
+      "source": "/api/health",
+      "destination": "/api/health"
     },
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "source": "/api/cron",
+      "destination": "/api/cron"
+    },
+    {
+      "source": "/api/results/:path*",
+      "destination": "/api/results"
+    },
+    {
+      "source": "/api/results",
+      "destination": "/api/results"
+    },
+    {
+      "source": "/api/discord/:path*",
+      "destination": "/api/discord/router?subpath=:path*"
+    },
+    {
+      "source": "/api/discord",
+      "destination": "/api/discord/router"
+    },
+    {
+      "source": "/api/telegram/:path*",
+      "destination": "/api/telegram/router?subpath=:path*"
+    },
+    {
+      "source": "/api/telegram",
+      "destination": "/api/telegram/router"
     },
     {
       "source": "/(.*)",
