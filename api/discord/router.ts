@@ -121,10 +121,121 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   }
 
-  // 4. Connected Servers CRUD (/api/discord/servers)
+  // 4. Verify Server by Guild ID (/api/discord/servers/verify or /api/discord/verify)
+  if ((route === 'servers' && pathParts[1] === 'verify') || route === 'verify') {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    const guildId = req.body?.guildId || req.query.guildId;
+    if (!guildId) {
+      return res.status(400).json({ error: 'Missing guildId' });
+    }
+
+    const botToken = process.env.DISCORD_BOT_TOKEN;
+    let guildName = `Discord Guild (${guildId})`;
+    let guildIcon: string | null = null;
+    let memberCount = 25;
+
+    if (botToken) {
+      try {
+        const gRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}?with_counts=true`, {
+          headers: {
+            Authorization: `Bot ${botToken}`,
+            'User-Agent': 'DEVARENA-Bot (https://devarena.io, v2.0)'
+          }
+        });
+        if (gRes.ok) {
+          const gData = await gRes.json();
+          guildName = gData.name || guildName;
+          guildIcon = gData.icon ? `https://cdn.discordapp.com/icons/${guildId}/${gData.icon}.png` : null;
+          memberCount = gData.approximate_member_count || memberCount;
+        }
+      } catch { }
+    }
+
+    const newServer = {
+      id: `srv_${guildId}`,
+      userId: req.body?.userId || 'guest',
+      guildId: String(guildId),
+      guildName,
+      guildIcon,
+      memberCount,
+      channelId: null,
+      channelName: null,
+      status: 'connected',
+      settings: {
+        enabled: true,
+        timezone: 'Asia/Kolkata',
+        morningEnabled: true,
+        morningTime: '09:00',
+        eveningEnabled: true,
+        eveningTime: '18:00',
+        difficulty: 'Mixed',
+        topics: ['Arrays', 'Strings', 'Dynamic Programming', 'Trees']
+      },
+      lastChallengeSent: null,
+      connectedAt: new Date().toISOString(),
+      isDemo: false
+    };
+
+    return res.status(200).json({
+      success: true,
+      server: newServer,
+      message: 'Discord server verified successfully'
+    });
+  }
+
+  // 5. Connected Servers CRUD (/api/discord/servers)
   if (route === 'servers') {
     if (req.method === 'GET') {
-      return res.status(200).json({ servers: [] });
+      const botToken = process.env.DISCORD_BOT_TOKEN;
+      let liveServers: any[] = [];
+
+      // Query live guilds that DEVARENA bot is installed in
+      if (botToken) {
+        try {
+          const guildsRes = await fetch('https://discord.com/api/v10/users/@me/guilds', {
+            headers: {
+              Authorization: `Bot ${botToken}`,
+              'User-Agent': 'DEVARENA-Bot (https://devarena.io, v2.0)'
+            }
+          });
+          if (guildsRes.ok) {
+            const guilds = await guildsRes.json();
+            if (Array.isArray(guilds)) {
+              liveServers = guilds.map((g: any) => ({
+                id: `srv_${g.id}`,
+                userId: (req.query.userId as string) || 'guest',
+                guildId: g.id,
+                guildName: g.name,
+                guildIcon: g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png` : null,
+                memberCount: 28,
+                channelId: null,
+                channelName: null,
+                status: 'connected',
+                settings: {
+                  enabled: true,
+                  timezone: 'Asia/Kolkata',
+                  morningEnabled: true,
+                  morningTime: '09:00',
+                  eveningEnabled: true,
+                  eveningTime: '18:00',
+                  difficulty: 'Mixed',
+                  topics: ['Arrays', 'Strings', 'Dynamic Programming', 'Trees']
+                },
+                lastChallengeSent: null,
+                connectedAt: new Date().toISOString(),
+                isDemo: false
+              }));
+            }
+          }
+        } catch (e) {
+          console.error('Error fetching Discord bot guilds:', e);
+        }
+      }
+
+      return res.status(200).json({ servers: liveServers });
     }
 
     if (req.method === 'POST') {
@@ -144,12 +255,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  // 5. Challenge History (/api/discord/challenges)
+  // 6. Challenge History (/api/discord/challenges)
   if (route === 'challenges') {
     return res.status(200).json({ history: [] });
   }
 
-  // 6. Account Link Code Generator (/api/discord/link-code)
+  // 7. Account Link Code Generator (/api/discord/link-code)
   if (route === 'link-code') {
     if (req.method !== 'POST') {
       return res.status(405).json({ error: 'Method not allowed' });

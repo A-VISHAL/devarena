@@ -43,28 +43,56 @@ class DiscordService {
 
   // 2. Get All Connected Discord Servers
   public async getConnectedServers(userId: string): Promise<DiscordServerIntegration[]> {
+    let backendServers: DiscordServerIntegration[] = [];
     try {
-      // First attempt fetching from backend API if running
+      // First attempt fetching live verified servers from backend API
       const res = await fetch(`/api/discord/servers?userId=${encodeURIComponent(userId)}`);
       if (res.ok) {
         const data = await res.json();
-        if (data && Array.isArray(data.servers) && data.servers.length > 0) {
-          return data.servers;
+        if (data && Array.isArray(data.servers)) {
+          backendServers = data.servers;
         }
       }
     } catch {
       // Fallback to local persistent storage
     }
 
-    if (typeof window === 'undefined') return MOCK_DISCORD_SERVERS;
+    if (typeof window === 'undefined') {
+      return backendServers.length > 0 ? backendServers : MOCK_DISCORD_SERVERS;
+    }
+
     try {
       const stored = localStorage.getItem(STORAGE_SERVERS_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.filter((s: DiscordServerIntegration) => s.userId === userId || s.userId === 'guest' || s.isDemo);
-        }
+      const localServers: DiscordServerIntegration[] = stored ? JSON.parse(stored) : [];
+
+      // If backend returned live servers
+      if (backendServers.length > 0) {
+        const merged: DiscordServerIntegration[] = backendServers.map(b => {
+          const existing = localServers.find(l => l.guildId === b.guildId || l.id === b.id);
+          if (existing) {
+            return {
+              ...b,
+              channelId: existing.channelId || b.channelId,
+              channelName: existing.channelName || b.channelName,
+              settings: existing.settings || b.settings,
+              lastChallengeSent: existing.lastChallengeSent || b.lastChallengeSent
+            };
+          }
+          return b;
+        });
+
+        // Retain any custom manual webhook servers user added
+        const manualServers = localServers.filter(l => l.webhookUrl && !merged.some(m => m.guildId === l.guildId));
+        const finalServers = [...merged, ...manualServers];
+
+        localStorage.setItem(STORAGE_SERVERS_KEY, JSON.stringify(finalServers));
+        return finalServers;
       }
+
+      if (localServers.length > 0) {
+        return localServers.filter((s: DiscordServerIntegration) => s.userId === userId || s.userId === 'guest' || s.isDemo);
+      }
+
       // Seed with centralized mock preview server on initial load
       localStorage.setItem(STORAGE_SERVERS_KEY, JSON.stringify(MOCK_DISCORD_SERVERS));
       return MOCK_DISCORD_SERVERS;
@@ -72,7 +100,29 @@ class DiscordService {
       console.error('Error reading discord servers', e);
     }
 
-    return MOCK_DISCORD_SERVERS;
+    return backendServers.length > 0 ? backendServers : MOCK_DISCORD_SERVERS;
+  }
+
+  // 2b. Verify and connect Discord server by Guild ID
+  public async verifyServer(
+    guildId: string,
+    userId: string
+  ): Promise<{ success: boolean; server?: DiscordServerIntegration; error?: string }> {
+    try {
+      const res = await fetch('/api/discord/servers/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ guildId, userId })
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.server) {
+        await this.saveServer(data.server);
+        return { success: true, server: data.server };
+      }
+      return { success: false, error: data.error || 'Failed to verify Discord server.' };
+    } catch (e: any) {
+      return { success: false, error: e.message };
+    }
   }
 
   // 3. Save / Update Discord Server

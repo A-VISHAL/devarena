@@ -98,8 +98,11 @@ export const ConnectPage: React.FC = () => {
   const [discordLinkCodeData, setDiscordLinkCodeData] = useState<DiscordLinkCode | null>(null);
   const [discordCopiedCode, setDiscordCopiedCode] = useState<boolean>(false);
   const [isManualDiscordModalOpen, setIsManualDiscordModalOpen] = useState<boolean>(false);
+  const [manualGuildId, setManualGuildId] = useState<string>('');
   const [manualGuildName, setManualGuildName] = useState<string>('');
   const [manualWebhookUrl, setManualWebhookUrl] = useState<string>('');
+  const [isVerifyingDiscordServer, setIsVerifyingDiscordServer] = useState<boolean>(false);
+  const [manualDiscordError, setManualDiscordError] = useState<string | null>(null);
 
   // ==========================================
   // TELEGRAM STATE
@@ -185,13 +188,25 @@ export const ConnectPage: React.FC = () => {
     setDiscordHistory(fetchedHistory);
     setDiscordOverview(stats);
 
-    if (fetchedServers.length > 0 && !selectedDiscordServerId) {
+    // If there is a real server (not demo preview), select it automatically
+    const liveServer = fetchedServers.find(s => !s.isDemo);
+    if (liveServer && (!selectedDiscordServerId || selectedDiscordServerId === 'srv_demo_preview')) {
+      setSelectedDiscordServerId(liveServer.id);
+    } else if (fetchedServers.length > 0 && !selectedDiscordServerId) {
       setSelectedDiscordServerId(fetchedServers[0].id);
     }
 
     for (const s of fetchedServers) {
       const channels = await discordService.getGuildChannels(s.guildId);
       setServerChannels(prev => ({ ...prev, [s.guildId]: channels }));
+
+      // Automatically default channel if not set
+      if (!s.channelId && channels.length > 0) {
+        const defaultChannel = channels.find(c => ['testing', 'general', 'daily-dsa', 'announcements'].includes(c.name.toLowerCase())) || channels[0];
+        s.channelId = defaultChannel.id;
+        s.channelName = defaultChannel.name;
+        await discordService.saveServer(s);
+      }
     }
 
     const activeCode = discordService.getActiveLinkCode();
@@ -233,7 +248,21 @@ export const ConnectPage: React.FC = () => {
   const handleConnectDiscord = () => {
     sound.click();
     const installUrl = discordService.getInstallationUrl();
-    window.open(installUrl, '_blank', 'width=600,height=800');
+    const popup = window.open(installUrl, '_blank', 'width=600,height=800');
+
+    // Automatically poll to detect when the user authorizes the server
+    let attempts = 0;
+    const pollTimer = setInterval(async () => {
+      attempts++;
+      const servers = await discordService.getConnectedServers(user.id || 'guest');
+      const hasRealServer = servers.some(s => !s.isDemo);
+
+      if (hasRealServer || !popup || popup.closed || attempts > 24) {
+        clearInterval(pollTimer);
+        await refreshDiscordData();
+        sound.success();
+      }
+    }, 2500);
   };
 
   const handleDiscordChannelChange = async (channelId: string) => {
@@ -323,6 +352,27 @@ export const ConnectPage: React.FC = () => {
   const handleManualDiscordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     sound.click();
+    setManualDiscordError(null);
+
+    // If Guild ID is provided, verify directly with Discord API
+    if (manualGuildId.trim()) {
+      setIsVerifyingDiscordServer(true);
+      const res = await discordService.verifyServer(manualGuildId.trim(), user.id || 'guest');
+      setIsVerifyingDiscordServer(false);
+      if (res.success && res.server) {
+        sound.success();
+        setIsManualDiscordModalOpen(false);
+        setManualGuildId('');
+        setManualGuildName('');
+        setManualWebhookUrl('');
+        await refreshDiscordData();
+        return;
+      } else {
+        setManualDiscordError(res.error || 'Could not verify Server ID. Make sure DEVARENA bot is added to your server.');
+        return;
+      }
+    }
+
     if (!manualGuildName.trim()) return;
 
     const fakeGuildId = `guild_${Date.now()}`;
@@ -345,6 +395,7 @@ export const ConnectPage: React.FC = () => {
     await discordService.saveServer(newServer);
     sound.success();
     setIsManualDiscordModalOpen(false);
+    setManualGuildId('');
     setManualGuildName('');
     setManualWebhookUrl('');
     await refreshDiscordData();
@@ -569,6 +620,18 @@ export const ConnectPage: React.FC = () => {
                   >
                     <Plus className="w-4 h-4" />
                     Add DEVARENA to Discord
+                  </button>
+                  <button
+                    onClick={async () => {
+                      sound.click();
+                      await refreshDiscordData();
+                      sound.success();
+                    }}
+                    className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#252D30] hover:bg-[#2F383C] text-neutral-200 text-xs font-mono transition-colors border border-neutral-700/50"
+                    title="Sync with Discord Bot API"
+                  >
+                    <RefreshCw className="w-4 h-4 text-[#5865F2]" />
+                    Sync Servers
                   </button>
                   <button
                     onClick={() => setIsManualDiscordModalOpen(true)}
@@ -1435,8 +1498,12 @@ export const ConnectPage: React.FC = () => {
                           }`}
                         >
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-10 h-10 rounded-xl bg-[#5865F2]/20 border border-[#5865F2]/30 flex items-center justify-center text-[#5865F2] font-mono font-bold text-sm shrink-0">
-                              {srv.guildName.slice(0, 2).toUpperCase()}
+                            <div className="w-10 h-10 rounded-xl bg-[#5865F2]/20 border border-[#5865F2]/30 flex items-center justify-center text-[#5865F2] font-mono font-bold text-sm shrink-0 overflow-hidden">
+                              {srv.guildIcon ? (
+                                <img src={srv.guildIcon} alt={srv.guildName} className="w-full h-full object-cover" />
+                              ) : (
+                                srv.guildName.slice(0, 2).toUpperCase()
+                              )}
                             </div>
                             <div className="min-w-0">
                               <h4 className="text-xs font-bold text-white font-mono truncate">
@@ -1476,18 +1543,27 @@ export const ConnectPage: React.FC = () => {
                   {selectedDiscordServer && (
                     <div className="lg:col-span-8 bg-[#1C2426] border border-[#252D30] rounded-2xl p-6 shadow-xl space-y-6">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#252D30]">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-lg font-bold text-white font-mono">
-                              {selectedDiscordServer.guildName}
-                            </h3>
-                            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-[#101314] text-neutral-400 border border-[#252D30]">
-                              ID: {selectedDiscordServer.guildId}
-                            </span>
+                        <div className="flex items-center gap-3">
+                          {selectedDiscordServer.guildIcon && (
+                            <img
+                              src={selectedDiscordServer.guildIcon}
+                              alt={selectedDiscordServer.guildName}
+                              className="w-12 h-12 rounded-xl object-cover border border-[#5865F2]/30 shrink-0"
+                            />
+                          )}
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-lg font-bold text-white font-mono">
+                                {selectedDiscordServer.guildName}
+                              </h3>
+                              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-[#101314] text-neutral-400 border border-[#252D30]">
+                                ID: {selectedDiscordServer.guildId}
+                              </span>
+                            </div>
+                            <p className="text-xs text-neutral-400 mt-0.5">
+                              Connected {new Date(selectedDiscordServer.connectedAt).toLocaleDateString()} • {selectedDiscordServer.memberCount} members
+                            </p>
                           </div>
-                          <p className="text-xs text-neutral-400 mt-0.5">
-                            Connected {new Date(selectedDiscordServer.connectedAt).toLocaleDateString()} • {selectedDiscordServer.memberCount} members
-                          </p>
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -1835,7 +1911,7 @@ export const ConnectPage: React.FC = () => {
           <div className="bg-[#1C2426] border border-[#252D30] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#252D30]">
               <h3 className="text-base font-bold text-white font-mono flex items-center gap-2">
-                <Link2 className="w-4 h-4 text-[#00E5FF]" /> Custom / Webhook Server
+                <Link2 className="w-4 h-4 text-[#00E5FF]" /> Connect Discord Server
               </h3>
               <button
                 onClick={() => setIsManualDiscordModalOpen(false)}
@@ -1845,15 +1921,43 @@ export const ConnectPage: React.FC = () => {
               </button>
             </div>
 
+            {manualDiscordError && (
+              <div className="bg-rose-950/40 border border-rose-500/40 rounded-xl p-3 flex items-center gap-2 text-xs font-mono text-rose-300">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{manualDiscordError}</span>
+              </div>
+            )}
+
             <form onSubmit={handleManualDiscordSubmit} className="space-y-4">
               <div>
                 <label className="text-xs font-mono font-bold text-white block mb-1">
-                  Server Name
+                  Discord Server ID (Guild ID)
                 </label>
                 <input
                   type="text"
-                  required
-                  placeholder="e.g. Stanford ACM Coding Club"
+                  placeholder="e.g. 1564177053861810226"
+                  value={manualGuildId}
+                  onChange={e => setManualGuildId(e.target.value)}
+                  className="w-full bg-[#101314] text-xs font-mono text-white px-3 py-2 rounded-lg border border-[#252D30] focus:outline-none focus:border-[#00E5FF]"
+                />
+                <span className="text-[10px] text-neutral-400 font-mono block mt-1">
+                  If DEVARENA bot is added to your server, enter your Server ID to verify instantly.
+                </span>
+              </div>
+
+              <div className="relative flex py-1 items-center">
+                <div className="flex-grow border-t border-[#252D30]"></div>
+                <span className="flex-shrink mx-2 text-[10px] font-mono text-neutral-500 uppercase">Or Custom Webhook</span>
+                <div className="flex-grow border-t border-[#252D30]"></div>
+              </div>
+
+              <div>
+                <label className="text-xs font-mono font-bold text-white block mb-1">
+                  Custom Server Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. ACM Coding Community"
                   value={manualGuildName}
                   onChange={e => setManualGuildName(e.target.value)}
                   className="w-full bg-[#101314] text-xs font-mono text-white px-3 py-2 rounded-lg border border-[#252D30] focus:outline-none focus:border-[#00E5FF]"
@@ -1871,9 +1975,6 @@ export const ConnectPage: React.FC = () => {
                   onChange={e => setManualWebhookUrl(e.target.value)}
                   className="w-full bg-[#101314] text-xs font-mono text-white px-3 py-2 rounded-lg border border-[#252D30] focus:outline-none focus:border-[#00E5FF]"
                 />
-                <span className="text-[10px] text-neutral-500 font-mono block mt-1">
-                  Allows direct zero-bot instant challenge delivery testing.
-                </span>
               </div>
 
               <div className="pt-2 flex items-center justify-end gap-2">
@@ -1886,9 +1987,10 @@ export const ConnectPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#00E5FF] hover:brightness-110 text-black font-bold text-xs font-mono rounded-lg transition-all shadow-md shadow-[#00E5FF]/20"
+                  disabled={isVerifyingDiscordServer}
+                  className="px-4 py-2 bg-[#00E5FF] hover:brightness-110 text-black font-bold text-xs font-mono rounded-lg transition-all shadow-md shadow-[#00E5FF]/20 disabled:opacity-50"
                 >
-                  Save Integration
+                  {isVerifyingDiscordServer ? 'Verifying...' : 'Connect Server'}
                 </button>
               </div>
             </form>
