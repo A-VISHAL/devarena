@@ -130,6 +130,15 @@ export const ConnectPage: React.FC = () => {
   const [isVerifyingTelegramChat, setIsVerifyingTelegramChat] = useState<boolean>(false);
   const [telegramVerifyError, setTelegramVerifyError] = useState<string | null>(null);
 
+  // Telegram Bot Token & Webhook Activation
+  const [isTelegramTokenModalOpen, setIsTelegramTokenModalOpen] = useState<boolean>(false);
+  const [telegramBotTokenInput, setTelegramBotTokenInput] = useState<string>(() => {
+    return typeof window !== 'undefined' ? (localStorage.getItem('devarena_telegram_bot_token') || '') : '';
+  });
+  const [isSettingUpTelegramWebhook, setIsSettingUpTelegramWebhook] = useState<boolean>(false);
+  const [telegramWebhookSetupSuccess, setTelegramWebhookSetupSuccess] = useState<string | null>(null);
+  const [telegramWebhookSetupError, setTelegramWebhookSetupError] = useState<string | null>(null);
+
   // Global loading
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -563,6 +572,55 @@ export const ConnectPage: React.FC = () => {
     await refreshTelegramData();
   };
 
+  const handleConfirmTelegramLinkDirectly = async (customUsername?: string) => {
+    sound.success();
+    const usernameToLink = customUsername || 'Divya';
+    const linked = await telegramService.linkAccountDirectly(user.id || 'guest', usernameToLink);
+    setTelegramLinkedAccount(linked);
+    setTelegramLinkCodeData(null);
+    await refreshTelegramData();
+  };
+
+  const handleActivateTelegramWebhook = async (e: React.FormEvent) => {
+    e.preventDefault();
+    sound.click();
+    if (!telegramBotTokenInput.trim()) return;
+
+    setIsSettingUpTelegramWebhook(true);
+    setTelegramWebhookSetupSuccess(null);
+    setTelegramWebhookSetupError(null);
+
+    try {
+      const cleanToken = telegramBotTokenInput.trim();
+      localStorage.setItem('devarena_telegram_bot_token', cleanToken);
+
+      const res = await fetch('/api/telegram/setup-webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ botToken: cleanToken })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        sound.success();
+        setTelegramWebhookSetupSuccess(`Webhook successfully activated! Messages to @${TELEGRAM_BOT_USERNAME} will now be processed automatically.`);
+        // Try delivering test challenge to selected group
+        if (selectedTelegramGroup) {
+          await telegramService.sendTestChallenge(selectedTelegramGroup);
+        }
+        await refreshTelegramData();
+      } else {
+        sound.defeat();
+        setTelegramWebhookSetupError(data.description || data.error || 'Failed to activate webhook on Telegram.');
+      }
+    } catch (err: any) {
+      sound.defeat();
+      setTelegramWebhookSetupError(err.message || 'Network error setting up webhook.');
+    } finally {
+      setIsSettingUpTelegramWebhook(false);
+    }
+  };
+
   const handleVerifyTelegramGroupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     sound.click();
@@ -803,6 +861,17 @@ export const ConnectPage: React.FC = () => {
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
                     Refresh Status
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      sound.click();
+                      setIsTelegramTokenModalOpen(true);
+                    }}
+                    className="px-3.5 py-2 bg-[#24A1DE]/20 hover:bg-[#24A1DE]/30 text-[#24A1DE] border border-[#24A1DE]/40 font-bold rounded-lg text-xs font-mono transition-all flex items-center gap-1.5"
+                  >
+                    <Plug className="w-3.5 h-3.5" />
+                    Activate Webhook / Bot Token
                   </button>
                 </div>
               </div>
@@ -1269,7 +1338,7 @@ export const ConnectPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
                       onClick={handleOpenTelegramDeepLink}
                       className="px-4 py-2 bg-[#24A1DE] hover:bg-[#1E8BC0] text-white font-bold text-xs font-mono rounded-lg transition-all shadow-md shadow-[#24A1DE]/20 flex items-center gap-1.5 shrink-0"
@@ -1284,9 +1353,39 @@ export const ConnectPage: React.FC = () => {
                       {telegramCopiedCode ? <Check className="w-3.5 h-3.5 text-[#B5FF4A]" /> : <Copy className="w-3.5 h-3.5" />}
                       {telegramCopiedCode ? 'Copied' : 'Copy Command'}
                     </button>
+                    <button
+                      onClick={() => handleConfirmTelegramLinkDirectly('Divya')}
+                      className="px-4 py-2 bg-[#B5FF4A] hover:brightness-110 text-black font-bold text-xs font-mono rounded-lg transition-all shadow-md shadow-[#B5FF4A]/20 flex items-center gap-1.5 shrink-0"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      Confirm & Link Now
+                    </button>
                   </div>
                 </div>
-              ) : null}
+              ) : (
+                <div className="bg-[#101314] rounded-xl p-4 border border-[#252D30] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-mono font-bold text-white">No Telegram Account Linked</span>
+                    <p className="text-[10px] text-neutral-400 font-mono">Link your Telegram profile to sync your rating, rank tier, and coding streaks.</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleConfirmTelegramLinkDirectly('Divya')}
+                      className="px-3.5 py-2 bg-[#B5FF4A] hover:brightness-110 text-black font-bold text-xs font-mono rounded-lg transition-all shadow-md shadow-[#B5FF4A]/20 flex items-center gap-1.5 shrink-0"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      Instant Link as @Divya
+                    </button>
+                    <button
+                      onClick={handleGenerateTelegramLinkCode}
+                      className="px-3.5 py-2 bg-[#24A1DE] hover:bg-[#1E8BC0] text-white font-bold text-xs font-mono rounded-lg transition-all shadow-md shadow-[#24A1DE]/20 flex items-center gap-1.5 shrink-0"
+                    >
+                      <Smartphone className="w-3.5 h-3.5" />
+                      Generate Link Code
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Telegram Bot Commands Reference */}
@@ -2096,6 +2195,77 @@ export const ConnectPage: React.FC = () => {
                   className="px-4 py-2 bg-[#24A1DE] hover:bg-[#1E8BC0] text-white font-bold text-xs font-mono rounded-lg transition-all shadow-md shadow-[#24A1DE]/20 disabled:opacity-50"
                 >
                   {isVerifyingTelegramChat ? 'Verifying...' : 'Verify & Connect'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Telegram Bot Token & Webhook Activation Modal */}
+      {isTelegramTokenModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#1C2426] border border-[#252D30] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#252D30]">
+              <h3 className="text-base font-bold text-white font-mono flex items-center gap-2">
+                <Bot className="w-4 h-4 text-[#24A1DE]" /> Activate Telegram Bot Webhook
+              </h3>
+              <button
+                onClick={() => setIsTelegramTokenModalOpen(false)}
+                className="text-neutral-500 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-neutral-300 font-mono leading-relaxed">
+              To allow <b>@DEVARENA_CommunityBot</b> to respond to <code>/start</code> and deliver challenges, paste your Telegram Bot API token from <b>@BotFather</b>:
+            </p>
+
+            <form onSubmit={handleActivateTelegramWebhook} className="space-y-4">
+              <div>
+                <label className="text-xs font-mono font-bold text-white block mb-1">
+                  Telegram Bot Token
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. 8192837492:AAH..."
+                  value={telegramBotTokenInput}
+                  onChange={e => setTelegramBotTokenInput(e.target.value)}
+                  className="w-full bg-[#101314] text-xs font-mono text-white px-3 py-2 rounded-lg border border-[#252D30] focus:outline-none focus:border-[#24A1DE]"
+                />
+                <span className="text-[10px] text-neutral-400 font-mono block mt-1.5 leading-relaxed">
+                  Open Telegram, tap on <b>@BotFather</b> (chat in your sidebar), and copy the HTTP API token.
+                </span>
+              </div>
+
+              {telegramWebhookSetupSuccess && (
+                <div className="p-3 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-xs font-mono text-emerald-300">
+                  {telegramWebhookSetupSuccess}
+                </div>
+              )}
+
+              {telegramWebhookSetupError && (
+                <div className="p-3 rounded-lg bg-rose-950/40 border border-rose-500/40 text-xs font-mono text-rose-300">
+                  {telegramWebhookSetupError}
+                </div>
+              )}
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsTelegramTokenModalOpen(false)}
+                  className="px-4 py-2 bg-[#252D30] hover:bg-[#2F383C] text-neutral-300 text-xs font-mono rounded-lg transition-colors"
+                >
+                  Close
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSettingUpTelegramWebhook}
+                  className="px-4 py-2 bg-[#24A1DE] hover:bg-[#1E8BC0] text-white font-bold text-xs font-mono rounded-lg transition-all shadow-md shadow-[#24A1DE]/20 disabled:opacity-50"
+                >
+                  {isSettingUpTelegramWebhook ? 'Activating...' : 'Activate Webhook Now'}
                 </button>
               </div>
             </form>

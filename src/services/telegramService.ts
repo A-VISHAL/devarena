@@ -137,10 +137,11 @@ class TelegramService {
     userId: string
   ): Promise<{ success: boolean; chat?: TelegramChatIntegration; error?: string }> {
     try {
+      const savedToken = typeof window !== 'undefined' ? localStorage.getItem('devarena_telegram_bot_token') : null;
       const res = await fetch('/api/telegram/chats/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chatId, userId })
+        body: JSON.stringify({ chatId, userId, botToken: savedToken || undefined })
       });
 
       const data = await res.json();
@@ -204,13 +205,15 @@ class TelegramService {
     }
 
     try {
+      const savedToken = typeof window !== 'undefined' ? localStorage.getItem('devarena_telegram_bot_token') : null;
       const res = await fetch(`/api/telegram/chats/${encodeURIComponent(group.chatId)}/test`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           problemId: problem.id,
           payload,
-          chatTitle: group.chatTitle
+          chatTitle: group.chatTitle,
+          botToken: savedToken || undefined
         })
       });
 
@@ -392,6 +395,36 @@ class TelegramService {
     }
 
     return null;
+  }
+
+  // 11b. Manually link Telegram account directly (e.g. for user Divya)
+  public async linkAccountDirectly(
+    userId: string,
+    username: string = 'Divya',
+    telegramUserId: string = '5990548158'
+  ): Promise<TelegramLinkedUser> {
+    const cleanUsername = username.replace(/^@/, '').trim() || 'Divya';
+    const linkedUser: TelegramLinkedUser = {
+      telegramUserId,
+      username: cleanUsername,
+      firstName: cleanUsername,
+      linkedAt: new Date().toISOString()
+    };
+
+    try {
+      await fetch('/api/telegram/account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(linkedUser)
+      });
+    } catch { }
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_USER_LINK_KEY, JSON.stringify(linkedUser));
+      localStorage.removeItem(STORAGE_LINK_KEY);
+    }
+
+    return linkedUser;
   }
 
   // 12. Unlink Telegram User Account

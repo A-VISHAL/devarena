@@ -44,7 +44,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Missing chatId' });
     }
 
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const botToken = req.body?.botToken || process.env.TELEGRAM_BOT_TOKEN;
     let chatTitle = `Telegram Group (${chatId})`;
     let chatType = 'supergroup';
 
