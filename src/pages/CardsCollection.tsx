@@ -21,6 +21,7 @@ import { getUserCards, BASE_COLLECTIBLE_CARDS } from '../data/collectibleCards';
 import { CollectibleCardItem } from '../components/cards/CollectibleCardItem';
 import { CardDetailModal } from '../components/cards/CardDetailModal';
 import { CardShareStudioModal } from '../components/cards/CardShareStudioModal';
+import { ErrorBoundary } from '../components/common/ErrorBoundary';
 import { sound } from '../utils/sound';
 
 export const CardsCollection: React.FC = () => {
@@ -389,23 +390,27 @@ export const CardsCollection: React.FC = () => {
       )}
 
       {/* 3D Card Detail & Flip Modal */}
-      <CardDetailModal
-        card={inspectingCard}
-        onClose={() => setInspectingCard(null)}
-        isPinned={inspectingCard ? pinnedCardIds.includes(inspectingCard.id) : false}
-        onTogglePin={handleTogglePin}
-        onShare={(c) => {
-          setInspectingCard(null);
-          setSharingCard(c);
-        }}
-      />
+      <ErrorBoundary fallbackTitle="Card Detail Error">
+        <CardDetailModal
+          card={inspectingCard}
+          onClose={() => setInspectingCard(null)}
+          isPinned={inspectingCard ? pinnedCardIds.includes(inspectingCard.id) : false}
+          onTogglePin={handleTogglePin}
+          onShare={(c) => {
+            setInspectingCard(null);
+            setSharingCard(c);
+          }}
+        />
+      </ErrorBoundary>
 
       {/* Victory Studio Card Share Modal */}
-      <CardShareStudioModal
-        card={sharingCard}
-        user={user}
-        onClose={() => setSharingCard(null)}
-      />
+      <ErrorBoundary fallbackTitle="Share Studio Error">
+        <CardShareStudioModal
+          card={sharingCard}
+          user={user}
+          onClose={() => setSharingCard(null)}
+        />
+      </ErrorBoundary>
 
       {/* Floating Toast Notification for Pin/Unpin Actions */}
       {toastMessage && (

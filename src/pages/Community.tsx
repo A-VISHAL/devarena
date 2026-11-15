@@ -22,6 +22,7 @@ import { CommunityRightSidebar } from '../components/community/CommunityRightSid
 import { CreatePostModal } from '../components/community/CreatePostModal';
 import { CardDetailModal } from '../components/cards/CardDetailModal';
 import { CardShareStudioModal } from '../components/cards/CardShareStudioModal';
+import { ErrorBoundary } from '../components/common/ErrorBoundary';
 import { sound } from '../utils/sound';
 
 type FeedFilter = 'for_you' | 'following' | 'projects' | 'discussions' | 'achievements';
@@ -233,21 +234,25 @@ export const Community: React.FC = () => {
       />
 
       {/* Collectible 3D Card Detail Modal */}
-      <CardDetailModal
-        card={inspectingCard}
-        onClose={() => setInspectingCard(null)}
-        onShare={(c) => {
-          setInspectingCard(null);
-          setSharingCard(c);
-        }}
-      />
+      <ErrorBoundary fallbackTitle="Card Detail Error">
+        <CardDetailModal
+          card={inspectingCard}
+          onClose={() => setInspectingCard(null)}
+          onShare={(c) => {
+            setInspectingCard(null);
+            setSharingCard(c);
+          }}
+        />
+      </ErrorBoundary>
 
       {/* Collectible Studio Share Modal */}
-      <CardShareStudioModal
-        card={sharingCard}
-        user={user}
-        onClose={() => setSharingCard(null)}
-      />
+      <ErrorBoundary fallbackTitle="Share Studio Error">
+        <CardShareStudioModal
+          card={sharingCard}
+          user={user}
+          onClose={() => setSharingCard(null)}
+        />
+      </ErrorBoundary>
 
     </div>
   );

@@ -13,11 +13,15 @@ import {
   Sparkles,
   QrCode,
   ExternalLink,
-  Code2
+  Code2,
+  Linkedin,
+  Users,
+  Send
 } from 'lucide-react';
 import { CollectibleCard } from '../../types/cards';
 import { CardArtwork } from './CardArtwork';
 import { sound } from '../../utils/sound';
+import { useApp } from '../../context/AppContext';
 
 interface CardDetailModalProps {
   card: CollectibleCard | null;
@@ -34,8 +38,11 @@ export const CardDetailModal: React.FC<CardDetailModalProps> = ({
   isPinned = false,
   onTogglePin
 }) => {
+  const { user, addPost } = useApp();
   const [isFlipped, setIsFlipped] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [quickLinkedInCopied, setQuickLinkedInCopied] = useState(false);
+  const [quickCommunityPosted, setQuickCommunityPosted] = useState(false);
 
   if (!card) return null;
 
@@ -49,9 +56,58 @@ export const CardDetailModal: React.FC<CardDetailModalProps> = ({
   const handleCopyLink = () => {
     sound.playClick();
     const url = `${window.location.origin}/app/cards?id=${card.id}`;
-    navigator.clipboard.writeText(url);
+    try {
+      if (navigator?.clipboard?.writeText) {
+        navigator.clipboard.writeText(url).catch(() => {});
+      }
+    } catch {}
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  const handleQuickLinkedIn = () => {
+    sound.playClick();
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://devarena-ten.vercel.app';
+    const shareUrl = `${origin}/app/profile?ref=${encodeURIComponent(user?.username || 'developer')}&milestone=${encodeURIComponent(card.id)}`;
+    const shareText = `🏆 Proud to unlock the verified [${card.title}] milestone on DEVARENA!\n\n"${card.description}"\n\n🎯 Benchmark: ${card.benchmarkPercentile || 'Top Percentile'}\nCan you beat my score? Challenge me on DEVARENA:\n👉 ${shareUrl}`;
+    
+    try {
+      if (navigator?.clipboard?.writeText) {
+        navigator.clipboard.writeText(shareText).catch(() => {});
+      }
+    } catch {}
+    setQuickLinkedInCopied(true);
+    setTimeout(() => setQuickLinkedInCopied(false), 3000);
+
+    const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+    window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleQuickCommunity = () => {
+    sound.playVictory();
+    try {
+      addPost({
+        title: `🏆 Unlocked Card: ${card.title}`,
+        content: `Just unlocked the verified [${card.title}] (${card.rarity.toUpperCase()}) collectible card on DEVARENA!\n\n"${card.description}"\n\nRarity: ${card.rarity.toUpperCase()} • Benchmark: ${card.benchmarkPercentile || 'Top Percentile'}`,
+        type: 'achievement_unlocked',
+        collectibleCardId: card.id,
+        author: {
+          id: user?.id || 'guest',
+          username: user?.username || 'developer',
+          displayName: user?.displayName || 'Developer',
+          headline: user?.headline || 'Ranked Duelist & Algorithm Solver',
+          avatar: user?.avatar,
+          rating: user?.rating || 1200
+        },
+        tags: ['achievement', card.category || 'coding', card.rarity, 'devarena'],
+        metadata: { badgeName: card.title, score: card.rarity.toUpperCase() }
+      });
+      setQuickCommunityPosted(true);
+      setTimeout(() => setQuickCommunityPosted(false), 3000);
+    } catch (e) {
+      console.error(e);
+      setQuickCommunityPosted(true);
+    }
   };
 
   return (
@@ -305,6 +361,29 @@ export const CardDetailModal: React.FC<CardDetailModalProps> = ({
                 </button>
               )}
             </div>
+
+            {/* Quick Share to LinkedIn & Community */}
+            {unlocked && (
+              <div className="grid grid-cols-2 gap-2 pt-0.5">
+                <button
+                  onClick={handleQuickLinkedIn}
+                  className="py-2.5 px-3 rounded-xl bg-[#0A66C2]/20 hover:bg-[#0A66C2]/35 border border-[#0A66C2]/50 text-[#70B5F9] text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm"
+                  title="Share achievement to LinkedIn"
+                >
+                  <Linkedin className="w-3.5 h-3.5 fill-current" />
+                  <span>{quickLinkedInCopied ? '✓ Post Copied!' : 'Share to LinkedIn'}</span>
+                </button>
+
+                <button
+                  onClick={handleQuickCommunity}
+                  className="py-2.5 px-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-400 text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm"
+                  title="Post card directly to DEVARENA Community Feed"
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  <span>{quickCommunityPosted ? '✓ Posted in Feed!' : 'Post to Community'}</span>
+                </button>
+              </div>
+            )}
 
             <button
               onClick={handleCopyLink}

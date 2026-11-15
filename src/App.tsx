@@ -22,6 +22,7 @@ import { PublicResultPage } from './pages/PublicResultPage';
 import { VictoryCardUnlockModal } from './components/cards/VictoryCardUnlockModal';
 import { CardDetailModal } from './components/cards/CardDetailModal';
 import { CardShareStudioModal } from './components/cards/CardShareStudioModal';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { CollectibleCard } from './types/cards';
 
 const AppContent: React.FC = () => {
@@ -106,7 +107,9 @@ const AppContent: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <AppProvider>
-      <AppContent />
+      <ErrorBoundary fallbackTitle="DEVARENA Application Error">
+        <AppContent />
+      </ErrorBoundary>
     </AppProvider>
   );
 };

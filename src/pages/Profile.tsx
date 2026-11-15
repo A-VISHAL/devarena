@@ -18,6 +18,7 @@ import { getUserCards, DSA_MILESTONE_THRESHOLDS, BASE_COLLECTIBLE_CARDS } from '
 import { CollectibleCardItem } from '../components/cards/CollectibleCardItem';
 import { CardDetailModal } from '../components/cards/CardDetailModal';
 import { CardShareStudioModal } from '../components/cards/CardShareStudioModal';
+import { ErrorBoundary } from '../components/common/ErrorBoundary';
 import { CollectibleCard } from '../types/cards';
 import { sound } from '../utils/sound';
 import { LearningActivityHeatmap } from '../components/learn/LearningActivityHeatmap';
@@ -674,28 +675,32 @@ export const Profile: React.FC = () => {
       </div>
 
       {/* 3D Card Detail & Flip Modal */}
-      <CardDetailModal
-        card={inspectingCard}
-        onClose={() => setInspectingCard(null)}
-        isPinned={inspectingCard ? (user.pinnedCardIds || []).includes(inspectingCard.id) : false}
-        onTogglePin={(c) => {
-          const currentPinned = [...(user.pinnedCardIds || ['first_blood', 'perfect_submission'])];
-          const isP = currentPinned.includes(c.id);
-          const nextP = isP ? currentPinned.filter(id => id !== c.id) : [...currentPinned.slice(-2), c.id];
-          updateUserProfile({ pinnedCardIds: nextP });
-        }}
-        onShare={(c) => {
-          setInspectingCard(null);
-          setSharingCard(c);
-        }}
-      />
+      <ErrorBoundary fallbackTitle="Card Detail Error">
+        <CardDetailModal
+          card={inspectingCard}
+          onClose={() => setInspectingCard(null)}
+          isPinned={inspectingCard ? (user.pinnedCardIds || []).includes(inspectingCard.id) : false}
+          onTogglePin={(c) => {
+            const currentPinned = [...(user.pinnedCardIds || ['first_blood', 'perfect_submission'])];
+            const isP = currentPinned.includes(c.id);
+            const nextP = isP ? currentPinned.filter(id => id !== c.id) : [...currentPinned.slice(-2), c.id];
+            updateUserProfile({ pinnedCardIds: nextP });
+          }}
+          onShare={(c) => {
+            setInspectingCard(null);
+            setSharingCard(c);
+          }}
+        />
+      </ErrorBoundary>
 
       {/* Victory Studio Share Modal */}
-      <CardShareStudioModal
-        card={sharingCard}
-        user={user}
-        onClose={() => setSharingCard(null)}
-      />
+      <ErrorBoundary fallbackTitle="Share Studio Error">
+        <CardShareStudioModal
+          card={sharingCard}
+          user={user}
+          onClose={() => setSharingCard(null)}
+        />
+      </ErrorBoundary>
 
       {/* Learning Milestone Modal */}
       <LearningMilestoneModal
