@@ -139,7 +139,7 @@ export const formatTelegramChallengePayload = (
   problem: CodingProblem,
   slot: 'morning' | 'evening' | 'manual_test',
   challengeNumber: number = 142,
-  baseUrl: string = 'https://devarena.io'
+  baseUrl: string = typeof window !== 'undefined' ? window.location.origin : 'https://devarena-ten.vercel.app'
 ) => {
   const isMorning = slot === 'morning';
   const headerIcon = slot === 'manual_test'

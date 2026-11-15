@@ -162,7 +162,7 @@ class TelegramService {
 
     const problem = selectProblemForTelegramGroup(group.settings);
     const challengeNumber = Math.floor(Math.random() * 200) + 100;
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://devarena.io';
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://devarena-ten.vercel.app';
     const payload = formatTelegramChallengePayload(problem, 'manual_test', challengeNumber, origin);
 
     let deliveryStatus: 'sent' | 'failed' = 'sent';

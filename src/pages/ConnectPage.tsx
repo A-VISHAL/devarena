@@ -148,23 +148,9 @@ export const ConnectPage: React.FC = () => {
       }
 
       if (guildId) {
-        const newServer: DiscordServerIntegration = {
-          id: `srv_${guildId}`,
-          userId: user.id || 'guest',
-          guildId,
-          guildName: `Discord Guild #${guildId.slice(-4)}`,
-          guildIcon: null,
-          memberCount: Math.floor(Math.random() * 80) + 12,
-          channelId: `${guildId}-daily-dsa`,
-          channelName: 'daily-dsa',
-          status: 'connected',
-          settings: { ...DISCORD_DEFAULT_SETTINGS },
-          lastChallengeSent: null,
-          connectedAt: new Date().toISOString()
-        };
-
-        await discordService.saveServer(newServer);
+        await discordService.verifyServer(guildId, user.id || 'guest');
         sound.success();
+        setSelectedDiscordServerId(`srv_${guildId}`);
         window.history.replaceState({}, '', '/app/connect');
       }
 
@@ -174,6 +160,19 @@ export const ConnectPage: React.FC = () => {
 
     initData();
   }, [user.id]);
+
+  // Handle postMessage from popup OAuth window if popup was used
+  useEffect(() => {
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.data?.type === 'DISCORD_OAUTH_SUCCESS' && event.data?.guildId) {
+        sound.success();
+        await refreshDiscordData();
+        setSelectedDiscordServerId(`srv_${event.data.guildId}`);
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   // Auto-refresh Discord & Telegram data when tab gains focus or returns from OAuth popup
   useEffect(() => {

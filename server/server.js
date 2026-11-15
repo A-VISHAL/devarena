@@ -551,14 +551,10 @@ const server = http.createServer(async (req, res) => {
 
   // 2. Discord Official Installation OAuth URL
   if (url.pathname === '/api/discord/oauth/url' && req.method === 'GET') {
-    const redirectUri = url.searchParams.get('redirectUri');
+    const redirectUri = url.searchParams.get('redirectUri') || 'https://devarena-ten.vercel.app/app/home';
     const baseUrl = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&permissions=2147485696&scope=bot%20applications.commands`;
-    let authUrl = baseUrl;
-    let state = '';
-    if (redirectUri) {
-      state = Math.random().toString(36).substring(2, 15);
-      authUrl = `${baseUrl}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}`;
-    }
+    const state = Math.random().toString(36).substring(2, 15);
+    const authUrl = `${baseUrl}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}`;
 
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ url: authUrl, state, clientId: DISCORD_CLIENT_ID }));

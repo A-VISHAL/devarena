@@ -129,7 +129,7 @@ ${escapeHtml(p.description)}
 <b>Input:</b> <code>${escapeHtml(p.input)}</code>
 <b>Output:</b> <code>${escapeHtml(p.output)}</code>
 
-👉 <a href="https://devarena.io/app/arena?problem=${p.id}">Solve on Code Arena</a>
+👉 <a href="https://devarena-ten.vercel.app/app/arena?problem=${p.id}">Solve on Code Arena</a>
 ━━━━━━━━━━━━━━━━━━━━
 <i>Slot: ${slot.toUpperCase()} • ${dateStr} • #${fingerprint}</i>`;
 
@@ -145,8 +145,8 @@ ${escapeHtml(p.description)}
               reply_markup: {
                 inline_keyboard: [
                   [
-                    { text: '⚡ Solve Challenge', url: `https://devarena.io/app/arena?problem=${p.id}` },
-                    { text: '🏆 Leaderboard', url: 'https://devarena.io/app/connect' }
+                    { text: '⚡ Solve Challenge', url: `https://devarena-ten.vercel.app/app/arena?problem=${p.id}` },
+                    { text: '🏆 Leaderboard', url: 'https://devarena-ten.vercel.app/app/connect' }
                   ]
                 ]
               }
@@ -177,7 +177,7 @@ ${escapeHtml(p.description)}
             footer: {
               text: `DEVARENA • ${dateStr} • #${fingerprint}`
             },
-            url: `https://devarena.io/app/arena?problem=${p.id}`
+            url: `https://devarena-ten.vercel.app/app/arena?problem=${p.id}`
           }
         ],
         components: [
@@ -188,7 +188,7 @@ ${escapeHtml(p.description)}
                 type: 2,
                 style: 5,
                 label: 'Solve on DEVARENA',
-                url: `https://devarena.io/app/arena?problem=${p.id}`
+                url: `https://devarena-ten.vercel.app/app/arena?problem=${p.id}`
               }
             ]
           }

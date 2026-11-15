@@ -111,6 +111,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (
         pathname.startsWith('/app') || 
         urlParams.get('view') === 'app' ||
+        urlParams.has('guild_id') ||
         urlParams.has('battle') ||
         urlParams.has('room') ||
         urlParams.has('game') ||
@@ -152,7 +153,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // 2. Navigation & active state
-  const [activeTab, setActiveTabState] = useState<NavigationTab>('home');
+  const [activeTab, setActiveTabState] = useState<NavigationTab>(() => {
+    try {
+      const pathname = window.location.pathname;
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('guild_id') || urlParams.get('platform') === 'discord') {
+        return 'connect';
+      }
+      const parts = pathname.split('/').filter(Boolean);
+      if (parts[1] && ['home', 'play', 'arena', 'dsa-sheets', 'cards', 'learn', 'community', 'connect', 'leaderboard', 'profile', 'settings', 'tools'].includes(parts[1])) {
+        return parts[1] as NavigationTab;
+      }
+    } catch {}
+    return 'home';
+  });
   const [activeGame, setActiveGame] = useState<CasualGameId | null>(null);
   const [activeBattleId, setActiveBattleId] = useState<string | null>(null);
   const [activeMultiplayerCode, setActiveMultiplayerCode] = useState<string | null>(null);
@@ -443,6 +457,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (parts[1] && ['home', 'play', 'arena', 'dsa-sheets', 'cards', 'learn', 'community', 'connect', 'leaderboard', 'profile', 'settings', 'tools'].includes(parts[1])) {
           setActiveTabState(parts[1] as NavigationTab);
         }
+      }
+
+      const guildIdParam = urlParams.get('guild_id');
+      if (guildIdParam) {
+        if (window.opener && window.opener !== window) {
+          try {
+            window.opener.postMessage({ type: 'DISCORD_OAUTH_SUCCESS', guildId: guildIdParam }, '*');
+            window.close();
+            return;
+          } catch {}
+        }
+        setCurrentView('app');
+        setActiveTabState('connect');
       }
 
       const problemParam = urlParams.get('problem') || urlParams.get('p');

@@ -31,15 +31,16 @@ class DiscordService {
   // 1. Generate Official Discord Bot Installation OAuth2 URL
   // Uses the official Discord Guild Install URL with bot and applications.commands scopes
   public getInstallationUrl(redirectUri?: string): string {
+    const defaultUri = typeof window !== 'undefined'
+      ? `${window.location.origin}/app/home`
+      : 'https://devarena-ten.vercel.app/app/home';
+    const targetRedirect = redirectUri || defaultUri;
     const baseUrl = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&permissions=${DISCORD_BOT_PERMISSIONS}&scope=bot%20applications.commands`;
-    if (redirectUri) {
-      const state = Math.random().toString(36).substring(2, 15);
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('discord_oauth_state', state);
-      }
-      return `${baseUrl}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}`;
+    const state = Math.random().toString(36).substring(2, 15);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('discord_oauth_state', state);
     }
-    return baseUrl;
+    return `${baseUrl}&redirect_uri=${encodeURIComponent(targetRedirect)}&response_type=code&state=${state}`;
   }
 
   // 2. Get All Connected Discord Servers
@@ -347,7 +348,7 @@ class DiscordService {
     // Select random problem matching server settings
     const problem = selectProblemForServer(server.settings);
     const challengeNumber = Math.floor(Math.random() * 200) + 100;
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://devarena.io';
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://devarena-ten.vercel.app';
     const payload = formatDiscordChallengeEmbed(problem, 'manual_test', challengeNumber, origin);
 
     let deliveryStatus: 'sent' | 'failed' = 'sent';

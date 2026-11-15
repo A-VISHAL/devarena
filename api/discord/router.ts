@@ -22,15 +22,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // 1. OAuth installation URL generator (/api/discord/oauth or /api/discord/oauth/url)
   if (route === 'oauth') {
     const clientId = process.env.DISCORD_CLIENT_ID || '1571437524746899537';
-    const redirectUri = req.query.redirectUri as string;
+    const redirectUri = (req.query.redirectUri as string) || 'https://devarena-ten.vercel.app/app/home';
     const baseUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=2147485696&scope=bot%20applications.commands`;
 
-    let authUrl = baseUrl;
-    let state = '';
-    if (redirectUri) {
-      state = Math.random().toString(36).substring(2, 15);
-      authUrl = `${baseUrl}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}`;
-    }
+    const state = Math.random().toString(36).substring(2, 15);
+    const authUrl = `${baseUrl}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}`;
 
     return res.status(200).json({ url: authUrl, state, clientId });
   }
