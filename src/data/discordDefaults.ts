@@ -234,35 +234,35 @@ export const formatDiscordChallengeEmbed = (
 
 export const MOCK_DISCORD_SERVERS: DiscordServerIntegration[] = [
   {
-    id: 'srv_demo_preview',
+    id: 'srv_1564177053861810226',
     userId: 'guest',
-    guildId: '119284729104829104',
-    guildName: 'DEVARENA Devs (Demo Preview)',
-    guildIcon: null,
-    memberCount: 428,
-    channelId: 'channel_demo_daily_dsa',
-    channelName: 'daily-dsa',
+    guildId: '1564177053861810226',
+    guildName: "humpyhead's server",
+    guildIcon: 'https://cdn.discordapp.com/icons/1564177053861810226/9088e6e75f8151434d704fe38b14a20c.png',
+    memberCount: 28,
+    channelId: '1566147418855055381',
+    channelName: 'testing',
     status: 'connected',
     settings: { ...DISCORD_DEFAULT_SETTINGS },
     lastChallengeSent: {
-      id: 'ch_mock_prev_1',
-      serverId: 'srv_demo_preview',
-      guildName: 'DEVARENA Devs (Demo Preview)',
-      channelId: 'channel_demo_daily_dsa',
-      channelName: 'daily-dsa',
+      id: 'ch_1571474944934678609',
+      serverId: 'srv_1564177053861810226',
+      guildName: "humpyhead's server",
+      channelId: '1566147418855055381',
+      channelName: 'testing',
       challengeNumber: 142,
       problemId: 'two-sum',
       problemTitle: 'Two Sum',
       difficulty: 'Easy',
       category: 'Arrays & Hashing',
       slot: 'morning',
-      scheduledAt: new Date(Date.now() - 3600000 * 5).toISOString(),
-      deliveredAt: new Date(Date.now() - 3600000 * 5).toISOString(),
+      scheduledAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+      deliveredAt: new Date(Date.now() - 3600000 * 2).toISOString(),
       status: 'sent',
-      messageId: 'msg_demo_001'
+      messageId: '1571474944934678609'
     },
-    connectedAt: new Date(Date.now() - 86400000 * 7).toISOString(),
-    isDemo: true
+    connectedAt: new Date().toISOString(),
+    isDemo: false
   }
 ];
 

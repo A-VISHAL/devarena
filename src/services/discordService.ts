@@ -90,6 +90,13 @@ class DiscordService {
       }
 
       if (localServers.length > 0) {
+        // If local storage only contains old demo preview, upgrade with live connected server
+        const hasLiveServer = localServers.some(s => !s.isDemo && s.guildId !== '119284729104829104');
+        if (!hasLiveServer) {
+          const updated = [...MOCK_DISCORD_SERVERS, ...localServers.filter(s => s.isDemo)];
+          localStorage.setItem(STORAGE_SERVERS_KEY, JSON.stringify(updated));
+          return updated;
+        }
         return localServers.filter((s: DiscordServerIntegration) => s.userId === userId || s.userId === 'guest' || s.isDemo);
       }
 

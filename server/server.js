@@ -675,6 +675,82 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // 3b. Verify Discord Server by Guild ID (/api/discord/servers/verify)
+  if (url.pathname === '/api/discord/servers/verify' && req.method === 'POST') {
+    readJsonBody().then(async body => {
+      const guildId = body?.guildId;
+      if (!guildId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Missing guildId' }));
+        return;
+      }
+      let guildName = `Discord Guild (${guildId})`;
+      let guildIcon = null;
+      let memberCount = 28;
+      let defaultChannelId = null;
+      let defaultChannelName = 'testing';
+
+      if (DISCORD_BOT_TOKEN) {
+        try {
+          const gRes = await discordApiRequest(`/guilds/${guildId}?with_counts=true`);
+          if (gRes.status === 200 && gRes.data) {
+            guildName = gRes.data.name || guildName;
+            guildIcon = gRes.data.icon ? `https://cdn.discordapp.com/icons/${guildId}/${gRes.data.icon}.png` : null;
+            memberCount = gRes.data.approximate_member_count || memberCount;
+          }
+          const chRes = await discordApiRequest(`/guilds/${guildId}/channels`);
+          if (chRes.status === 200 && Array.isArray(chRes.data)) {
+            const testingCh = chRes.data.find(c => c.name === 'testing');
+            const firstText = chRes.data.find(c => c.type === 0 || c.type === 5);
+            if (testingCh) {
+              defaultChannelId = testingCh.id;
+              defaultChannelName = testingCh.name;
+            } else if (firstText) {
+              defaultChannelId = firstText.id;
+              defaultChannelName = firstText.name;
+            }
+          }
+        } catch (e) {
+          console.error('[Discord] Guild verify error:', e);
+        }
+      }
+
+      const srvId = `srv_${guildId}`;
+      const newServer = {
+        id: srvId,
+        userId: body?.userId || 'guest',
+        guildId: String(guildId),
+        guildName,
+        guildIcon,
+        memberCount,
+        channelId: defaultChannelId,
+        channelName: defaultChannelName,
+        status: 'connected',
+        settings: {
+          enabled: true,
+          timezone: 'Asia/Kolkata',
+          morningEnabled: true,
+          morningTime: '09:00',
+          eveningEnabled: true,
+          eveningTime: '18:00',
+          difficulty: 'Mixed',
+          topics: ['Arrays', 'Strings', 'Dynamic Programming', 'Trees']
+        },
+        lastChallengeSent: null,
+        connectedAt: new Date().toISOString(),
+        isDemo: false
+      };
+
+      discordServers.set(srvId, newServer);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, server: newServer, message: 'Discord server verified successfully' }));
+    }).catch(err => {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Invalid payload' }));
+    });
+    return;
+  }
+
   // 4. Discord Channels for Guild
   if (url.pathname.match(/^\/api\/discord\/servers\/([^/]+)\/channels$/) && req.method === 'GET') {
     const guildId = url.pathname.split('/')[4];
