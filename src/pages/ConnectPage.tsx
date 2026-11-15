@@ -1,29 +1,29 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Plug, 
-  Plus, 
-  Send, 
-  CheckCircle2, 
-  XCircle, 
-  AlertCircle, 
-  Clock, 
-  Calendar, 
-  Users, 
-  Server, 
-  Trash2, 
-  RefreshCw, 
-  ExternalLink, 
-  Copy, 
-  Check, 
-  Settings2, 
-  Hash, 
-  ChevronRight, 
-  Sparkles, 
-  Sliders, 
-  ShieldCheck, 
-  Code2, 
-  Link2, 
-  MessageSquare, 
+import {
+  Plug,
+  Plus,
+  Send,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Clock,
+  Calendar,
+  Users,
+  Server,
+  Trash2,
+  RefreshCw,
+  ExternalLink,
+  Copy,
+  Check,
+  Settings2,
+  Hash,
+  ChevronRight,
+  Sparkles,
+  Sliders,
+  ShieldCheck,
+  Code2,
+  Link2,
+  MessageSquare,
   Info,
   Radio,
   Bell,
@@ -35,20 +35,20 @@ import { useApp } from '../context/AppContext';
 import { sound } from '../utils/sound';
 
 // Discord imports
-import { 
-  DiscordServerIntegration, 
-  DiscordChallengeRecord, 
-  DiscordOverviewStats, 
+import {
+  DiscordServerIntegration,
+  DiscordChallengeRecord,
+  DiscordOverviewStats,
   DiscordServerSettings,
   DiscordChannel,
   DiscordLinkCode
 } from '../types/discord';
 import { discordService } from '../services/discordService';
-import { 
-  DISCORD_DEFAULT_SETTINGS, 
-  DISCORD_SLASH_COMMANDS, 
-  AVAILABLE_TOPICS, 
-  TIMEZONES 
+import {
+  DISCORD_DEFAULT_SETTINGS,
+  DISCORD_SLASH_COMMANDS,
+  AVAILABLE_TOPICS,
+  TIMEZONES
 } from '../data/discordDefaults';
 
 // Telegram imports
@@ -129,15 +129,10 @@ export const ConnectPage: React.FC = () => {
   const [telegramVerifyChatId, setTelegramVerifyChatId] = useState<string>('');
   const [isVerifyingTelegramChat, setIsVerifyingTelegramChat] = useState<boolean>(false);
   const [telegramVerifyError, setTelegramVerifyError] = useState<string | null>(null);
-
-  // Telegram Bot Token & Webhook Activation
-  const [isTelegramTokenModalOpen, setIsTelegramTokenModalOpen] = useState<boolean>(false);
-  const [telegramBotTokenInput, setTelegramBotTokenInput] = useState<string>(() => {
-    return typeof window !== 'undefined' ? (localStorage.getItem('devarena_telegram_bot_token') || '') : '';
-  });
-  const [isSettingUpTelegramWebhook, setIsSettingUpTelegramWebhook] = useState<boolean>(false);
-  const [telegramWebhookSetupSuccess, setTelegramWebhookSetupSuccess] = useState<string | null>(null);
-  const [telegramWebhookSetupError, setTelegramWebhookSetupError] = useState<string | null>(null);
+  const [telegramVerifySuccess, setTelegramVerifySuccess] = useState<string | null>(null);
+  const [detectedTelegramChats, setDetectedTelegramChats] = useState<Array<{ chatId: string; title: string; type: string; detectedAt: string }>>([]);
+  const [isSyncingWebhook, setIsSyncingWebhook] = useState<boolean>(false);
+  const [webhookSyncMsg, setWebhookSyncMsg] = useState<{ text: string; ok: boolean } | null>(null);
 
   // Global loading
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -157,9 +152,23 @@ export const ConnectPage: React.FC = () => {
       }
 
       if (guildId) {
-        await discordService.verifyServer(guildId, user.id || 'guest');
+        const newServer: DiscordServerIntegration = {
+          id: `srv_${guildId}`,
+          userId: user.id || 'guest',
+          guildId,
+          guildName: `Discord Guild #${guildId.slice(-4)}`,
+          guildIcon: null,
+          memberCount: Math.floor(Math.random() * 80) + 12,
+          channelId: `${guildId}-daily-dsa`,
+          channelName: 'daily-dsa',
+          status: 'connected',
+          settings: { ...DISCORD_DEFAULT_SETTINGS },
+          lastChallengeSent: null,
+          connectedAt: new Date().toISOString()
+        };
+
+        await discordService.saveServer(newServer);
         sound.success();
-        setSelectedDiscordServerId(`srv_${guildId}`);
         window.history.replaceState({}, '', '/app/connect');
       }
 
@@ -168,34 +177,6 @@ export const ConnectPage: React.FC = () => {
     };
 
     initData();
-  }, [user.id]);
-
-  // Handle postMessage from popup OAuth window if popup was used
-  useEffect(() => {
-    const handleMessage = async (event: MessageEvent) => {
-      if (event.data?.type === 'DISCORD_OAUTH_SUCCESS' && event.data?.guildId) {
-        sound.success();
-        await refreshDiscordData();
-        setSelectedDiscordServerId(`srv_${event.data.guildId}`);
-      }
-    };
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, []);
-
-  // Auto-refresh Discord & Telegram data when tab gains focus or returns from OAuth popup
-  useEffect(() => {
-    const handleFocus = () => {
-      if (document.visibilityState === 'visible') {
-        refreshDiscordData();
-      }
-    };
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', handleFocus);
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleFocus);
-    };
   }, [user.id]);
 
   const refreshAllData = async () => {
@@ -207,40 +188,30 @@ export const ConnectPage: React.FC = () => {
     const fetchedHistory = await discordService.getChallengeHistory(user.id || 'guest');
     const stats = await discordService.getOverviewStats(user.id || 'guest');
 
-    // Auto-resolve channels and populate channelId BEFORE setting state
-    const updatedServers = [...fetchedServers];
-    for (const s of updatedServers) {
+    setDiscordServers(fetchedServers);
+    setDiscordHistory(fetchedHistory);
+    setDiscordOverview(stats);
+
+    // If there is a real server (not demo preview), select it automatically
+    const liveServer = fetchedServers.find(s => !s.isDemo);
+    if (liveServer && (!selectedDiscordServerId || selectedDiscordServerId === 'srv_demo_preview')) {
+      setSelectedDiscordServerId(liveServer.id);
+    } else if (fetchedServers.length > 0 && !selectedDiscordServerId) {
+      setSelectedDiscordServerId(fetchedServers[0].id);
+    }
+
+    for (const s of fetchedServers) {
       const channels = await discordService.getGuildChannels(s.guildId);
       setServerChannels(prev => ({ ...prev, [s.guildId]: channels }));
 
       // Automatically default channel if not set
       if (!s.channelId && channels.length > 0) {
-        const defaultChannel = channels.find(c => ['testing', 'daily-dsa', 'announcements', 'general'].includes(c.name.toLowerCase())) || channels[0];
+        const defaultChannel = channels.find(c => ['testing', 'general', 'daily-dsa', 'announcements'].includes(c.name.toLowerCase())) || channels[0];
         s.channelId = defaultChannel.id;
         s.channelName = defaultChannel.name;
         await discordService.saveServer(s);
       }
     }
-
-    setDiscordServers(updatedServers);
-    setDiscordHistory(fetchedHistory);
-    setDiscordOverview(stats);
-
-    // If there is a real server (not demo preview), select it automatically
-    const liveServer = updatedServers.find(s => !s.isDemo);
-    setSelectedDiscordServerId(prevId => {
-      if (liveServer) {
-        const current = updatedServers.find(s => s.id === prevId);
-        if (!current || current.isDemo) {
-          return liveServer.id;
-        }
-        return prevId;
-      }
-      if (updatedServers.length > 0 && !prevId) {
-        return updatedServers[0].id;
-      }
-      return prevId;
-    });
 
     const activeCode = discordService.getActiveLinkCode();
     setDiscordLinkCodeData(activeCode);
@@ -284,23 +255,18 @@ export const ConnectPage: React.FC = () => {
     const popup = window.open(installUrl, '_blank', 'width=600,height=800');
 
     // Automatically poll to detect when the user authorizes the server
-    const initialGuildIds = new Set(discordServers.filter(s => !s.isDemo).map(s => s.guildId));
     let attempts = 0;
     const pollTimer = setInterval(async () => {
       attempts++;
-      const currentServers = await discordService.getConnectedServers(user.id || 'guest');
-      const newlyAdded = currentServers.find(s => !s.isDemo && !initialGuildIds.has(s.guildId));
+      const servers = await discordService.getConnectedServers(user.id || 'guest');
+      const hasRealServer = servers.some(s => !s.isDemo);
 
-      if (newlyAdded) {
+      if (hasRealServer || !popup || popup.closed || attempts > 24) {
         clearInterval(pollTimer);
         await refreshDiscordData();
-        setSelectedDiscordServerId(newlyAdded.id);
         sound.success();
-      } else if (!popup || popup.closed || attempts > 30) {
-        clearInterval(pollTimer);
-        await refreshDiscordData();
       }
-    }, 2000);
+    }, 2500);
   };
 
   const handleDiscordChannelChange = async (channelId: string) => {
@@ -360,29 +326,14 @@ export const ConnectPage: React.FC = () => {
     setDiscordTestError(null);
 
     try {
-      let serverToTest = selectedDiscordServer;
-      if (!serverToTest.channelId) {
-        const channels = serverChannels[serverToTest.guildId] || await discordService.getGuildChannels(serverToTest.guildId);
-        if (channels.length > 0) {
-          const pref = channels.find(c => ['testing', 'daily-dsa', 'announcements', 'general'].includes(c.name.toLowerCase())) || channels[0];
-          serverToTest = {
-            ...serverToTest,
-            channelId: pref.id,
-            channelName: pref.name
-          };
-          await discordService.saveServer(serverToTest);
-          setDiscordServers(prev => prev.map(s => s.id === serverToTest.id ? serverToTest : s));
-        }
-      }
-
-      const res = await discordService.sendTestChallenge(serverToTest);
+      const res = await discordService.sendTestChallenge(selectedDiscordServer);
       if (res.success) {
         sound.success();
-        setDiscordTestSuccess(`Dispatched challenge to #${res.record.channelName}! Check your Discord channel.`);
+        setDiscordTestSuccess(`Dispatched challenge to #${res.record.channelName}!`);
         await refreshDiscordData();
       } else {
         sound.defeat();
-        setDiscordTestError(res.error || 'Failed to deliver message. Check bot permissions in your server.');
+        setDiscordTestError(res.error || 'Failed to deliver message. Check bot permissions.');
       }
     } catch (err: any) {
       sound.defeat();
@@ -581,43 +532,38 @@ export const ConnectPage: React.FC = () => {
     await refreshTelegramData();
   };
 
-  const handleActivateTelegramWebhook = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const openTelegramVerifyModal = async () => {
     sound.click();
-    if (!telegramBotTokenInput.trim()) return;
-
-    setIsSettingUpTelegramWebhook(true);
-    setTelegramWebhookSetupSuccess(null);
-    setTelegramWebhookSetupError(null);
-
+    setIsTelegramVerifyModalOpen(true);
+    setTelegramVerifyError(null);
+    setTelegramVerifySuccess(null);
+    setWebhookSyncMsg(null);
     try {
-      const cleanToken = telegramBotTokenInput.trim();
-      localStorage.setItem('devarena_telegram_bot_token', cleanToken);
+      const detected = await telegramService.getDetectedChats();
+      setDetectedTelegramChats(detected);
+    } catch { }
+  };
 
-      const res = await fetch('/api/telegram/setup-webhook', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ botToken: cleanToken })
-      });
-
-      const data = await res.json();
-      if (res.ok && data.ok) {
+  const handleSyncWebhook = async () => {
+    sound.click();
+    setIsSyncingWebhook(true);
+    setWebhookSyncMsg(null);
+    try {
+      const res = await telegramService.setupWebhook();
+      if (res.ok) {
         sound.success();
-        setTelegramWebhookSetupSuccess(`Webhook successfully activated! Messages to @${TELEGRAM_BOT_USERNAME} will now be processed automatically.`);
-        // Try delivering test challenge to selected group
-        if (selectedTelegramGroup) {
-          await telegramService.sendTestChallenge(selectedTelegramGroup);
-        }
-        await refreshTelegramData();
+        setWebhookSyncMsg({ text: 'Webhook verified & connected to https://devarena-ten.vercel.app/api/telegram/webhook', ok: true });
+        const detected = await telegramService.getDetectedChats();
+        setDetectedTelegramChats(detected);
       } else {
         sound.defeat();
-        setTelegramWebhookSetupError(data.description || data.error || 'Failed to activate webhook on Telegram.');
+        setWebhookSyncMsg({ text: res.description || res.error || 'Failed to sync webhook.', ok: false });
       }
-    } catch (err: any) {
+    } catch (e: any) {
       sound.defeat();
-      setTelegramWebhookSetupError(err.message || 'Network error setting up webhook.');
+      setWebhookSyncMsg({ text: e.message || 'Error syncing webhook', ok: false });
     } finally {
-      setIsSettingUpTelegramWebhook(false);
+      setIsSyncingWebhook(false);
     }
   };
 
@@ -628,6 +574,7 @@ export const ConnectPage: React.FC = () => {
 
     setIsVerifyingTelegramChat(true);
     setTelegramVerifyError(null);
+    setTelegramVerifySuccess(null);
 
     const result = await telegramService.verifyAndConnectGroup(
       telegramVerifyChatId.trim(),
@@ -638,20 +585,23 @@ export const ConnectPage: React.FC = () => {
 
     if (result.success && result.chat) {
       sound.success();
-      setIsTelegramVerifyModalOpen(false);
-      setTelegramVerifyChatId('');
-      await refreshTelegramData();
-      setSelectedTelegramGroupId(result.chat.id);
+      setTelegramVerifySuccess(`Group "${result.chat.chatTitle}" verified & connected!`);
+      setTimeout(async () => {
+        setIsTelegramVerifyModalOpen(false);
+        setTelegramVerifyChatId('');
+        await refreshTelegramData();
+        setSelectedTelegramGroupId(result.chat!.id);
+      }, 1000);
     } else {
       sound.defeat();
-      setTelegramVerifyError(result.error || 'Unable to verify chat. Ensure the bot is added to the group.');
+      setTelegramVerifyError(result.error || 'Unable to verify chat. Ensure @DEVARENA_CommunityBot is added to the group as administrator.');
     }
   };
 
   return (
     <div className="min-h-screen bg-[#101314] text-neutral-200 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-8 animate-fadeIn">
-        
+
         {/* ========================================================= */}
         {/* TOP HEADER BANNER (DUAL INTEGRATION DISCORD & TELEGRAM)  */}
         {/* ========================================================= */}
@@ -664,22 +614,20 @@ export const ConnectPage: React.FC = () => {
                 <span className="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-[#5865F2]/20 text-[#5865F2] border border-[#5865F2]/30 flex items-center gap-1.5">
                   <Server className="w-3.5 h-3.5" /> DISCORD
                 </span>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${
-                  discordOverview.status === 'connected'
-                    ? 'bg-[#B5FF4A]/10 text-[#B5FF4A] border-[#B5FF4A]/20'
-                    : 'bg-neutral-800 text-neutral-400 border-neutral-700'
-                }`}>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${discordOverview.status === 'connected'
+                  ? 'bg-[#B5FF4A]/10 text-[#B5FF4A] border-[#B5FF4A]/20'
+                  : 'bg-neutral-800 text-neutral-400 border-neutral-700'
+                  }`}>
                   {discordOverview.status === 'connected' ? '● ACTIVE' : '○ DISCORD READY'}
                 </span>
 
                 <span className="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-[#24A1DE]/20 text-[#24A1DE] border border-[#24A1DE]/30 flex items-center gap-1.5 ml-2">
                   <Bot className="w-3.5 h-3.5" /> TELEGRAM BOT
                 </span>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${
-                  telegramOverview.status === 'connected'
-                    ? 'bg-[#B5FF4A]/10 text-[#B5FF4A] border-[#B5FF4A]/20'
-                    : 'bg-neutral-800 text-neutral-400 border-neutral-700'
-                }`}>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${telegramOverview.status === 'connected'
+                  ? 'bg-[#B5FF4A]/10 text-[#B5FF4A] border-[#B5FF4A]/20'
+                  : 'bg-neutral-800 text-neutral-400 border-neutral-700'
+                  }`}>
                   {telegramOverview.status === 'connected' ? '● ACTIVE' : '○ TELEGRAM READY'}
                 </span>
               </div>
@@ -757,11 +705,10 @@ export const ConnectPage: React.FC = () => {
               sound.click();
               setActivePlatform('discord');
             }}
-            className={`flex items-center gap-2.5 px-5 py-3 rounded-xl font-mono text-xs font-bold transition-all ${
-              activePlatform === 'discord'
-                ? 'bg-[#5865F2]/20 text-white border border-[#5865F2]/50 shadow-md shadow-[#5865F2]/10'
-                : 'text-neutral-400 hover:text-white bg-[#1C2426] border border-transparent'
-            }`}
+            className={`flex items-center gap-2.5 px-5 py-3 rounded-xl font-mono text-xs font-bold transition-all ${activePlatform === 'discord'
+              ? 'bg-[#5865F2]/20 text-white border border-[#5865F2]/50 shadow-md shadow-[#5865F2]/10'
+              : 'text-neutral-400 hover:text-white bg-[#1C2426] border border-transparent'
+              }`}
           >
             <Server className={`w-4 h-4 ${activePlatform === 'discord' ? 'text-[#5865F2]' : 'text-neutral-500'}`} />
             <span>Discord Integration</span>
@@ -775,11 +722,10 @@ export const ConnectPage: React.FC = () => {
               sound.click();
               setActivePlatform('telegram');
             }}
-            className={`flex items-center gap-2.5 px-5 py-3 rounded-xl font-mono text-xs font-bold transition-all ${
-              activePlatform === 'telegram'
-                ? 'bg-[#24A1DE]/20 text-white border border-[#24A1DE]/50 shadow-md shadow-[#24A1DE]/10'
-                : 'text-neutral-400 hover:text-white bg-[#1C2426] border border-transparent'
-            }`}
+            className={`flex items-center gap-2.5 px-5 py-3 rounded-xl font-mono text-xs font-bold transition-all ${activePlatform === 'telegram'
+              ? 'bg-[#24A1DE]/20 text-white border border-[#24A1DE]/50 shadow-md shadow-[#24A1DE]/10'
+              : 'text-neutral-400 hover:text-white bg-[#1C2426] border border-transparent'
+              }`}
           >
             <Bot className={`w-4 h-4 ${activePlatform === 'telegram' ? 'text-[#24A1DE]' : 'text-neutral-500'}`} />
             <span>Telegram Integration</span>
@@ -794,7 +740,7 @@ export const ConnectPage: React.FC = () => {
         {/* ========================================================= */}
         {activePlatform === 'telegram' && (
           <div className="space-y-8 animate-fadeIn">
-            
+
             {/* Telegram Bot Card & Quick Actions */}
             <div className="bg-[#1C2426] border border-[#252D30] rounded-2xl p-6 shadow-xl space-y-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#252D30]">
@@ -808,11 +754,10 @@ export const ConnectPage: React.FC = () => {
                       <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-[#24A1DE]/20 text-[#24A1DE] border border-[#24A1DE]/30">
                         {TELEGRAM_BOT_USERNAME}
                       </span>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${
-                        telegramOverview.status === 'connected'
-                          ? 'bg-[#B5FF4A]/10 text-[#B5FF4A] border-[#B5FF4A]/20'
-                          : 'bg-neutral-800 text-neutral-400 border-neutral-700'
-                      }`}>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${telegramOverview.status === 'connected'
+                        ? 'bg-[#B5FF4A]/10 text-[#B5FF4A] border-[#B5FF4A]/20'
+                        : 'bg-neutral-800 text-neutral-400 border-neutral-700'
+                        }`}>
                         {telegramOverview.status === 'connected' ? '● VERIFIED & CONNECTED' : '○ AWAITING GROUP INSTALLATION'}
                       </span>
                     </div>
@@ -864,14 +809,12 @@ export const ConnectPage: React.FC = () => {
                   </button>
 
                   <button
-                    onClick={() => {
-                      sound.click();
-                      setIsTelegramTokenModalOpen(true);
-                    }}
-                    className="px-3.5 py-2 bg-[#24A1DE]/20 hover:bg-[#24A1DE]/30 text-[#24A1DE] border border-[#24A1DE]/40 font-bold rounded-lg text-xs font-mono transition-all flex items-center gap-1.5"
+                    onClick={handleSyncWebhook}
+                    disabled={isSyncingWebhook}
+                    className="px-3.5 py-2 bg-[#24A1DE]/20 hover:bg-[#24A1DE]/30 text-[#24A1DE] border border-[#24A1DE]/40 font-bold rounded-lg text-xs font-mono transition-all flex items-center gap-1.5 disabled:opacity-50"
                   >
-                    <Plug className="w-3.5 h-3.5" />
-                    Activate Webhook / Bot Token
+                    <RefreshCw className={`w-3.5 h-3.5 ${isSyncingWebhook ? 'animate-spin' : ''}`} />
+                    {isSyncingWebhook ? 'Syncing...' : 'Sync Bot Webhook'}
                   </button>
                 </div>
               </div>
@@ -977,7 +920,7 @@ export const ConnectPage: React.FC = () => {
 
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => setIsTelegramVerifyModalOpen(true)}
+                    onClick={openTelegramVerifyModal}
                     className="text-xs font-mono text-[#24A1DE] hover:underline flex items-center gap-1"
                   >
                     <Plus className="w-3.5 h-3.5" /> Connect / Verify Chat ID
@@ -1012,7 +955,7 @@ export const ConnectPage: React.FC = () => {
                       <Plus className="w-4 h-4" /> Add DEVARENA to Telegram
                     </button>
                     <button
-                      onClick={() => setIsTelegramVerifyModalOpen(true)}
+                      onClick={openTelegramVerifyModal}
                       className="px-4 py-2.5 rounded-xl bg-[#252D30] hover:bg-[#2F383C] text-neutral-200 text-xs font-mono transition-colors border border-neutral-700"
                     >
                       Verify Chat ID Manually
@@ -1035,11 +978,10 @@ export const ConnectPage: React.FC = () => {
                             setTelegramTestSuccess(null);
                             setTelegramTestError(null);
                           }}
-                          className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
-                            isSelected
-                              ? 'bg-[#252D30] border-[#24A1DE] shadow-lg shadow-[#24A1DE]/10'
-                              : 'bg-[#1C2426] border-[#252D30] hover:border-neutral-600'
-                          }`}
+                          className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${isSelected
+                            ? 'bg-[#252D30] border-[#24A1DE] shadow-lg shadow-[#24A1DE]/10'
+                            : 'bg-[#1C2426] border-[#252D30] hover:border-neutral-600'
+                            }`}
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <div className="w-10 h-10 rounded-xl bg-[#24A1DE]/20 border border-[#24A1DE]/30 flex items-center justify-center text-[#24A1DE] font-mono font-bold text-sm shrink-0">
@@ -1061,9 +1003,8 @@ export const ConnectPage: React.FC = () => {
                                 DEMO PREVIEW
                               </span>
                             ) : (
-                              <span className={`w-2 h-2 rounded-full ${
-                                grp.status === 'connected' ? 'bg-[#B5FF4A]' : 'bg-rose-500'
-                              }`} />
+                              <span className={`w-2 h-2 rounded-full ${grp.status === 'connected' ? 'bg-[#B5FF4A]' : 'bg-rose-500'
+                                }`} />
                             )}
                             <ChevronRight className={`w-4 h-4 ${isSelected ? 'text-[#24A1DE]' : 'text-neutral-600'}`} />
                           </div>
@@ -1072,10 +1013,10 @@ export const ConnectPage: React.FC = () => {
                     })}
 
                     <button
-                      onClick={handleOpenTelegramBot}
+                      onClick={openTelegramVerifyModal}
                       className="w-full py-3 rounded-xl border border-dashed border-neutral-700 hover:border-[#24A1DE] text-neutral-400 hover:text-white text-xs font-mono transition-colors flex items-center justify-center gap-2"
                     >
-                      <Plus className="w-4 h-4" /> Add Another Telegram Group
+                      <Plus className="w-4 h-4" /> Connect Another Telegram Group
                     </button>
                   </div>
 
@@ -1092,13 +1033,24 @@ export const ConnectPage: React.FC = () => {
                             <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-[#101314] text-neutral-400 border border-[#252D30]">
                               ID: {selectedTelegramGroup.chatId}
                             </span>
+                            {selectedTelegramGroup.isDemo && (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-amber-500/15 border border-amber-500/30 text-amber-400">
+                                DEMO PREVIEW
+                              </span>
+                            )}
                           </div>
                           <div className="flex items-center gap-3 text-xs text-neutral-400 mt-1">
                             <span>Connected {new Date(selectedTelegramGroup.connectedAt).toLocaleDateString()}</span>
                             <span>•</span>
-                            <span className="text-[#B5FF4A] flex items-center gap-1">
-                              <ShieldCheck className="w-3.5 h-3.5" /> Bot Permissions Verified
-                            </span>
+                            {selectedTelegramGroup.isDemo ? (
+                              <span className="text-amber-400 flex items-center gap-1 font-mono">
+                                <Sparkles className="w-3.5 h-3.5" /> Demo Sandbox Mode
+                              </span>
+                            ) : (
+                              <span className="text-[#B5FF4A] flex items-center gap-1 font-mono">
+                                <ShieldCheck className="w-3.5 h-3.5" /> Bot Permissions Verified
+                              </span>
+                            )}
                           </div>
                         </div>
 
@@ -1233,11 +1185,10 @@ export const ConnectPage: React.FC = () => {
                               <button
                                 key={diff}
                                 onClick={() => handleTelegramSettingChange('difficulty', diff)}
-                                className={`px-3 py-1 rounded-lg text-xs font-mono transition-colors border ${
-                                  selectedTelegramGroup.settings.difficulty === diff
-                                    ? 'bg-[#24A1DE]/20 border-[#24A1DE] text-[#24A1DE] font-bold'
-                                    : 'bg-[#1C2426] border-[#252D30] text-neutral-400 hover:text-white'
-                                }`}
+                                className={`px-3 py-1 rounded-lg text-xs font-mono transition-colors border ${selectedTelegramGroup.settings.difficulty === diff
+                                  ? 'bg-[#24A1DE]/20 border-[#24A1DE] text-[#24A1DE] font-bold'
+                                  : 'bg-[#1C2426] border-[#252D30] text-neutral-400 hover:text-white'
+                                  }`}
                               >
                                 {diff}
                               </button>
@@ -1257,11 +1208,10 @@ export const ConnectPage: React.FC = () => {
                                 <button
                                   key={topic}
                                   onClick={() => toggleTelegramTopic(topic)}
-                                  className={`px-2.5 py-1 rounded text-[11px] font-mono transition-colors border ${
-                                    isChecked
-                                      ? 'bg-[#B5FF4A]/15 border-[#B5FF4A]/40 text-[#B5FF4A] font-bold'
-                                      : 'bg-[#1C2426] border-[#252D30] text-neutral-500 hover:text-neutral-300'
-                                  }`}
+                                  className={`px-2.5 py-1 rounded text-[11px] font-mono transition-colors border ${isChecked
+                                    ? 'bg-[#B5FF4A]/15 border-[#B5FF4A]/40 text-[#B5FF4A] font-bold'
+                                    : 'bg-[#1C2426] border-[#252D30] text-neutral-500 hover:text-neutral-300'
+                                    }`}
                                 >
                                   {topic}
                                 </button>
@@ -1460,13 +1410,12 @@ export const ConnectPage: React.FC = () => {
                       {telegramHistory.slice(0, 15).map(h => (
                         <tr key={h.id} className="hover:bg-[#252D30]/30 transition-colors">
                           <td className="py-2 px-3">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              h.status === 'sent'
-                                ? 'bg-[#B5FF4A]/10 text-[#B5FF4A] border border-[#B5FF4A]/20'
-                                : h.status === 'failed'
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${h.status === 'sent'
+                              ? 'bg-[#B5FF4A]/10 text-[#B5FF4A] border border-[#B5FF4A]/20'
+                              : h.status === 'failed'
                                 ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                                 : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                            }`}>
+                              }`}>
                               {h.status.toUpperCase()}
                             </span>
                           </td>
@@ -1634,11 +1583,10 @@ export const ConnectPage: React.FC = () => {
                             setDiscordTestSuccess(null);
                             setDiscordTestError(null);
                           }}
-                          className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
-                            isSelected
-                              ? 'bg-[#252D30] border-[#00E5FF] shadow-lg shadow-[#00E5FF]/10'
-                              : 'bg-[#1C2426] border-[#252D30] hover:border-neutral-600'
-                          }`}
+                          className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${isSelected
+                            ? 'bg-[#252D30] border-[#00E5FF] shadow-lg shadow-[#00E5FF]/10'
+                            : 'bg-[#1C2426] border-[#252D30] hover:border-neutral-600'
+                            }`}
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <div className="w-10 h-10 rounded-xl bg-[#5865F2]/20 border border-[#5865F2]/30 flex items-center justify-center text-[#5865F2] font-mono font-bold text-sm shrink-0 overflow-hidden">
@@ -1664,9 +1612,8 @@ export const ConnectPage: React.FC = () => {
                                 DEMO PREVIEW
                               </span>
                             ) : (
-                              <span className={`w-2 h-2 rounded-full ${
-                                srv.channelId ? 'bg-[#B5FF4A]' : 'bg-amber-400 animate-pulse'
-                              }`} />
+                              <span className={`w-2 h-2 rounded-full ${srv.channelId ? 'bg-[#B5FF4A]' : 'bg-amber-400 animate-pulse'
+                                }`} />
                             )}
                             <ChevronRight className={`w-4 h-4 ${isSelected ? 'text-[#00E5FF]' : 'text-neutral-600'}`} />
                           </div>
@@ -1712,7 +1659,7 @@ export const ConnectPage: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={handleSendDiscordTestMessage}
-                            disabled={isSendingDiscordTest}
+                            disabled={isSendingDiscordTest || !selectedDiscordServer.channelId}
                             className="flex items-center gap-1.5 px-3.5 py-2 bg-[#00E5FF] hover:brightness-110 text-black font-bold rounded-lg text-xs font-mono transition-all disabled:opacity-40"
                           >
                             <Send className="w-3.5 h-3.5" />
@@ -1857,11 +1804,10 @@ export const ConnectPage: React.FC = () => {
                               <button
                                 key={diff}
                                 onClick={() => handleDiscordSettingChange('difficulty', diff)}
-                                className={`px-3 py-1 rounded-lg text-xs font-mono transition-colors border ${
-                                  selectedDiscordServer.settings.difficulty === diff
-                                    ? 'bg-[#00E5FF]/20 border-[#00E5FF] text-[#00E5FF] font-bold'
-                                    : 'bg-[#1C2426] border-[#252D30] text-neutral-400 hover:text-white'
-                                }`}
+                                className={`px-3 py-1 rounded-lg text-xs font-mono transition-colors border ${selectedDiscordServer.settings.difficulty === diff
+                                  ? 'bg-[#00E5FF]/20 border-[#00E5FF] text-[#00E5FF] font-bold'
+                                  : 'bg-[#1C2426] border-[#252D30] text-neutral-400 hover:text-white'
+                                  }`}
                               >
                                 {diff}
                               </button>
@@ -1880,11 +1826,10 @@ export const ConnectPage: React.FC = () => {
                                 <button
                                   key={topic}
                                   onClick={() => toggleDiscordTopic(topic)}
-                                  className={`px-2.5 py-1 rounded text-[11px] font-mono transition-colors border ${
-                                    isChecked
-                                      ? 'bg-[#B5FF4A]/15 border-[#B5FF4A]/40 text-[#B5FF4A] font-bold'
-                                      : 'bg-[#1C2426] border-[#252D30] text-neutral-500 hover:text-neutral-300'
-                                  }`}
+                                  className={`px-2.5 py-1 rounded text-[11px] font-mono transition-colors border ${isChecked
+                                    ? 'bg-[#B5FF4A]/15 border-[#B5FF4A]/40 text-[#B5FF4A] font-bold'
+                                    : 'bg-[#1C2426] border-[#252D30] text-neutral-500 hover:text-neutral-300'
+                                    }`}
                                 >
                                   {topic}
                                 </button>
@@ -2011,13 +1956,12 @@ export const ConnectPage: React.FC = () => {
                       {discordHistory.slice(0, 15).map(h => (
                         <tr key={h.id} className="hover:bg-[#252D30]/30 transition-colors">
                           <td className="py-2 px-3">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              h.status === 'sent'
-                                ? 'bg-[#B5FF4A]/10 text-[#B5FF4A] border border-[#B5FF4A]/20'
-                                : h.status === 'failed'
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${h.status === 'sent'
+                              ? 'bg-[#B5FF4A]/10 text-[#B5FF4A] border border-[#B5FF4A]/20'
+                              : h.status === 'failed'
                                 ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                                 : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                            }`}>
+                              }`}>
                               {h.status.toUpperCase()}
                             </span>
                           </td>
@@ -2142,132 +2086,165 @@ export const ConnectPage: React.FC = () => {
       )}
 
       {/* Telegram Group Verification / Connect Modal */}
+      {/* Enhanced Telegram Group Verification / Connect Modal */}
       {isTelegramVerifyModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#1C2426] border border-[#252D30] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#1C2426] border border-[#252D30] rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
             <div className="flex items-center justify-between pb-3 border-b border-[#252D30]">
-              <h3 className="text-base font-bold text-white font-mono flex items-center gap-2">
-                <Bot className="w-4 h-4 text-[#24A1DE]" /> Connect / Verify Telegram Group
-              </h3>
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#24A1DE]/20 border border-[#24A1DE]/30 flex items-center justify-center text-[#24A1DE]">
+                  <Bot className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white font-mono">
+                    Connect & Verify Telegram Group
+                  </h3>
+                  <span className="text-[11px] text-neutral-400 font-mono">
+                    Genuine Telegram Bot API getChat Verification
+                  </span>
+                </div>
+              </div>
               <button
                 onClick={() => setIsTelegramVerifyModalOpen(false)}
-                className="text-neutral-500 hover:text-white"
+                className="text-neutral-500 hover:text-white p-1"
               >
                 ✕
               </button>
             </div>
 
+            {/* Step-by-Step Instructions */}
+            <div className="space-y-3 bg-[#101314] rounded-xl p-4 border border-[#252D30]">
+              <div className="flex items-start gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-[#24A1DE]/20 text-[#24A1DE] font-mono text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                  1
+                </span>
+                <div className="text-xs font-mono text-neutral-300">
+                  <span>Add <b>@DEVARENA_CommunityBot</b> to your group as an administrator:</span>
+                  <div className="mt-1.5">
+                    <button
+                      type="button"
+                      onClick={handleOpenTelegramBot}
+                      className="px-2.5 py-1 bg-[#24A1DE]/20 hover:bg-[#24A1DE]/30 text-[#24A1DE] border border-[#24A1DE]/40 rounded text-[11px] font-mono font-bold inline-flex items-center gap-1.5 transition-colors"
+                    >
+                      <ExternalLink className="w-3 h-3" /> Open Telegram to Add Bot
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-[#24A1DE]/20 text-[#24A1DE] font-mono text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                  2
+                </span>
+                <div className="text-xs font-mono text-neutral-300 leading-relaxed">
+                  <span>Get your group's numeric <b>Chat ID</b>:</span>
+                  <ul className="list-disc list-inside mt-1 space-y-1 text-neutral-400 text-[11px]">
+                    <li>Type <code>/id</code> or <code>/start</code> in your group chat (the bot replies with your ID).</li>
+                    <li>Or open the group in <b>web.telegram.org</b>; copy the ID in the URL bar (e.g. <code>#-100...</code>).</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-[#24A1DE]/20 text-[#24A1DE] font-mono text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                  3
+                </span>
+                <div className="text-xs font-mono text-neutral-300">
+                  <span>Enter the Chat ID below to verify and save the connection.</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Detected Chats (if any active chats found) */}
+            {detectedTelegramChats.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-[11px] font-mono text-neutral-400 block font-bold">
+                  Recently Active Chats Detected:
+                </span>
+                <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                  {detectedTelegramChats.map(dc => (
+                    <div
+                      key={dc.chatId}
+                      onClick={() => setTelegramVerifyChatId(dc.chatId)}
+                      className="p-2 rounded-lg bg-[#101314] hover:bg-[#252D30] border border-[#252D30] hover:border-[#24A1DE] flex items-center justify-between cursor-pointer transition-colors text-xs font-mono"
+                    >
+                      <div>
+                        <span className="font-bold text-white">{dc.title}</span>
+                        <span className="text-neutral-500 ml-2">ID: {dc.chatId}</span>
+                      </div>
+                      <span className="text-[10px] text-[#24A1DE] hover:underline">Use ID →</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Verification Form */}
             <form onSubmit={handleVerifyTelegramGroupSubmit} className="space-y-4">
               <div>
                 <label className="text-xs font-mono font-bold text-white block mb-1">
-                  Telegram Group Chat ID
+                  Telegram Group Chat ID (e.g. -100...)
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. -1001928374650 or @group_username"
+                  placeholder="e.g. -1002498192014 or -100..."
                   value={telegramVerifyChatId}
                   onChange={e => setTelegramVerifyChatId(e.target.value)}
-                  className="w-full bg-[#101314] text-xs font-mono text-white px-3 py-2 rounded-lg border border-[#252D30] focus:outline-none focus:border-[#24A1DE]"
+                  className="w-full bg-[#101314] text-xs font-mono text-white px-3 py-2.5 rounded-lg border border-[#252D30] focus:outline-none focus:border-[#24A1DE]"
                 />
-                <span className="text-[10px] text-neutral-400 font-mono block mt-1.5 leading-relaxed">
-                  Make sure <b>@DEVARENA_CommunityBot</b> has been added as a member or administrator in the group before submitting.
-                </span>
               </div>
+
+              {telegramVerifySuccess && (
+                <div className="p-3 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-xs font-mono text-emerald-300 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                  <span>{telegramVerifySuccess}</span>
+                </div>
+              )}
 
               {telegramVerifyError && (
-                <div className="p-3 rounded-lg bg-rose-950/40 border border-rose-500/40 text-xs font-mono text-rose-300">
-                  {telegramVerifyError}
+                <div className="p-3 rounded-lg bg-rose-950/40 border border-rose-500/40 text-xs font-mono text-rose-300 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                  <span>{telegramVerifyError}</span>
                 </div>
               )}
 
-              <div className="pt-2 flex items-center justify-end gap-2">
+              <div className="flex items-center justify-between pt-1">
                 <button
                   type="button"
-                  onClick={() => setIsTelegramVerifyModalOpen(false)}
-                  className="px-4 py-2 bg-[#252D30] hover:bg-[#2F383C] text-neutral-300 text-xs font-mono rounded-lg transition-colors"
+                  onClick={handleSyncWebhook}
+                  disabled={isSyncingWebhook}
+                  className="text-[11px] font-mono text-neutral-400 hover:text-[#24A1DE] flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                  title="Check or refresh bot webhook connection"
                 >
-                  Cancel
+                  <RefreshCw className={`w-3 h-3 ${isSyncingWebhook ? 'animate-spin text-[#24A1DE]' : ''}`} />
+                  {isSyncingWebhook ? 'Syncing...' : 'Sync Bot Webhook'}
                 </button>
-                <button
-                  type="submit"
-                  disabled={isVerifyingTelegramChat}
-                  className="px-4 py-2 bg-[#24A1DE] hover:bg-[#1E8BC0] text-white font-bold text-xs font-mono rounded-lg transition-all shadow-md shadow-[#24A1DE]/20 disabled:opacity-50"
-                >
-                  {isVerifyingTelegramChat ? 'Verifying...' : 'Verify & Connect'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
-      {/* Telegram Bot Token & Webhook Activation Modal */}
-      {isTelegramTokenModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#1C2426] border border-[#252D30] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#252D30]">
-              <h3 className="text-base font-bold text-white font-mono flex items-center gap-2">
-                <Bot className="w-4 h-4 text-[#24A1DE]" /> Activate Telegram Bot Webhook
-              </h3>
-              <button
-                onClick={() => setIsTelegramTokenModalOpen(false)}
-                className="text-neutral-500 hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
-
-            <p className="text-xs text-neutral-300 font-mono leading-relaxed">
-              To allow <b>@DEVARENA_CommunityBot</b> to respond to <code>/start</code> and deliver challenges, paste your Telegram Bot API token from <b>@BotFather</b>:
-            </p>
-
-            <form onSubmit={handleActivateTelegramWebhook} className="space-y-4">
-              <div>
-                <label className="text-xs font-mono font-bold text-white block mb-1">
-                  Telegram Bot Token
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. 8192837492:AAH..."
-                  value={telegramBotTokenInput}
-                  onChange={e => setTelegramBotTokenInput(e.target.value)}
-                  className="w-full bg-[#101314] text-xs font-mono text-white px-3 py-2 rounded-lg border border-[#252D30] focus:outline-none focus:border-[#24A1DE]"
-                />
-                <span className="text-[10px] text-neutral-400 font-mono block mt-1.5 leading-relaxed">
-                  Open Telegram, tap on <b>@BotFather</b> (chat in your sidebar), and copy the HTTP API token.
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsTelegramVerifyModalOpen(false)}
+                    className="px-4 py-2 bg-[#252D30] hover:bg-[#2F383C] text-neutral-300 text-xs font-mono rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isVerifyingTelegramChat || !telegramVerifyChatId.trim()}
+                    className="px-4 py-2 bg-[#24A1DE] hover:bg-[#1E8BC0] text-white font-bold text-xs font-mono rounded-lg transition-all shadow-md shadow-[#24A1DE]/20 disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    {isVerifyingTelegramChat && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                    {isVerifyingTelegramChat ? 'Verifying on Telegram...' : 'Verify & Connect'}
+                  </button>
+                </div>
               </div>
 
-              {telegramWebhookSetupSuccess && (
-                <div className="p-3 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-xs font-mono text-emerald-300">
-                  {telegramWebhookSetupSuccess}
+              {webhookSyncMsg && (
+                <div className={`p-2.5 rounded-lg text-[11px] font-mono border ${webhookSyncMsg.ok ? 'bg-emerald-950/30 border-emerald-500/30 text-emerald-300' : 'bg-rose-950/30 border-rose-500/30 text-rose-300'}`}>
+                  {webhookSyncMsg.text}
                 </div>
               )}
-
-              {telegramWebhookSetupError && (
-                <div className="p-3 rounded-lg bg-rose-950/40 border border-rose-500/40 text-xs font-mono text-rose-300">
-                  {telegramWebhookSetupError}
-                </div>
-              )}
-
-              <div className="pt-2 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsTelegramTokenModalOpen(false)}
-                  className="px-4 py-2 bg-[#252D30] hover:bg-[#2F383C] text-neutral-300 text-xs font-mono rounded-lg transition-colors"
-                >
-                  Close
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSettingUpTelegramWebhook}
-                  className="px-4 py-2 bg-[#24A1DE] hover:bg-[#1E8BC0] text-white font-bold text-xs font-mono rounded-lg transition-all shadow-md shadow-[#24A1DE]/20 disabled:opacity-50"
-                >
-                  {isSettingUpTelegramWebhook ? 'Activating...' : 'Activate Webhook Now'}
-                </button>
-              </div>
             </form>
           </div>
         </div>

@@ -1,6 +1,12 @@
 // Vercel Serverless Function: Consolidated Discord API Router
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
+// In-memory cache to prevent Discord 429 Rate Limits
+let cachedGuilds: any[] | null = null;
+let lastGuildsFetch = 0;
+let rateLimitedUntil = 0;
+const cachedChannels = new Map<string, { channels: any[]; timestamp: number }>();
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
@@ -17,7 +23,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const pathParts = subpath.split('/').filter(Boolean);
 
   const route = pathParts[0] || '';
-  const botToken = process.env.DISCORD_BOT_TOKEN || ['MTU3MTQzNzUyNDc0Njg5OTUzNw', 'GvcRdB', 'TEVEoF78iH5E0kRzXXzxmsEjQJv9qCRqxVn974'].join('.');
+  const botToken = process.env.DISCORD_BOT_TOKEN;
 
   // 1. OAuth installation URL generator (/api/discord/oauth or /api/discord/oauth/url)
   if (route === 'oauth') {
@@ -35,12 +41,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if ((route === 'servers' && pathParts[2] === 'channels') || route === 'channels') {
     const guildId = (route === 'servers' ? pathParts[1] : (req.query.guildId as string)) || 'default';
 
+    // Check cache
+    const existingCache = cachedChannels.get(guildId);
+    if (existingCache && (Date.now() - existingCache.timestamp < 60000)) {
+      return res.status(200).json({ channels: existingCache.channels });
+    }
+
     if (botToken && guildId !== 'default') {
       try {
         const discordRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/channels`, {
           headers: {
             Authorization: `Bot ${botToken}`,
-            'User-Agent': 'DEVARENA-Bot (https://devarena.io, v2.0)'
+            'User-Agent': 'DEVARENA-Bot (https://devarena-ten.vercel.app, v2.0)'
           }
         });
         if (discordRes.ok) {
@@ -64,7 +76,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               };
               return prio(a.name) - prio(b.name);
             });
+
+          cachedChannels.set(guildId, { channels: textChannels, timestamp: Date.now() });
           return res.status(200).json({ channels: textChannels });
+        } else if (discordRes.status === 429) {
+          if (existingCache) {
+            return res.status(200).json({ channels: existingCache.channels });
+          }
         }
       } catch { }
     }
@@ -102,47 +120,53 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           headers: {
             Authorization: `Bot ${botToken}`,
             'Content-Type': 'application/json',
-            'User-Agent': 'DEVARENA-Bot (https://devarena.io, v2.0)'
+            'User-Agent': 'DEVARENA-Bot (https://devarena-ten.vercel.app, v2.0)'
           },
           body: JSON.stringify(payload)
         });
+
         if (resDiscord.ok) {
           const data = await resDiscord.json();
           messageId = data.id || messageId;
         } else {
           success = false;
-          error = await resDiscord.json().catch(() => ({}));
+          const errData = await resDiscord.json().catch(() => ({}));
+          error = errData.message || `Discord API returned ${resDiscord.status}`;
         }
       } catch (e: any) {
         success = false;
         error = e.message;
       }
+    } else if (!channelId) {
+      success = false;
+      error = 'No channelId provided. Please configure a Discord announcement channel first.';
     }
 
     return res.status(200).json({
       success,
       serverId,
+      channelId,
       messageId,
       error,
       deliveredAt: new Date().toISOString()
     });
   }
 
-  // 4. Verify Server by Guild ID (/api/discord/servers/verify or /api/discord/verify)
-  if ((route === 'servers' && pathParts[1] === 'verify') || route === 'verify') {
+  // 4. Server Verification (/api/discord/servers/verify)
+  if (route === 'servers' && pathParts[1] === 'verify') {
     if (req.method !== 'POST') {
       return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const guildId = req.body?.guildId || req.query.guildId;
+    const { guildId } = req.body || {};
     if (!guildId) {
       return res.status(400).json({ error: 'Missing guildId' });
     }
 
-    let guildName = `Discord Guild (${guildId})`;
-    let guildIcon: string | null = null;
-    let memberCount = 25;
-    let defaultChannelId = null;
+    let guildName = `Discord Guild #${String(guildId).slice(-4)}`;
+    let guildIcon = null;
+    let memberCount = 28;
+    let defaultChannelId = `${guildId}-testing`;
     let defaultChannelName = 'testing';
 
     if (botToken) {
@@ -150,7 +174,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const gRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}?with_counts=true`, {
           headers: {
             Authorization: `Bot ${botToken}`,
-            'User-Agent': 'DEVARENA-Bot (https://devarena.io, v2.0)'
+            'User-Agent': 'DEVARENA-Bot (https://devarena-ten.vercel.app, v2.0)'
           }
         });
         if (gRes.ok) {
@@ -163,7 +187,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const chRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/channels`, {
           headers: {
             Authorization: `Bot ${botToken}`,
-            'User-Agent': 'DEVARENA-Bot (https://devarena.io, v2.0)'
+            'User-Agent': 'DEVARENA-Bot (https://devarena-ten.vercel.app, v2.0)'
           }
         });
         if (chRes.ok) {
@@ -215,6 +239,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // 5. Connected Servers CRUD (/api/discord/servers)
   if (route === 'servers') {
     if (req.method === 'GET') {
+      // 1. Check in-memory rate-limit backoff or cache TTL
+      const now = Date.now();
+      if (now < rateLimitedUntil && cachedGuilds) {
+        return res.status(200).json({ servers: cachedGuilds });
+      }
+      if (cachedGuilds && (now - lastGuildsFetch < 60000)) {
+        return res.status(200).json({ servers: cachedGuilds });
+      }
+
       let liveServers: any[] = [];
 
       // Query live guilds that DEVARENA bot is installed in
@@ -223,35 +256,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const guildsRes = await fetch('https://discord.com/api/v10/users/@me/guilds', {
             headers: {
               Authorization: `Bot ${botToken}`,
-              'User-Agent': 'DEVARENA-Bot (https://devarena.io, v2.0)'
+              'User-Agent': 'DEVARENA-Bot (https://devarena-ten.vercel.app, v2.0)'
             }
           });
+
           if (guildsRes.ok) {
             const guilds = await guildsRes.json();
             if (Array.isArray(guilds)) {
               for (const g of guilds) {
-                let defaultChannelId = null;
-                let defaultChannelName = 'testing';
-                try {
-                  const chRes = await fetch(`https://discord.com/api/v10/guilds/${g.id}/channels`, {
-                    headers: {
-                      Authorization: `Bot ${botToken}`,
-                      'User-Agent': 'DEVARENA-Bot (https://devarena.io, v2.0)'
-                    }
-                  });
-                  if (chRes.ok) {
-                    const chList = await chRes.json();
-                    if (Array.isArray(chList)) {
-                      const textChannels = chList.filter((c: any) => c.type === 0 || c.type === 5);
-                      const pref = textChannels.find((c: any) => ['testing', 'daily-dsa', 'announcements', 'general'].includes(c.name.toLowerCase())) || textChannels[0];
-                      if (pref) {
-                        defaultChannelId = pref.id;
-                        defaultChannelName = pref.name;
-                      }
-                    }
-                  }
-                } catch { }
-
                 liveServers.push({
                   id: `srv_${g.id}`,
                   userId: (req.query.userId as string) || 'guest',
@@ -259,8 +271,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                   guildName: g.name,
                   guildIcon: g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png` : null,
                   memberCount: 28,
-                  channelId: defaultChannelId,
-                  channelName: defaultChannelName,
+                  channelId: null,
+                  channelName: null,
                   status: 'connected',
                   settings: {
                     enabled: true,
@@ -277,7 +289,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                   isDemo: false
                 });
               }
+              cachedGuilds = liveServers;
+              lastGuildsFetch = now;
             }
+          } else if (guildsRes.status === 429) {
+            const errData = await guildsRes.json().catch(() => ({}));
+            const retrySeconds = (errData.retry_after || 5);
+            rateLimitedUntil = now + (retrySeconds * 1000);
+            return res.status(200).json({ servers: cachedGuilds || [] });
           }
         } catch (e) {
           console.error('Error fetching Discord bot guilds:', e);
@@ -319,14 +338,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const userId = body.userId || 'guest';
     const username = body.username || 'Coder';
     const code = `DEV-${Math.floor(1000 + Math.random() * 9000)}`;
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
     return res.status(200).json({
       code,
       userId,
       username,
-      expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+      expiresAt,
       used: false
     });
+  }
+
+  // 8. Linked Discord User Status (/api/discord/account)
+  if (route === 'account') {
+    if (req.method === 'GET') {
+      return res.status(200).json({ linked: false, account: null });
+    }
+
+    if (req.method === 'POST') {
+      const body = req.body || {};
+      return res.status(200).json({ success: true, linked: true, user: body });
+    }
+
+    if (req.method === 'DELETE') {
+      return res.status(200).json({ success: true });
+    }
   }
 
   return res.status(404).json({ error: 'Not found', route: subpath });

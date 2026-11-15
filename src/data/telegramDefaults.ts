@@ -223,12 +223,12 @@ function escapeHtml(str: string): string {
 
 export const MOCK_TELEGRAM_GROUPS: TelegramChatIntegration[] = [
   {
-    id: 'tg_lukizerk',
+    id: 'tg_demo_preview',
     userId: 'guest',
-    chatId: '-1002498192014',
-    chatTitle: 'lukizerk',
-    chatType: 'group',
-    memberCount: 3,
+    chatId: '-1001928374829',
+    chatTitle: 'DEVARENA Community (Demo Preview)',
+    chatType: 'supergroup',
+    memberCount: 315,
     status: 'connected',
     botPermissions: {
       canSendMessages: true,
@@ -237,9 +237,9 @@ export const MOCK_TELEGRAM_GROUPS: TelegramChatIntegration[] = [
     },
     settings: { ...TELEGRAM_DEFAULT_SETTINGS },
     lastChallengeSent: {
-      id: 'tg_ch_lukizerk_1',
-      chatId: '-1002498192014',
-      chatTitle: 'lukizerk',
+      id: 'tg_ch_mock_prev_1',
+      chatId: '-1001928374829',
+      chatTitle: 'DEVARENA Community (Demo Preview)',
       challengeNumber: 142,
       problemId: 'two-sum',
       problemTitle: 'Two Sum',
@@ -249,11 +249,11 @@ export const MOCK_TELEGRAM_GROUPS: TelegramChatIntegration[] = [
       scheduledAt: new Date(Date.now() - 3600000 * 2).toISOString(),
       deliveredAt: new Date(Date.now() - 3600000 * 2).toISOString(),
       status: 'sent',
-      telegramMessageId: 'tg_msg_lukizerk_001'
+      telegramMessageId: 'tg_msg_demo_001'
     },
     connectedAt: new Date().toISOString(),
-    addedByUsername: 'Divya',
-    isDemo: false
+    addedByUsername: 'DevArenaBot',
+    isDemo: true
   }
 ];
 

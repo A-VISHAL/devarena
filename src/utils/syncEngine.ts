@@ -38,6 +38,10 @@ class SyncEngine {
 
   private tryConnectWebSocket() {
     if (typeof window === 'undefined') return;
+    // Only attempt local WebSocket connection in dev environment; production uses BroadcastChannel & localStorage
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      return;
+    }
     try {
       const wsUrl = window.location.protocol === 'https:' 
         ? `wss://${window.location.host}/ws` 

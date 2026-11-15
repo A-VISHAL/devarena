@@ -99,6 +99,8 @@ export interface TelegramCommandInfo {
 }
 
 export interface TelegramWebhookStatus {
+  ok?: boolean;
+  configured?: boolean;
   url?: string;
   hasCustomCertificate?: boolean;
   pendingUpdateCount?: number;

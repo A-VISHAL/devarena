@@ -49,13 +49,19 @@ class TelegramService {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const hasLiveGroup = parsed.some((c: TelegramChatIntegration) => !c.isDemo && c.chatId !== '-1001928374829');
-          if (!hasLiveGroup) {
-            const updated = [...MOCK_TELEGRAM_GROUPS, ...parsed.filter((c: TelegramChatIntegration) => c.isDemo)];
-            localStorage.setItem(STORAGE_CHATS_KEY, JSON.stringify(updated));
-            return updated;
+          // Purge invalid mock chat -1002498192014 and tg_lukizerk
+          const cleaned = parsed.filter((c: TelegramChatIntegration) => 
+            c.chatId !== '-1002498192014' && c.id !== 'tg_lukizerk'
+          );
+          if (cleaned.length !== parsed.length) {
+            localStorage.setItem(STORAGE_CHATS_KEY, JSON.stringify(cleaned));
           }
-          return parsed.filter((c: TelegramChatIntegration) => c.userId === userId || c.userId === 'guest' || c.isDemo);
+          const hasLiveGroup = cleaned.some((c: TelegramChatIntegration) => !c.isDemo && c.chatId !== '-1001928374829');
+          if (!hasLiveGroup) {
+            // Keep demo preview available if no verified live groups
+            return MOCK_TELEGRAM_GROUPS;
+          }
+          return cleaned.filter((c: TelegramChatIntegration) => c.userId === userId || c.userId === 'guest' || c.isDemo);
         }
       }
       // Seed with centralized mock preview groups on initial load
@@ -137,14 +143,14 @@ class TelegramService {
     userId: string
   ): Promise<{ success: boolean; chat?: TelegramChatIntegration; error?: string }> {
     try {
-      const savedToken = typeof window !== 'undefined' ? localStorage.getItem('devarena_telegram_bot_token') : null;
+      const cleanChatId = chatId.trim();
       const res = await fetch('/api/telegram/chats/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chatId, userId, botToken: savedToken || undefined })
+        body: JSON.stringify({ chatId: cleanChatId, userId })
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (res.ok && data.success && data.chat) {
         await this.saveGroup(data.chat);
         return { success: true, chat: data.chat };
@@ -152,7 +158,7 @@ class TelegramService {
 
       return {
         success: false,
-        error: data.error || 'Failed to verify group. Ensure the bot is added as administrator.'
+        error: data.error || 'Failed to verify group. Ensure @DEVARENA_CommunityBot is added as administrator.'
       };
     } catch (e: any) {
       return { success: false, error: e.message || 'Network error verifying group' };
@@ -205,29 +211,23 @@ class TelegramService {
     }
 
     try {
-      const savedToken = typeof window !== 'undefined' ? localStorage.getItem('devarena_telegram_bot_token') : null;
       const res = await fetch(`/api/telegram/chats/${encodeURIComponent(group.chatId)}/test`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           problemId: problem.id,
           payload,
-          chatTitle: group.chatTitle,
-          botToken: savedToken || undefined
+          chatTitle: group.chatTitle
         })
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        messageId = data.messageId || messageId;
-        if (!data.success) {
-          deliveryStatus = 'failed';
-          errorMessage = data.error || 'Telegram API rejected message';
-        }
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        messageId = String(data.messageId || messageId);
+        deliveryStatus = 'sent';
       } else {
-        const errData = await res.json().catch(() => ({}));
         deliveryStatus = 'failed';
-        errorMessage = errData.error || `Server responded with HTTP ${res.status}`;
+        errorMessage = data.error || `Telegram API rejected message (HTTP ${res.status})`;
       }
     } catch (e: any) {
       deliveryStatus = 'failed';
@@ -263,6 +263,45 @@ class TelegramService {
       record,
       error: errorMessage
     };
+  }
+
+  // 6b. Get Recently Detected Groups
+  public async getDetectedChats(): Promise<Array<{ chatId: string; title: string; type: string; detectedAt: string }>> {
+    try {
+      const res = await fetch('/api/telegram/chats/detected');
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Array.isArray(data.detectedChats)) {
+          return data.detectedChats;
+        }
+      }
+    } catch { }
+    return [];
+  }
+
+  // 6c. Setup Webhook (One-Click)
+  public async setupWebhook(): Promise<{ ok: boolean; targetUrl?: string; error?: string; description?: string }> {
+    try {
+      const res = await fetch('/api/telegram/setup-webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+      return await res.json();
+    } catch (e: any) {
+      return { ok: false, error: e.message };
+    }
+  }
+
+  // 6d. Get Webhook Status
+  public async getWebhookStatus(): Promise<TelegramWebhookStatus> {
+    try {
+      const res = await fetch('/api/telegram/webhook-status');
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch { }
+    return { configured: false, ok: false };
   }
 
   // 7. Get Challenge Delivery History
